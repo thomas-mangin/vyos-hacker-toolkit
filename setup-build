@@ -1,0 +1,38 @@
+#!/bin/sh
+
+mkdir vyos
+cd vyos
+
+git clone -b current --single-branch https://github.com/vyos/vyos-build
+cd vyos-build
+
+mkdir packages
+cp /vyos/vyos-1x* packages/
+
+# cd packages/vyos-1x
+# make deb
+# cd -
+
+cat << EOF > data/live-build-config/hooks/live/99-localuser.chroot
+#!/bin/bash
+
+useradd -r -m -N -s /bin/vbash -G frrvty,vyattacfg,sudo,adm,dip,disk admin
+echo admin:admin | chpasswd
+EOF
+
+docker build -t vyos/vyos-build docker
+
+docker run --rm -it --privileged -v $(pwd):/vyos -w /vyos vyos/vyos-build bash
+
+# in docker
+
+alias isobuild='function _vyos_current() { \
+    version="1.3$1-$(date '+%Y%m%d%H%M')"
+    echo "Building custom VyOS version: $version"
+    ./configure --build-by thomas@mangin.com \
+    --debian-mirror http://ftp.de.debian.org/debian/ \
+    --version $version \
+    --build-type release \
+    --custom-package "mc vim git" && sudo make iso; }; _vyos_current'
+
+isobuild
