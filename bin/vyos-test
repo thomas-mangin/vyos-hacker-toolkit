@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Get configuration
+
+etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
+data="$(cd "$(dirname "$0")"/../data ; pwd)"
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+
+declare router_port=""
+if [ "$config_router_port" != "" ]; then
+	declare router_port="-p $config_router_port"
+fi
+
+declare router_user=""
+if [ "$config_router_user" != "" ]; then
+	declare router_user=" $config_router_user@"
+fi
+
+declare router_scp_port=""
+if [ "$config_router_port" != "" ]; then
+	declare router_scp_port="-P $config_router_port"
+fi
+
+connect_router="ssh $router_port $router_user$config_router_host"
+
+# Check if remote router is up
+
+up=$( $connect_router 'echo up' 2> /dev/null )
+if [ "$up" != "up" ]; then
+	echo "could not ssh $router_port $route_user$config_build_host"
+	exit
+fi
+
+echo $( date ) updating
+
+cd $config_local_folder/vyos-smoketest 2> /dev/null
+
+if [ "$?" != "0" ]; then
+	cd $config_local_folder/
+	if [ "$?" != "0" ]; then
+		echo "failed to access $local_folder"
+		exit
+	fi
+	git clone git@github.com:vyos/vyos-smoketest.git
+else
+	git pull
+fi
+
+cd $config_local_folder/vyos-smoketest 2> /dev/null
+
+if [ "$?" != "0" ]; then
+	echo "failed to use vyos-smoketest folder at $local_folder"
+	exit
+fi
+
+cd $config_local_folder 2> /dev/null
+scp $router_scp_port -r vyos-smoketest $router_user$config_router_host:
+
+echo $( date ) testing
+
+$connect_router python3 ./vyos-smoketest/bin/vyos-smoketest
+
+echo $( date ) complete
+

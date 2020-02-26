@@ -1,0 +1,74 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]
+then
+	echo "Usage:"
+	echo "$0 followed by the name of the repo to build (ie: T31)"
+	exit
+fi
+
+# Get configuration
+
+etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
+data="$(cd "$(dirname "$0")"/../data ; pwd)"
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+
+declare build_port=""
+if [ "$config_build_port" != "" ]; then
+	declare build_port="-p $config_build_port"
+fi
+
+declare build_user=""
+if [ "$config_build_user" != "" ]; then
+	declare build_user=" $config_build_user@"
+fi
+
+connect_build="ssh $build_port $build_user$config_build_host"
+
+declare router_port=""
+if [ "$config_router_port" != "" ]; then
+	declare router_port="-p $config_router_port"
+fi
+
+declare router_user=""
+if [ "$config_router_user" != "" ]; then
+	declare router_user=" $config_router_user@"
+fi
+
+connect_router="ssh $router_port $router_user$config_router_host"
+
+# Check if remote router is up
+
+up=$( $connect_build 'echo up' 2> /dev/null )
+if [ "$up" != "up" ]; then
+	echo "could not ssh$build_port $build_user$config_build_host"
+	exit
+fi
+
+up=$( $connect_router 'echo up' 2> /dev/null )
+if [ "$up" != "up" ]; then
+	echo "could not ssh$router_port $router_user$config_router_host"
+	exit
+fi
+
+echo $( date ) building
+
+cd $local_folder/ 2> /dev/null
+
+docker="docker run --rm --privileged -v $config_build_folder:$config_build_folder -w $config_build_folder/$1 vyos-builder"
+command="dpkg-buildpackage -uc -us -tc -b"
+
+$connect_build $docker /bin/sh -c $command
+
+echo $( date ) deploying
+
+# enable debugging
+$connect_router "touch /tmp/vyos.ifconfig.debug"
+
+# copying
+$connect_build "cd $config_build_folder; cat cat vyos-1x_1.3.0-16_all.deb" | $connect_router "cat - > vyos-1x_1.3.0-16_all.deb"
+$connect_router "sudo dpkg -i --force-all vyos-1x_1.3.0-16_all.deb"
+$connect_router "rm vyos-1x_1.3.0-16_all.deb"
+
+now=$( date )
+echo $( date ) complete

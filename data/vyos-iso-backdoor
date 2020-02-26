@@ -1,0 +1,5 @@
+#!/bin/bash
+# data/live-build-config/hooks/live/99-localuser.chroot
+
+useradd -r -m -N -s /bin/vbash -G frrvty,vyattacfg,sudo,adm,dip,disk admin
+echo admin:admin | chpasswd
