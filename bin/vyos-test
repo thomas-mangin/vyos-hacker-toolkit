@@ -4,39 +4,42 @@
 
 etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
 data="$(cd "$(dirname "$0")"/../data ; pwd)"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+cd $etc; for name in `ls`; do config_$name=$( cat $name ); done; cd - > /dev/null
 
-declare router_port=""
-if [ "$config_router_port" != "" ]; then
-	declare router_port="-p $config_router_port"
-fi
+local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
 
-declare router_user=""
+ssh_router_user=""
+ssh_router_port=""
+scp_router_port=""
+
+build_host=$config_build_host
+router_host=$config_router_host
+
 if [ "$config_router_user" != "" ]; then
-	declare router_user=" $config_router_user@"
+	ssh_router_user=" $config_router_user@"
 fi
 
-declare router_scp_port=""
 if [ "$config_router_port" != "" ]; then
-	declare router_scp_port="-P $config_router_port"
+	ssh_router_port="-p $config_router_port"
+	scp_router_port="-P $config_router_port"
 fi
 
-connect_router="ssh $router_port $router_user$config_router_host"
+connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 
 # Check if remote router is up
 
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh $router_port $route_user$config_build_host"
+	echo "could not ssh $ssh_router_port $route_user$build_host"
 	exit
 fi
 
 echo $( date ) updating
 
-cd $config_local_folder/vyos-smoketest 2> /dev/null
+cd $local_folder/vyos-smoketest 2> /dev/null
 
 if [ "$?" != "0" ]; then
-	cd $config_local_folder/
+	cd $local_folder/
 	if [ "$?" != "0" ]; then
 		echo "failed to access $local_folder"
 		exit
@@ -46,15 +49,15 @@ else
 	git pull
 fi
 
-cd $config_local_folder/vyos-smoketest 2> /dev/null
+cd $local_folder/vyos-smoketest 2> /dev/null
 
 if [ "$?" != "0" ]; then
 	echo "failed to use vyos-smoketest folder at $local_folder"
 	exit
 fi
 
-cd $config_local_folder 2> /dev/null
-scp $router_scp_port -r vyos-smoketest $router_user$config_router_host:
+cd $local_folder 2> /dev/null
+scp $scp_router_port -r vyos-smoketest $ssh_router_user$router_host:
 
 echo $( date ) testing
 

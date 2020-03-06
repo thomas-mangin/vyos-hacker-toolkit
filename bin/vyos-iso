@@ -6,28 +6,37 @@ etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
 data="$(cd "$(dirname "$0")"/../data ; pwd)"
 cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
 
-declare build_user=""
+ssh_build_user=""
+ssh_build_port=""
+scp_build_port=""
+
+email=$config_email
+build_host=$config_build_host
+build_port=$config_build_port
+build_repo=$config_build_repo
+build_folder=$config_build_folder
+
 if [ "$config_build_user" != "" ]; then
-	declare build_user=" $config_build_user@"
+	ssh_build_user=" $config_build_user@"
 fi
 
-declare build_port=""
 if [ "$config_build_port" != "" ]; then
-	declare build_port="-p $config_build_port"
+	ssh_build_port="-p $config_build_port"
+	scp_build_port="-P $config_build_port"
 fi
 
-declare build_scp_port=""
-if [ "$config_build_port" != "" ]; then
-	declare build_scp_port="-P $config_build_port"
-fi
+connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 
-connect_build="ssh $build_port $build_user$config_build_host"
+# home_build=$( $connect_build 'echo $HOME' )
+
+docker_iso="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo vyos-builder"
+docker_dpkg="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo/packages/vyos-1x vyos-builder"
 
 # Check if remote router is up
 
 up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh$config_build_port $build_user$config_build_host"
+	echo "could not ssh$build_port $build_user$build_host"
 	exit
 fi
 
@@ -36,7 +45,7 @@ echo $( date ) building
 # update vyos-build
 
 cd $local_folder/ 2> /dev/null
-$connect_build "cd $config_build_repo; git pull"
+$connect_build "cd $build_repo; git pull"
 
 # backdoor option
 
@@ -44,29 +53,35 @@ backdoor="vyos-iso-backdoor"
 location=$( head -2 $data/$backdoor | tail -1 | cut -f2 -d# | tr -d '^ ' )
 
 if [ "$1" == "backdoor" ]; then
-	scp $build_scp_port $data/$backdoor $build_user$config_build_host:$config_build_repo/$location
+	scp $scp_build_port $data/$backdoor $build_user$build_host:$build_repo/$location
 else
-	$connect_build rm $config_build_repo/$location 2> /dev/null
+	$connect_build rm $build_repo/$location 2> /dev/null
 fi
 
 # copying packages
 
+dated_packages="packages-$(date +%F=%T)"
 
+$connect_build mv $home/$build_repo/packages /tmp/$dated_packages
+$connect_build mkdir -p $home/$build_repo/packages
+$connect_build cp -a $build_folder/$1  $home/$build_repo/packages/vyos-1x
 
-# run in docker 
+# make debian package in /packages folder
+
+echo $( date ) making vyos-1x
+
+$connect_build $docker_dpkg "dpkg-buildpackage -uc -us -tc -b"
+
+# make iso
 
 tags=""
-home='$HOME'
 extra="mc vim git rsync"
 version="1.3$tags-$(date '+%Y%m%d%H%M')"
 
-configure="./configure --build-by $config_email --debian-mirror http://ftp.de.debian.org/debian/ --version $version --build-type release --custom-package '$extra'"
+configure="./configure --build-by $email --debian-mirror http://ftp.de.debian.org/debian/ --version $version --build-type release --custom-package '$extra'"
 
 echo $( date ) making iso
 
-docker="docker run --rm --privileged -v $home/$config_build_repo:$config_build_folder -w $config_build_folder vyos-builder"
-
-$connect_build $docker $configure
-$connect_build $docker sudo make iso
+$connect_build $docker_iso sudo make iso
 
 echo $( date ) complete

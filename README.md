@@ -2,14 +2,15 @@
 
 It is not possible to compile VyOS on MacOS, therefore a VM environement need to be used.
 
+This solution is designed with VirtualBox 
+(TODO: use vagrant to automate the VM build)
+
 It will be composed of:
   - A build VM (vyos-build) which will be use to build debian packages and iso
   - A test VM (vyos-router) which will be use to check the validity of the code
   - A set of tools to help the transfer the build image from one to the other (this repository)
 
-The vyos repositories will be placed in a code folder located in ~/Vyos, which will be shared with the build machine on /vyos
-
-This repository requires VirtualBox to be installed (TODO: use vagrant to automate the VM build)
+The different vyos repositories will be placed in a code folder located in ~/Vyos, which will be shared with the build machine on /vyos
 
 # This repository
 
@@ -18,7 +19,7 @@ The bin folder of this repository should be added to the PATH.
 
 ```
 mkdir ~/VyOS
-cd ~/VyOs
+cd ~/VyOS
 git clone git@github.com:thomas-mangin/vyos-extra vyos-extra
 echo "export PATH=$PATH:$HOME/Vyos/vyos-extra/bin" >> ~/.profile
 ```
