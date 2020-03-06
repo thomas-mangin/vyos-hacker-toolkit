@@ -83,5 +83,6 @@ configure="./configure --build-by $email --debian-mirror http://ftp.de.debian.or
 echo $( date ) making iso
 
 $connect_build $docker_iso sudo make iso
+$connect_build $docker_iso sudo make test
 
 echo $( date ) complete
