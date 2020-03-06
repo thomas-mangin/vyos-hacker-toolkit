@@ -6,8 +6,8 @@ This solution is designed with VirtualBox
 (TODO: use vagrant to automate the VM build)
 
 It will be composed of:
-  - A build VM (vyos-build) which will be use to build debian packages and iso
-  - A test VM (vyos-router) which will be use to check the validity of the code
+  - A build VM (vyos-build) which will be used to build debian packages and iso
+  - A test VM (vyos-router) which will be used to check the validity of the code
   - A set of tools to help the transfer the build image from one to the other (this repository)
 
 The different vyos repositories will be placed in a code folder located in ~/Vyos, which will be shared with the build machine on /vyos
