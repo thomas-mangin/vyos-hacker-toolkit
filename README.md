@@ -134,4 +134,24 @@ docker build -t vyos-builder docker
 
 # vyos-router
 
-Virtual box running debian 10 ssh port mapped to 127.0.0.1 port 2201 with VyOS image installed
+The virtual box immage is running a normal VyOS image 
+ * with the local ssh port mapped to 127.0.0.1 port 2201
+ * adding your ssh key to a vyos (default) user
+
+Assuming a ssh-rsa (the key type is the first word in the line of your SSH key in ./ssh/authorized_keys)
+
+```
+set system login user vyos authentication plaintext-password 'your-password'
+set system login user vyos authentication public-keys thomas@mangin.com type 'ssh-rsa'
+set system login user vyos authentication public-keys user@email key 'SSH-KEY-AS-IN-AUTHORIZED-KEYS'
+```
+
+# Tools
+
+There are:
+ * vyos-iso <repo-name>, build and test the iso
+ * vyos-dpkg <repo-name>, build and install the package on the router
+ * vyos-update, copy the most common changed files from vyos-1x to the router (faster than making a debian package)
+ * vyos-test, install smoketest on the VM and run it
+
+Only a few files are copied by vyos-update, make sure all your changes are copied across.
