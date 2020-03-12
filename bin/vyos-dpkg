@@ -9,16 +9,21 @@ fi
 
 # Get configuration
 
-etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
-data="$(cd "$(dirname "$0")"/../data ; pwd)"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+wd=$( pwd )
+etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
+data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
+base=$( basename $1 )
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
 local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
 
 ssh_build_port=""
 ssh_build_user=""
+scp_build_port=""
+
 ssh_router_port=""
 ssh_router_user=""
+scp_router_port=""
 
 build_host=$config_build_host
 router_host=$config_router_host
@@ -30,14 +35,17 @@ fi
 
 if [ "$config_build_port" != "" ]; then
 	ssh_build_port="-p $config_build_port"
+	scp_build_port="-P $config_build_port"
 fi
 
 if [ "$config_router_user" != "" ]; then
 	ssh_router_user="$config_router_user@"
+	scp_router_port="-P $config_router_port"
 fi
 
 if [ "$config_router_port" != "" ]; then
 	ssh_router_port="-p $config_router_port"
+	scp_router_port="-P $config_router_port"
 fi
 
 connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
@@ -45,12 +53,14 @@ connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 
 # Check if remote router is up
 
+echo "checking if the build machine is up"
 up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
 	echo "could not ssh $ssh_build_port $ssh_build_user$build_host"
 	exit
 fi
 
+echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
 	echo "could not ssh $ssh_router_port $ssh_router_user$router_host"
@@ -68,13 +78,20 @@ $connect_build $docker /bin/sh -c $command
 
 echo $( date ) deploying
 
-# enable debugging
-$connect_router "touch /tmp/vyos.ifconfig.debug"
+cd $1 2> /dev/null
+if [ "$?" != "0" ]; then
+	echo "failed to locate vyos-1x folder at $local_folder/$1"
+	exit
+fi
+cd .. 2> /dev/null
 
 # copying
-cd $local_folder; cat vyos-1x_1.3.0-16_all.deb | $connect_router "cat - > vyos-1x_1.3.0-16_all.deb"
+scp $scp_router_port vyos-1x_1.3.0-16_all.deb $ssh_router_user$router_host:
+
 $connect_router "sudo dpkg -i --force-all vyos-1x_1.3.0-16_all.deb"
 $connect_router "rm vyos-1x_1.3.0-16_all.deb"
 
-now=$( date )
+# enable debugging
+$connect_router "touch /tmp/vyos.ifconfig.debug"
+
 echo $( date ) complete

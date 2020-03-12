@@ -2,9 +2,10 @@
 
 # Get configuration
 
-etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
-data="$(cd "$(dirname "$0")"/../data ; pwd)"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+wd=$( pwd )
+etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
+data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
 ssh_build_user=""
 ssh_build_port=""
@@ -34,7 +35,7 @@ docker_dpkg="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo
 
 # Check if remote router is up
 
-up=$( $connect_build 'echo up' 2> /dev/null )
+echo "checking if the build machine is up"
 if [ "$up" != "up" ]; then
 	echo "could not ssh$build_port $build_user$build_host"
 	exit
@@ -78,7 +79,7 @@ tags=""
 extra="mc vim git rsync"
 version="1.3$tags-$(date '+%Y%m%d%H%M')"
 
-configure="./configure --build-by $email --debian-mirror http://ftp.de.debian.org/debian/ --version $version --build-type release --custom-package '$extra'"
+# configure="./configure --build-by $email --debian-mirror http://ftp.de.debian.org/debian/ --version $version --build-type release --custom-package '$extra'"
 
 echo $( date ) making iso
 

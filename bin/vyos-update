@@ -9,9 +9,10 @@ fi
 
 # Get configuration
 
-etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
-data="$(cd "$(dirname "$0")"/../data ; pwd)"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null
+wd=$( pwd )
+etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
+data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
 local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
 
@@ -31,11 +32,12 @@ if [ "$config_router_port" != "" ]; then
 	scp_router_port="-P $config_router_port"
 fi
 
-connect_router="ssh $router_port $ssh_router_user$router_host"
+connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 
 # Check if remote router is up
 
-echo $connect_router 'echo up' 2> /dev/null
+echo $( date ) checking if the build machine is up
+
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
 	echo "could not ssh $router_port $ssh_router_user$build_host"
@@ -51,7 +53,10 @@ if [ "$?" != "0" ]; then
 	exit
 fi
 
-scp $scp_router_port src/conf_mode/* $ssh_router_user@$router_host:/usr/libexec/vyos/conf_mode/
-scp $scp_router_port python/vyos/*   $ssh_router_user@$router_host:/usr/lib/python3/dist-packages/vyos/
+$connect_router sudo chown -R $config_router_user /usr/libexec/vyos/conf_mode
+$connect_router sudo chown -R $config_router_user /usr/lib/python3/dist-packages/vyos
+
+scp -r $scp_router_port src/conf_mode/* $ssh_router_user$router_host:/usr/libexec/vyos/conf_mod
+scp -r $scp_router_port python/vyos/*    $ssh_router_user$router_host:/usr/lib/python3/dist-packages/vyos
 
 echo $( date ) complete

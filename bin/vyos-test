@@ -2,9 +2,10 @@
 
 # Get configuration
 
-etc="$(cd "$(dirname "$0")"/../etc ; pwd)"
-data="$(cd "$(dirname "$0")"/../data ; pwd)"
-cd $etc; for name in `ls`; do config_$name=$( cat $name ); done; cd - > /dev/null
+wd=$( pwd )
+etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
+data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
+cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
 local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
 
