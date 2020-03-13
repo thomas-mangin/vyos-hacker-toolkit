@@ -40,7 +40,7 @@ echo $( date ) checking if the build machine is up
 
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh $router_port $ssh_router_user$build_host"
+	echo "could $connect_router"
 	exit
 fi
 

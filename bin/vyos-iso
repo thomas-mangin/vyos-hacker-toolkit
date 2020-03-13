@@ -18,7 +18,7 @@ build_repo=$config_build_repo
 build_folder=$config_build_folder
 
 if [ "$config_build_user" != "" ]; then
-	ssh_build_user=" $config_build_user@"
+	ssh_build_user="$config_build_user@"
 fi
 
 if [ "$config_build_port" != "" ]; then
@@ -36,8 +36,9 @@ docker_dpkg="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo
 # Check if remote router is up
 
 echo "checking if the build machine is up"
+up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh$build_port $build_user$build_host"
+	echo "could not $connect_build"
 	exit
 fi
 

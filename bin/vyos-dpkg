@@ -56,14 +56,14 @@ connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 echo "checking if the build machine is up"
 up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh $ssh_build_port $ssh_build_user$build_host"
+	echo "could not $connect_build"
 	exit
 fi
 
 echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh $ssh_router_port $ssh_router_user$router_host"
+	echo "could not $connect_router"
 	exit
 fi
 

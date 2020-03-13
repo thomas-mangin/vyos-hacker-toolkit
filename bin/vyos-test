@@ -29,9 +29,10 @@ connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 
 # Check if remote router is up
 
+echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could not ssh $ssh_router_port $route_user$build_host"
+	echo "could not $connect_router"
 	exit
 fi
 
