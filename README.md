@@ -141,9 +141,12 @@ The virtual box immage is running a normal VyOS image
 Assuming a ssh-rsa (the key type is the first word in the line of your SSH key in ./ssh/authorized_keys)
 
 ```
+configure
 set system login user vyos authentication plaintext-password 'your-password'
 set system login user vyos authentication public-keys thomas@mangin.com type 'ssh-rsa'
 set system login user vyos authentication public-keys user@email key 'SSH-KEY-AS-IN-AUTHORIZED-KEYS'
+commit
+save
 ```
 
 # Tools
