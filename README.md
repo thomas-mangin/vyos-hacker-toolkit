@@ -79,6 +79,10 @@ exit
 exit
 ```
 
+## Enable VT-x / AMD-V for KVM
+
+In order to be able to use KVM, go to Settings > System > Processor and tick "Enable Nested VT-x/AMD-V"
+
 ## Add VirtualBox guest OS additions
 
 running debian 10 with virtual box integration tool installed
@@ -113,6 +117,13 @@ sudo apt install --yes git
 sudo apt install --yes docker
 sudo apt install --yes docker.io
 sudo usermod -aG docker ${USER}
+```
+
+## Install KVM
+
+```
+sudo apt-get install --yes --no-install-recommends qemu-kvm libvirt-clients libvirt-daemon-system
+sudo adduser vyos libvirt
 ```
 
 ## Install the vyos-builder container
