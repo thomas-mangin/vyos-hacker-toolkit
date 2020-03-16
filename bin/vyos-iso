@@ -30,7 +30,6 @@ scp_build_port=""
 
 email=$config_email
 build_host=$config_build_host
-build_port=$config_build_port
 build_repo=$config_build_repo
 build_folder=$config_build_folder
 

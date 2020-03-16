@@ -1,33 +1,67 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]
-then
-	echo "Usage:"
-	echo "$0 followed by the name of the repo to build (ie: T31)"
-	exit
-fi
+
+usage() {
+  echo "Usage:
+
+  $0 [-b|--backdoor] [-f|--folder vyos-1x-repo]
+
+Options:
+	-v, --vyos, the vyos-1x folder to build
+	-c, --cfg, the vyatta-cfg-system folder to build
+" >&2
+}
 
 # Get configuration
+
+echo $( date ) parsing configuration
 
 wd=$( pwd )
 etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
 data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
-base=$( basename $1 )
 cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
-local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
-
-ssh_build_port=""
 ssh_build_user=""
+ssh_build_port=""
 scp_build_port=""
 
 ssh_router_port=""
 ssh_router_user=""
 scp_router_port=""
 
-build_host=$config_build_host
+email=$config_email
 router_host=$config_router_host
+build_host=$config_build_host
+build_repo=$config_build_repo
 build_folder=$config_build_folder
+
+echo $( date ) parsing command line
+# ---------------------------------
+
+option_backdoor=0
+option_vyos=""
+option_vcfg=""
+option_tags=""
+option_extra="mc vim git"
+
+while [[ "$#" -gt 0 ]]; do case $1 in
+	-v|--vyos) option_vyos="$2"; shift;;
+	-c|--cfg) option_vcfg="$2"; shift;;
+	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
+esac; shift; done
+
+# check options
+
+if [ "$option_vyos" == "" ]; then
+	echo "missing vyos-1x repository"
+	usage
+	exit
+fi
+
+echo $( date ) building commands
+# ------------------------------
+
+# variable building
 
 if [ "$config_build_user" != "" ]; then
 	ssh_build_user="$config_build_user@"
@@ -50,15 +84,25 @@ fi
 
 connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
+docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
+docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
+docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyatta-cfg-system vyos/vyos-build:current"
 
-# Check if remote router is up
+varh=$(echo '$HOME')
+home=$( $connect_build 'echo $HOME' )
+build_repo=`echo $build_repo | sed -e "s:$varh:$home:g"`
 
-echo "checking if the build machine is up"
+echo $( date ) checking if the build machine is up
+# ------------------------------------------------
+
 up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
 	echo "could not $connect_build"
 	exit
 fi
+
+echo $( date ) checking if the router is up
+# -----------------------------------------
 
 echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
@@ -67,31 +111,37 @@ if [ "$up" != "up" ]; then
 	exit
 fi
 
-echo $( date ) building
+echo $( date ) updating vyos-build
+# --------------------------------
 
-cd $local_folder/ 2> /dev/null
+$connect_build "cd $build_repo; git pull"
 
-docker="docker run --rm --privileged -v $build_folder:$build_folder -w $build_folder/$1 vyos-builder"
-command="dpkg-buildpackage -uc -us -tc -b"
+echo $( date ) cleaning up repo
+# -----------------------------
 
-$connect_build $docker /bin/sh -c $command
+dated_packages="packages-$(date +%F:%T)"
 
-echo $( date ) deploying
-
-cd $1 2> /dev/null
-if [ "$?" != "0" ]; then
-	echo "failed to locate vyos-1x folder at $local_folder/$1"
-	exit
-fi
-cd .. 2> /dev/null
-
-# copying
-scp $scp_router_port vyos-1x_1.3.0-16_all.deb $ssh_router_user$router_host:
-
-$connect_router "sudo dpkg -i --force-all vyos-1x_1.3.0-16_all.deb"
-$connect_router "rm vyos-1x_1.3.0-16_all.deb"
+$connect_build mv $build_repo/packages /tmp/$dated_packages
+$connect_build mkdir -p $build_repo/packages
 
 # enable debugging
 $connect_router "touch /tmp/vyos.ifconfig.debug"
+
+if [ "$option_vyos" != "" ]; then
+	echo $( date ) copying vyos-1x
+	# -----------------------------
+	tar zcf - $option_vyos | $connect_build "cd $build_repo/packages; tar zxf -"
+	echo $( date ) making vyos-1x
+	# -----------------------------
+	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
+
+	echo $( date ) copying to router
+	# ------------------------------
+	# $connect_build tar zcf - $build_repo/packages/vyos-1x_1.3.0-16_all.deb | $connect_route "tar zxf -"
+	$connect_build cat $build_repo/packages/vyos-1x_1.3.0-16_all.deb | $connect_router "cat - > vyos-1x_1.3.0-16_all.deb"
+
+	$connect_router "sudo dpkg -i --force-all vyos-1x_1.3.0-16_all.deb"
+	$connect_router "rm vyos-1x_1.3.0-16_all.deb"
+fi
 
 echo $( date ) complete
