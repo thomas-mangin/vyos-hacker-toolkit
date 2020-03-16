@@ -1,9 +1,9 @@
 # Setup on Mac
 
 It is not possible to compile VyOS on MacOS, therefore a VM environement need to be used.
+Ideally an host running Linux will be used, but if it is not possible, Virtualbox can be used.
 
 This solution is designed with VirtualBox 
-(TODO: use vagrant to automate the VM build)
 
 It will be composed of:
   - A build VM (vyos-build) which will be used to build debian packages and iso
@@ -12,31 +12,43 @@ It will be composed of:
 
 The different vyos repositories will be placed in a code folder located in ~/Vyos, which will be shared with the build machine on /vyos
 
-# This repository
+## Expectations
 
-All the users, IPs and ports can be configured using the variables in `etc`.
-The bin folder of this repository should be added to the PATH.
+For the purpose of this document, we will assume that you will perform your development in a `~/VyOS` folder. 
+To keep things simple, this repository will also be installed in the `~/VyOS` folder but it could be installed elsewhere.
 
+You could, for example, create one folder per change PR you want to work on (perhaps calling the folder by the name of the phabricator task you are working on, but this document will assume the `~/VyOS` folder is the folder intended to contain the cloned repositories.
+
+# Local setup
+
+We assume you have git already installed on your system (most likely using [HomeBrew](https://brew.sh))
+```
+brew install git
+```
+
+Making the VyOS folder
 ```
 mkdir ~/VyOS
+```
+
+Installing from github
+```
 cd ~/VyOS
 git clone git@github.com:thomas-mangin/vyos-osx-dev vyos-osx-dev
+```
+
+adding the scripts to your path
+
+All the users, IPs and ports used to connect to the VM can be configured using the variables in `etc`.
+The `bin` folder of this repository could/should be added to the PATH.
+
+```
 export path='$PATH'
 echo "export PATH=$path:$HOME/Vyos/vyos-osx-dev/bin" >> ~/.profile
 ```
 
-## Vyos code folder
-
-Create a Vyos directory which will include all your development
-
-```
-cd ~/VyOS
-git clone git@github.com:vyos/vyos-1x vyos-1x
-```
-
-## Setup SSH
-
-Setup your local `~/.ssh/config` file to include the following hosts, making sure the ssh key does exists
+You can also setup your local `~/.ssh/config` file to include the VM hosts, making sure the ssh key does exists
+For example:
 ```
 cat <EOF >> ~/.ssh/config
 
@@ -53,10 +65,15 @@ Host vyos-router
         IdentityFile ~/.ssh/id_rsa.personal
 EOF
 ```
-
 It will allow you to ssh using the name `vyos-build` and `vyos-router`
 
-# vyos-build
+Finally, clone the vyos-1x project
+```
+cd ~/VyOS
+git clone git@github.com:vyos/vyos-1x vyos-1x
+```
+
+# vyos-build VM
 
 ## Base Install
 
@@ -82,7 +99,7 @@ exit
 
 ## Enabling  KVM
 
-At the time of writing, it does not work. So qemu will be slllooowww.
+At the time of writing, it does not work on virtual. So qemu will be slllooowww and this prevent the testing of the ISO.
 https://forums.virtualbox.org/viewtopic.php?f=3&t=97035
 
 Attempted with:
@@ -91,32 +108,6 @@ VirtualBox: Settings > System > Processor and tick "Enable Nested VT-x/AMD-V"
 ```
 sudo apt-get install --yes --no-install-recommends qemu-kvm libvirt-clients libvirt-daemon-system
 sudo adduser vyos libvirt
-```
-
-## Add VirtualBox guest OS additions
-
-running debian 10 with virtual box integration tool installed
-Download VboxGuestAditions.iso on your mac and mount it on the VM CDROM
-```
-latest=$( curl https://download.virtualbox.org/virtualbox/LATEST.TXT )
-curl https://download.virtualbox.org/virtualbox/$latest/VBoxGuestAdditions_$latest.iso -o VBoxGuestAdditions.iso
-```
-
-```
-sudo apt install build-essential dkms linux-headers-$(uname -r)
-mount /media/cdrom
-sudo /mnt/media/VBoxLinuxAdditions.run
-reboot
-```
-
-## Mount the local vyos development folder to the VM
-
-On the network interface, Host port 127.0.0.1 port 2200 to your Guest VM IP port 22
-Also create a "Shared Folder" called VyOS mapping ~/Vyos to /vyos
-
-Then have the system automount the folder
-```
-echo "vyos		/vyos		vboxsf rw,dev,uid=1000,gid=1000    0       0" >> /etc/fstab
 ```
 
 ## Install Docker
@@ -136,7 +127,7 @@ Using Docker registry
 docker pull vyos/vyos-build:current
 ```
 
-Or manual installation
+Or manual installation (ATM, it will require editing the scripts to use this image)
 ```
 mkdir ~/vyos
 cd ~/vyos
@@ -145,6 +136,37 @@ git clone https://github.com/vyos/vyos-build.git
 cd vyos-build/
 docker build -t vyos-builder docker
 ```
+
+## VirtualBox specifics
+
+If you are running VirtualBox, you should/can also do the following:
+
+### Add VirtualBox guest OS additions
+
+running debian 10 with virtual box integration tool installed
+Download VboxGuestAditions.iso on your mac and mount it on the VM CDROM
+```
+latest=$( curl https://download.virtualbox.org/virtualbox/LATEST.TXT )
+curl https://download.virtualbox.org/virtualbox/$latest/VBoxGuestAdditions_$latest.iso -o VBoxGuestAdditions.iso
+```
+
+```
+sudo apt install build-essential dkms linux-headers-$(uname -r)
+mount /media/cdrom
+sudo /mnt/media/VBoxLinuxAdditions.run
+reboot
+```
+
+### Mount the local vyos development folder to the VM
+
+On the network interface, Host port 127.0.0.1 port 2200 to your Guest VM IP port 22
+Also create a "Shared Folder" called VyOS mapping ~/Vyos to /vyos
+
+Then have the system automount the folder
+```
+echo "vyos		/vyos		vboxsf rw,dev,uid=1000,gid=1000    0       0" >> /etc/fstab
+```
+
 
 # vyos-router
 
