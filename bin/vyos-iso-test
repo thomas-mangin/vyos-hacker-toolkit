@@ -29,8 +29,8 @@ connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 
 # home_build=$( $connect_build 'echo $HOME' )
 
-docker_iso="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo vyos-builder"
-docker_dpkg="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo/packages/vyos-1x vyos-builder"
+docker_iso="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo vyos/vyos-build:current"
+docker_dpkg="docker run --rm --privileged -v $home/$build_repo:$home/$build_repo -w $home/$build_repo/packages/vyos-1x vyos/vyos-build:current"
 
 # Check if remote router is up
 
