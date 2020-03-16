@@ -20,8 +20,9 @@ The bin folder of this repository should be added to the PATH.
 ```
 mkdir ~/VyOS
 cd ~/VyOS
-git clone git@github.com:thomas-mangin/vyos-extra vyos-extra
-echo "export PATH=$PATH:$HOME/Vyos/vyos-extra/bin" >> ~/.profile
+git clone git@github.com:thomas-mangin/vyos-osx-dev vyos-osx-dev
+export path='$PATH'
+echo "export PATH=$path:$HOME/Vyos/vyos-osx-dev/bin" >> ~/.profile
 ```
 
 ## Vyos code folder
@@ -74,7 +75,7 @@ add your SSH key to your user under ~vyos/.ssh/authorized_keys so that you can s
 ```
 su -
 apt install --yes sudo
-adduser vyos sudo
+adduser ${USER} sudo
 exit
 exit
 ```
@@ -123,9 +124,9 @@ echo "vyos		/vyos		vboxsf rw,dev,uid=1000,gid=1000    0       0" >> /etc/fstab
 Install Docker
 ```
 sudo apt install --yes git
-sudo apt install --yes docker
 sudo apt install --yes docker.io
 sudo usermod -aG docker ${USER}
+reboot
 ```
 
 ## Install the vyos-builder container
