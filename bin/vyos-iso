@@ -8,7 +8,8 @@ usage() {
 
 Options:
 	-b, --backdoor, install a user admin with password admin
-	-f, --folder, the vyos-1x folder to build
+	-v, --vyos, the vyos-1x folder to build
+	-c, --cfg, the vyatta-cfg-system folder to build
 	-e, --extra, debian packages to add to the build 
 	-t, --tags, tags to add to the build version
 " >&2
@@ -37,13 +38,15 @@ echo $( date ) parsing command line
 # ---------------------------------
 
 option_backdoor=0
-option_folder=""
+option_vyos=""
+option_vcfg=""
 option_tags=""
 option_extra="mc vim git"
 
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-b|--backdoor) option_backdoor=1;;
-	-f|--folder) option_folder="$2"; shift;;
+	-v|--vyos) option_vyos="$2"; shift;;
+	-c|--cfg) option_vcfg="$2"; shift;;
 	-e|--extra) option_extra="$2"; shift;;
 	-t|--tags) option_tags="$2"; shift;;
 	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
@@ -51,7 +54,7 @@ esac; shift; done
 
 # check options
 
-if [ "$option_folder" == "" ]; then
+if [ "$option_vyos" == "" ]; then
 	echo "missing vyos-1x repository"
 	usage
 	exit
@@ -73,7 +76,8 @@ fi
 
 connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
-docker_dpkg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
+docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
+docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyatta-cfg-system vyos/vyos-build:current"
 
 varh=$(echo '$HOME')
 home=$( $connect_build 'echo $HOME' )
@@ -107,22 +111,32 @@ else
 	$connect_build rm $build_repo/$location 2> /dev/null
 fi
 
-echo $( date ) copying vyos-1x
-# ----------------------------
+
+echo $( date ) cleaning up repo
+# -----------------------------
 
 dated_packages="packages-$(date +%F:%T)"
 
 $connect_build mv $build_repo/packages /tmp/$dated_packages
 $connect_build mkdir -p $build_repo/packages
-# way way faster than scp
-tar zcf - $option_folder | $connect_build "cd $build_repo/packages; tar zxf -"
 
-# make debian package in /packages folder
+if [ "$option_vyos" != "" ]; then
+	echo $( date ) copying vyos-1x
+	# -----------------------------
+	tar zcf - $option_vyos | $connect_build "cd $build_repo/packages; tar zxf -"
+	echo $( date ) making vyos-1x
+	# -----------------------------
+	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
+fi
 
-echo $( date ) making vyos-1x
-# ---------------------------
-
-$connect_build $docker_dpkg "dpkg-buildpackage -uc -us -tc -b"
+if [ "$option_vcfg" != "" ]; then
+	echo $( date ) copying vyatta-cfg-system
+	# --------------------------------------
+	tar zcf - $option_vcfg | $connect_build "cd $build_repo/packages; tar zxf -"
+	echo $( date ) making vyatta-cfg-system
+	# -------------------------------------
+	$connect_build $docker_vcfg "dpkg-buildpackage -uc -us -tc -b"
+fi
 
 echo $( date ) making iso
 # ---------------------------
