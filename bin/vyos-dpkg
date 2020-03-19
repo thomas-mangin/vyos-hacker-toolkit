@@ -4,7 +4,7 @@
 usage() {
   echo "Usage:
 
-  $0 [-b|--backdoor] [-f|--folder vyos-1x-repo]
+  $0 [-v|--vyos vyos-1x-repo]
 
 Options:
 	-v, --vyos, the vyos-1x folder to build
@@ -88,12 +88,22 @@ docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_re
 docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
 docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyatta-cfg-system vyos/vyos-build:current"
 
-varh=$(echo '$HOME')
-home=$( $connect_build 'echo $HOME' )
-build_repo=`echo $build_repo | sed -e "s:$varh:$home:g"`
+if [ "$option_vyos" == "." ]; then
+	option_vyos=$(basename $(pwd))
+	cd ..
+fi
+
+if [ "$option_vcfg" == "." ]; then
+	option_vcfg=$(basename $(pwd))
+	cd ..
+fi
 
 echo $( date ) checking if the build machine is up
 # ------------------------------------------------
+
+varh=$(echo '$HOME')
+home=$( $connect_build 'echo $HOME' )
+build_repo=`echo $build_repo | sed -e "s:$varh:$home:g"`
 
 up=$( $connect_build 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then

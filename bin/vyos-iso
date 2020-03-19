@@ -4,7 +4,7 @@
 usage() {
   echo "Usage:
 
-  $0 [-b|--backdoor] [-f|--folder vyos-1x-repo]
+  $0 [-b|--backdoor] [-v|--vyos vyos-1x-repo] [-c|--cfg vyos-cfg-system] [-e|--extra <PACKAGE>...] [-t|--tag <TAG>]
 
 Options:
 	-b, --backdoor, install a user admin with password admin

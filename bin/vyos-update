@@ -14,14 +14,36 @@ etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
 data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
 cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
 
-local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
-
 ssh_router_user=""
 ssh_router_port=""
 scp_router_port=""
 
 build_host=$config_build_host
 router_host=$config_router_host
+
+
+echo $( date ) parsing command line
+# ---------------------------------
+
+option_vyos=""
+option_vcfg=""
+
+while [[ "$#" -gt 0 ]]; do case $1 in
+	-v|--vyos) option_vyos="$2"; shift;;
+	-c|--cfg) option_vcfg="$2"; shift;;
+	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
+esac; shift; done
+
+# check options
+
+if [ "$option_vyos" == "" ]; then
+	echo "missing vyos-1x repository"
+	usage
+	exit
+fi
+
+echo $( date ) building commands
+# ------------------------------
 
 if [ "$config_router_user" != "" ]; then
 	ssh_router_user=" $config_router_user@"
@@ -34,29 +56,31 @@ fi
 
 connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 
-# Check if remote router is up
+echo $( date ) checking if the router is up
+# -----------------------------------------
 
-echo $( date ) checking if the build machine is up
-
+echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
-	echo "could $connect_router"
+	echo "could not $connect_router"
 	exit
 fi
 
-echo $( date ) updating
+if [ "$option_vyos" != "" ]; then
+	echo $( date ) updating
+	# ---------------------
 
-cd $local_folder/$1 2> /dev/null
+	config_files=`find $option_vyos/src/conf_mode/ -name '*.py'`
+	python_files=`find $option_vyos/python/vyos/   -name '*.py'`
 
-if [ "$?" != "0" ]; then
-	echo "failed to locate vyos-1x folder at $local_folder/$1"
-	exit
+	$connect_router sudo chown -R $config_router_user /usr/libexec/vyos/conf_mode
+	$connect_router sudo chown -R $config_router_user /usr/lib/python3/dist-packages/vyos
+
+	scp $scp_router_port $config_files $ssh_router_user$router_host:/usr/libexec/vyos/conf_mode
+	scp $scp_router_port $python_files $ssh_router_user$router_host:/usr/lib/python3/dist-packages/vyos
+
+	$connect_router sudo chown -R root /usr/libexec/vyos/conf_mode
+	$connect_router sudo chown -R root /usr/lib/python3/dist-packages/vyos
 fi
-
-$connect_router sudo chown -R $config_router_user /usr/libexec/vyos/conf_mode
-$connect_router sudo chown -R $config_router_user /usr/lib/python3/dist-packages/vyos
-
-scp -r $scp_router_port src/conf_mode/* $ssh_router_user$router_host:/usr/libexec/vyos/conf_mod
-scp -r $scp_router_port python/vyos/*    $ssh_router_user$router_host:/usr/lib/python3/dist-packages/vyos
 
 echo $( date ) complete
