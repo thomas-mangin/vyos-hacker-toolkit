@@ -132,15 +132,20 @@ echo $( date ) cleaning up repo
 # -----------------------------
 
 $connect_build mv $build_repo/debian-* /tmp/ 2> /dev/null
-$connect_build mkdir -p $build_repo/$dated
+$connect_build mkdir -p $build_repo/$dated/vyos-1x
 
 # enable debugging
 $connect_router "touch /tmp/vyos.ifconfig.debug"
 
+if [ "$option_vyos" == "." ]; then
+	option_vyos=$(basename $(pwd))
+	cd ..
+fi
+
 if [ "$option_vyos" != "" ]; then
 	echo $( date ) copying vyos-1x
 	# -----------------------------
-	tar zcf - $option_vyos | $connect_build "cd $build_repo/$dated; tar zxf -"
+	tar -zc -C $option_vyos -f - . | $connect_build "cd $build_repo/$dated/vyos-1x; tar zxf -"
 	echo $( date ) making vyos-1x
 	# -----------------------------
 	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
