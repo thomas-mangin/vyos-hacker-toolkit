@@ -100,6 +100,13 @@ if [ "$option_vcfg" == "." ]; then
 	cd ..
 fi
 
+echo $( date ) getting vyos version
+# ---------------------------------
+
+version=`head -1 $option_vyos/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
+echo $( date ) version is $version
+
+
 echo $( date ) checking if the build machine is up
 # ------------------------------------------------
 
@@ -116,7 +123,6 @@ fi
 echo $( date ) checking if the router is up
 # -----------------------------------------
 
-echo "checking if the router is up"
 up=$( $connect_router 'echo up' 2> /dev/null )
 if [ "$up" != "up" ]; then
 	echo "could not $connect_router"
@@ -152,11 +158,10 @@ if [ "$option_vyos" != "" ]; then
 
 	echo $( date ) copying to router
 	# ------------------------------
-	# $connect_build tar zcf - $build_repo/$dated/vyos-1x_1.3.0-16_all.deb | $connect_route "tar zxf -"
-	$connect_build cat $build_repo/$dated/vyos-1x_1.3.0-16_all.deb | $connect_router "cat - > vyos-1x_1.3.0-16_all.deb"
+	$connect_build cat $build_repo/$dated/vyos-1x_${version}_all.deb | $connect_router "cat - > vyos-1x_${version}_all.deb"
 
-	$connect_router "sudo dpkg -i --force-all vyos-1x_1.3.0-16_all.deb"
-	$connect_router "rm vyos-1x_1.3.0-16_all.deb"
+	$connect_router "sudo dpkg -i --force-all vyos-1x_${version}_all.deb"
+	$connect_router "rm vyos-1x_${version}_all.deb"
 fi
 
 echo $( date ) complete
