@@ -8,6 +8,7 @@ usage() {
 
 Options:
 	-v, --vyos, the vyos-1x folder to build
+	-s, --smoke, the vyatta-cfg-system folder to build
 	-c, --cfg, the vyatta-cfg-system folder to build
 " >&2
 }
@@ -40,23 +41,19 @@ echo $( date ) parsing command line
 
 option_backdoor=0
 option_vyos=""
+option_smoke=""
 option_vcfg=""
 option_tags=""
 option_extra="mc vim git"
 
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-v|--vyos) option_vyos="$2"; shift;;
+	-s|--smoke) option_smoke="$2"; shift;;
 	-c|--cfg) option_vcfg="$2"; shift;;
 	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
 esac; shift; done
 
 # check options
-
-if [ "$option_vyos" == "" ]; then
-	echo "missing vyos-1x repository"
-	usage
-	exit
-fi
 
 echo $( date ) building commands
 # ------------------------------
@@ -88,6 +85,7 @@ connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
 docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
 docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyos-1x vyos/vyos-build:current"
+docker_smoke="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyos-smoketest vyos/vyos-build:current"
 docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyatta-cfg-system vyos/vyos-build:current"
 
 if [ "$option_vyos" == "." ]; then
@@ -95,17 +93,15 @@ if [ "$option_vyos" == "." ]; then
 	cd ..
 fi
 
+if [ "$option_smoke" == "." ]; then
+	option_smoke=$(basename $(pwd))
+	cd ..
+fi
+
 if [ "$option_vcfg" == "." ]; then
 	option_vcfg=$(basename $(pwd))
 	cd ..
 fi
-
-echo $( date ) getting vyos version
-# ---------------------------------
-
-version=`head -1 $option_vyos/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
-echo $( date ) version is $version
-
 
 echo $( date ) checking if the build machine is up
 # ------------------------------------------------
@@ -138,7 +134,7 @@ echo $( date ) cleaning up repo
 # -----------------------------
 
 $connect_build mv $build_repo/debian-* /tmp/ 2> /dev/null
-$connect_build mkdir -p $build_repo/$dated/vyos-1x
+$connect_build mkdir -p $build_repo/$dated/vyos-1x $build_repo/$dated/vyos-smoketest $build_repo/$dated/vyatta-cfg-system $build_repo/$dated/vyatta-op
 
 # enable debugging
 $connect_router "touch /tmp/vyos.ifconfig.debug"
@@ -149,8 +145,11 @@ if [ "$option_vyos" == "." ]; then
 fi
 
 if [ "$option_vyos" != "" ]; then
-	echo $( date ) copying vyos-1x
-	# -----------------------------
+	echo $( date ) getting vyos-1x version
+	# ------------------------------------
+	version=`head -1 $option_vyos/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
+	echo $( date ) copying vyos-1x $version
+	# -------------------------------------
 	tar -zc -C $option_vyos -f - . | $connect_build "cd $build_repo/$dated/vyos-1x; tar zxf -"
 	echo $( date ) making vyos-1x
 	# -----------------------------
@@ -162,6 +161,25 @@ if [ "$option_vyos" != "" ]; then
 
 	$connect_router "sudo dpkg -i --force-all vyos-1x_${version}_all.deb"
 	$connect_router "rm vyos-1x_${version}_all.deb"
+fi
+
+if [ "$option_smoke" != "" ]; then
+	echo $( date ) getting vyos-smoketest version
+	# -------------------------------------------
+	version=`head -1 $option_smoke/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
+	echo $( date ) copying vyos-smoketest $version
+	# -----------------------------
+	tar -zc -C $option_smoke -f - . | $connect_build "cd $build_repo/$dated/vyos-smoketest; tar zxf -"
+	echo $( date ) making vyos-smoketest
+	# -----------------------------
+	$connect_build $docker_smoke "dpkg-buildpackage -uc -us -tc -b"
+
+	echo $( date ) copying to router
+	# ------------------------------
+	$connect_build cat $build_repo/$dated/vyos-smoketest_${version}_all.deb | $connect_router "cat - > vyos-smoketest_${version}_all.deb"
+
+	$connect_router "sudo dpkg -i --force-all vyos-smoketest_${version}_all.deb"
+	$connect_router "rm vyos-smoketest_${version}_all.deb"
 fi
 
 echo $( date ) complete
