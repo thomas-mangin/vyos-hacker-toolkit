@@ -45,6 +45,7 @@ option_extra="mc vim git"
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-b|--backdoor) option_backdoor=1;;
 	-v|--vyos) option_vyos="$2"; shift;;
+	-s|--smoke) option_smoke="$2"; shift;;
 	-c|--cfg) option_vcfg="$2"; shift;;
 	-e|--extra) option_extra="$2"; shift;;
 	-t|--tags) option_tags="$2"; shift;;
@@ -77,6 +78,7 @@ connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
 docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
 docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
 docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyatta-cfg-system vyos/vyos-build:current"
+docker_smoke="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-smoketest vyos/vyos-build:current"
 
 varh=$(echo '$HOME')
 home=$( $connect_build 'echo $HOME' )
@@ -126,6 +128,15 @@ if [ "$option_vyos" != "" ]; then
 	echo $( date ) making vyos-1x
 	# -----------------------------
 	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
+fi
+
+if [ "$option_smoke" != "" ]; then
+	echo $( date ) copying vyos-smoketest
+	# --------------------------------------
+	tar zcf - $option_smoke | $connect_build "cd $build_repo/packages; tar zxf -"
+	echo $( date ) making vyos-smoketest
+	# -------------------------------------
+	$connect_build $docker_smoke "dpkg-buildpackage -uc -us -tc -b"
 fi
 
 if [ "$option_vcfg" != "" ]; then
