@@ -1,163 +1,266 @@
-#!/bin/bash
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+import glob
+import argparse
+from datetime import datetime
+from subprocess import Popen, PIPE, STDOUT
+
+CMDONLY = False
+DEBUG = False
+
+HOME = '/home/vyos'
+
+def now():
+	return datetime.now().strftime('%H:%M:%S')
 
 
-usage() {
-  echo "Usage:
-
-  $0 [-b|--backdoor] [-v|--vyos vyos-1x-repo] [-c|--cfg vyos-cfg-system] [-e|--extra <PACKAGE>...] [-t|--tag <TAG>]
-
-Options:
-	-b, --backdoor, install a user admin with password admin
-	-v, --vyos, the vyos-1x folder to build
-	-c, --cfg, the vyatta-cfg-system folder to build
-	-e, --extra, debian packages to add to the build 
-	-t, --tags, tags to add to the build version
-" >&2
-}
-
-# Get configuration
-
-echo $( date ) parsing configuration
-
-wd=$( pwd )
-etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
-data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
-
-ssh_build_user=""
-ssh_build_port=""
-scp_build_port=""
-
-email=$config_email
-build_host=$config_build_host
-build_repo=$config_build_repo
-build_folder=$config_build_folder
-
-echo $( date ) parsing command line
-# ---------------------------------
-
-option_backdoor=0
-option_vyos=""
-option_vcfg=""
-option_tags=""
-option_extra="mc vim git"
-
-while [[ "$#" -gt 0 ]]; do case $1 in
-	-b|--backdoor) option_backdoor=1;;
-	-v|--vyos) option_vyos="$2"; shift;;
-	-s|--smoke) option_smoke="$2"; shift;;
-	-c|--cfg) option_vcfg="$2"; shift;;
-	-e|--extra) option_extra="$2"; shift;;
-	-t|--tags) option_tags="$2"; shift;;
-	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
-esac; shift; done
-
-# check options
-
-if [ "$option_vyos" == "" ]; then
-	echo "missing vyos-1x repository"
-	usage
-	exit
-fi
-
-echo $( date ) building commands
-# ------------------------------
-
-# variable building
-
-if [ "$config_build_user" != "" ]; then
-	ssh_build_user="$config_build_user@"
-fi
-
-if [ "$config_build_port" != "" ]; then
-	ssh_build_port="-p $config_build_port"
-	scp_build_port="-P $config_build_port"
-fi
-
-connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
-docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
-docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-1x vyos/vyos-build:current"
-docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyatta-cfg-system vyos/vyos-build:current"
-docker_smoke="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/packages/vyos-smoketest vyos/vyos-build:current"
-
-varh=$(echo '$HOME')
-home=$( $connect_build 'echo $HOME' )
-build_repo=`echo $build_repo | sed -e "s:$varh:$home:g"`
-
-echo $( date ) checking if the build machine is up
-# ------------------------------------------------
-
-up=$( $connect_build 'echo up' 2> /dev/null )
-if [ "$up" != "up" ]; then
-	echo "could not $connect_build"
-	exit
-fi
-
-echo $( date ) updating vyos-build
-# --------------------------------
-
-$connect_build "cd $build_repo; git pull"
-
-echo $( date ) installing backdoor
-# --------------------------------
-
-# cd $local_folder/ 2> /dev/null
-
-backdoor="vyos-iso-backdoor"
-location=$( head -2 $data/$backdoor | tail -1 | cut -f2 -d# | tr -d '^ ' )
-
-if [ $option_backdoor -eq 1 ]; then
-	scp $scp_build_port $data/$backdoor $ssh_build_user$build_host:$build_repo/$location
-else
-	$connect_build rm $build_repo/$location 2> /dev/null
-fi
+def timed(s):
+	return f'{now()} {s}'
 
 
-echo $( date ) cleaning up repo
-# -----------------------------
+class InRepo:
+	def __init__(self, folder):
+		self.folder = folder
+		self.pwd = os.getcwd()
 
-dated_packages="packages-$(date +%F:%T)"
+	def __enter__(self):
+		os.chdir(self.folder)
+		self.folder = os.path.basename(os.getcwd())
+		return self
 
-$connect_build mv $build_repo/packages /tmp/$dated_packages
-$connect_build mkdir -p $build_repo/packages
+	def __exit__(self, type, value, tb):
+		os.chdir(self.pwd)
 
-if [ "$option_vyos" != "" ]; then
-	echo $( date ) copying vyos-1x
-	# -----------------------------
-	tar zcf - $option_vyos | $connect_build "cd $build_repo/packages; tar zxf -"
-	echo $( date ) making vyos-1x
-	# -----------------------------
-	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
-fi
+	def version(self):
+		with open(os.path.join('debian', 'changelog')) as f:
+			line = f.readline().strip()
+		found = re.match('[^(]+\((.*)\).*', line)
+		if found is None:
+			report(f'could not figure package version in {self.folder}')
+			failed()
+		return found.group(1)
 
-if [ "$option_smoke" != "" ]; then
-	echo $( date ) copying vyos-smoketest
-	# --------------------------------------
-	tar zcf - $option_smoke | $connect_build "cd $build_repo/packages; tar zxf -"
-	echo $( date ) making vyos-smoketest
-	# -------------------------------------
-	$connect_build $docker_smoke "dpkg-buildpackage -uc -us -tc -b"
-fi
 
-if [ "$option_vcfg" != "" ]; then
-	echo $( date ) copying vyatta-cfg-system
-	# --------------------------------------
-	tar zcf - $option_vcfg | $connect_build "cd $build_repo/packages; tar zxf -"
-	echo $( date ) making vyatta-cfg-system
-	# -------------------------------------
-	$connect_build $docker_vcfg "dpkg-buildpackage -uc -us -tc -b"
-fi
+class Config(dict):
+	def __init__(self):
+		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
+		etc = os.path.join(wd, '..', 'etc', '*')
+		self.data = os.path.join(wd, '..', 'data')
 
-echo $( date ) making iso
-# ---------------------------
+		for name in glob.glob(etc):
+			with open(name) as f:
+				base = os.path.basename(name)
+				part = base.split('_', 1)
+				if len(part) == 1:
+					self[base] = f.readline().strip().replace('$HOME', HOME)
+					continue
+				self.setdefault(part[0], {})[part[1]] = f.readline().strip().replace('$HOME', HOME)
 
-version="1.3$option_tags-$(date '+%Y%m%d%H%M')"
+	def read(self, name):
+		with open(os.path.join(self.data, name)) as f:
+			return f.read()
 
-configure="--build-by $email --debian-mirror http://ftp.de.debian.org/debian/ --version $version --build-type release --custom-package '$option_extra'"
+	def ssh(self, where, command=''):
+		port = self[where]['port']
+		user = self[where]['user']
+		host = self[where]['host']
+		return f'ssh -p {port} {user}@{host} "{command}"'
 
-echo with options $configure
-$connect_build $docker_iso ./configure $configure
-$connect_build $docker_iso sudo make iso
+	def docker(self, repo, command):
+		build = self['build']['repo']
+		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
 
-echo $( date ) complete
-# -----------------------
+	def rsync_in(self, src, dest):
+		port = self['build']['port']
+		user = self['build']['user']
+		host = self['build']['host']
+		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
+
+	def rsync_out(self, src, dest):
+		port = self['build']['port']
+		user = self['build']['user']
+		host = self['build']['host']
+		dest = remote.replace('$HOME', HOME)
+		return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
+
+
+def unprefix(s, prefix):
+	return s[len(prefix):] if s.startswith(prefix) else s
+
+
+_record = []
+
+
+def record(s):
+	_record.append(s)
+	return s
+
+
+def report(s):
+	if CMDONLY:
+		if s.startswith('> '):
+			print(s[2:])
+		return
+	print(record(timed(s)))
+
+
+def end(reason, code):
+	print()
+	print (timed(reason))
+	print ()
+	print()
+	for s in _record:
+		print(s)
+	sys.exit(code)
+
+
+def failed():
+	end('failure', 1)
+
+
+def completed():
+	if DEBUG:
+		end('completed', 0)
+	sys.exit(0)
+
+
+def check(out, ret):
+	if ret != 0:
+		print(out)
+		failed()
+
+
+def run(command):
+	report(f'> {command}')
+	if CMDONLY:
+		return '', 0
+	p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+	return _popen(p)
+
+
+def chain(command1, command2):
+	report(f'> {command1} | {command2}')
+	if CMDONLY:
+		return '', 0
+	p1 = Popen(command1, stdout=PIPE, shell=True)
+	p2 = Popen(command2, stdin=p1.stdout, stdout=PIPE, shell=True)
+	return _popen(p2)
+
+
+def _popen(p):
+	msg = p.communicate()
+	ret = p.returncode
+	out = msg[0].decode().strip()
+	record(out)
+	err = msg[1]
+	if err:
+		record(err.decode().strip())
+	if ret != 0:
+		failed()
+	return unprefix(out, 'Welcome to VyOS\n'), ret
+
+
+def install(repo, vyos, location):
+	with InRepo(args.vyos) as repo:
+		report(f'getting {vyos} version')
+		version = repo.version()
+		package = f'{vyos}_{version}_all.deb'
+
+		check(*run(conf.rsync_in('.', f'{vyos_build}/{location}/{vyos}')))
+		check(*run(conf.ssh('build', f'rm {vyos_build}/{location}/{package} || true')))
+		check(*run(conf.ssh('build', conf.docker(f'{location}/{vyos}', 'dpkg-buildpackage -uc -us -tc -b'))))
+		check(*chain(
+			conf.ssh('build', f'cat {vyos_build}/{location}/{package}'),
+			conf.ssh('router', f'cat - > {package}')
+		))
+		check(*run(conf.ssh('router', f'sudo dpkg -i --force-all {package}')))
+		check(*run(conf.ssh('router', f'rm {package}')))
+
+def backdoor(backdoor):
+	data = conf.read('vyos-iso-backdoor').format(backdoor=args.backdoor)
+	location = data.split('\n')[1].strip().lstrip('#').strip()
+
+	if not backdoor:
+		check(*run(conf.ssh("build", f"rm {vyos_build}/{location} || true")))
+		return
+
+	check(*chain(
+		'printf "' + data.replace('\n', '\\n') + '"',
+		conf.ssh('build', f'cat - > {vyos_build}/{location}')
+	))
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(
+		description='build and install a vyos debian package')
+	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
+	parser.add_argument('-s', '--smoke', type=str, help="vyos-smoke folder to build")
+	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
+	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
+	parser.add_argument('-e', '--extra', type=str, help='extra debian package(s) to install')
+	parser.add_argument('-n', '--name', type=str, help='name/tag to add to the build version')
+	parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
+	parser.add_argument('-f', '--force', help="make without custom package", action='store_true')
+	parser.add_argument('-t', '--test', help='test the iso', action='store_true')
+	parser.add_argument('-l', '--dry', help='only show what will be done', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
+
+	args = parser.parse_args()
+
+	DEBUG = args.debug
+	CMDONLY = args.dry
+
+	conf = Config()
+
+	vyos_build = conf['build']['repo']
+	location = 'packages'
+
+	check(*run(conf.ssh("build", f"cd {vyos_build}; git pull")))
+	check(*run(conf.ssh('build',
+					 f'mkdir -p {vyos_build}/{location} && '
+					 f'cd {vyos_build}/{location} && '
+					 f'mkdir -p vyos-1x vyos-smoketest vyatta-cfg-system vyatta-op'
+	)))
+
+	make = False
+	if args.vyos:
+		install(args.vyos, 'vyos-1x', location)
+		make = True
+	if args.smoke:
+		install(args.smoke, 'vyos-smoketest', location)
+		make = True
+	if args.cfg:
+		install(args.smoke, 'vyatta-cfg-system', location)
+		make = True
+	if args.op:
+		install(args.smoke, 'vyatta-op', location)
+		make = True
+
+	if make or args.force:
+		backdoor(args.backdoor)
+
+		date = datetime.now().strftime('%Y%m%d%H%M')
+		if args.name:
+			name = args.name
+			version = f'1.3-{name}-{date}'
+		else:
+			version = f'1.3-rolling-{date}'
+
+		email = conf['email']
+		extra = args.extra
+		configure = f"--build-by {email}"
+		configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
+		configure += f"  --version {version}"
+		configure += f"  --build-type release"
+		configure += f"  --custom-package '{extra}'"
+
+		check(*run(conf.ssh('build', conf.docker('', 'pwd'))))
+		check(*run(conf.ssh('build', conf.docker('', f'./configure {configure}'))))
+		check(*run(conf.ssh('build', conf.docker('', 'sudo make iso'))))
+
+	if args.test:
+		check(*run(conf.ssh('build', conf.docker('', 'sudo make test'))))
+
+	completed()
