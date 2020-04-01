@@ -24,6 +24,7 @@ You could, for example, create one folder per change PR you want to work on (per
 We assume you have git already installed on your system (most likely using [HomeBrew](https://brew.sh))
 ```
 brew install git
+brew install rsync
 ```
 
 Making the VyOS folder
@@ -110,11 +111,12 @@ sudo apt-get install --yes --no-install-recommends qemu-kvm libvirt-clients libv
 sudo adduser vyos libvirt
 ```
 
-## Install Docker
+## Install git, rsync and docker
 
 Install Docker
 ```
 sudo apt install --yes git
+sudo apt install --yes rsync
 sudo apt install --yes docker.io
 sudo usermod -aG docker ${USER}
 reboot
