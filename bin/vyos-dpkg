@@ -19,10 +19,6 @@ def now():
 def timed (s):
 	return f'{now()} {s}'
 
-def readline(fname):
-	with open(fname) as f:
-		return f.readline().strip()
-
 
 class InRepo:
 	def __init__(self, folder):
@@ -38,7 +34,8 @@ class InRepo:
 		os.chdir(self.pwd)
 
 	def version(self):
-		line = readline(os.path.join('debian','changelog'))
+		with open(os.path.join('debian', 'changelog')) as f:
+			line = f.readline().strip()
 		found = re.match('[^(]+\((.*)\).*', line)
 		if found is None:
 			report(f'could not figure package version in {self.folder}')
@@ -50,7 +47,7 @@ class Config(dict):
 	def __init__(self):
 		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
 		etc = os.path.join(wd, '..', 'etc', '*')
-		data = os.path.join(wd, '..', 'data')
+		self.data = os.path.join(wd, '..', 'data')
 
 		for name in glob.glob(etc):
 			with open(name) as f:
@@ -60,6 +57,10 @@ class Config(dict):
 					self[base] = f.readline().strip().replace('$HOME', HOME)
 					continue
 				self.setdefault(part[0],{})[part[1]] = f.readline().strip().replace('$HOME', HOME)
+
+	def read(self, name):
+		with open(os.path.join(self.data, name)) as f:
+			return f.read()
 
 	def ssh(self, where, command=''):
 		port = self[where]['port']
@@ -75,7 +76,7 @@ class Config(dict):
 		port = self['build']['port']
 		user = self['build']['user']
 		host = self['build']['host']
-		return f'rsync -a -e "ssh -p {port}" {src} {user}@{host}:{dest}'
+		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
 
 	def rsync_out(self, src, dest):
 		port = self['build']['port']
@@ -85,7 +86,7 @@ class Config(dict):
 		return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
 
 def unprefix(s, prefix):
-    return s[len(prefix):] if s.startswith(prefix) else s
+	return s[len(prefix):] if s.startswith(prefix) else s
 
 _record = []
 
@@ -169,7 +170,8 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
 	parser.add_argument('-s', '--smoke', type=str, help="vyos-smoke folder to build")
-	parser.add_argument('-c', '--cfg-system', type=str, help="vyatta-cfg-system folder to build")
+	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
+	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
 	parser.add_argument('-l', '--dry', help='only show what will be done', action='store_true')
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
@@ -185,12 +187,20 @@ if __name__ == '__main__':
 
 	check(*run(conf.ssh("build", f"cd {vyos_build}; git pull")))
 	check(*run(conf.ssh('build',
-                     f'mkdir -p {vyos_build}/{location} && '
-                     f'cd {vyos_build}/{location} && '
-                     f'mkdir -p vyos-1x vyos-smoketest vyatta-cfg-system vyatta-op'
-                     )))
+					 f'mkdir -p {vyos_build}/{location} && '
+					 f'cd {vyos_build}/{location} && '
+					 f'mkdir -p vyos-1x vyos-smoketest vyatta-cfg-system vyatta-op'
+					 )))
 
-	install(args.vyos, 'vyos-1x', location)
+	if args.vyos:
+		install(args.vyos, 'vyos-1x', location)
+	if args.smoke:
+		install(args.smoke, 'vyos-smoketest', location)
+	if args.cfg:
+		install(args.smoke, 'vyatta-cfg-system', location)
+	if args.op:
+		install(args.smoke, 'vyatta-op', location)
+
 	check(*run(conf.ssh('router', f'touch /tmp/vyos.ifconfig.debug')))
 
 	completed()
