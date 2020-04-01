@@ -1,185 +1,196 @@
-#!/bin/bash
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+import glob
+import argparse
+from datetime import datetime
+from subprocess import Popen, PIPE, STDOUT
+
+CMDONLY = False
+DEBUG = False
+
+HOME = '/home/vyos'
+
+def now():
+	return datetime.now().strftime('%H:%M:%S')
+
+def timed (s):
+	return f'{now()} {s}'
+
+def readline(fname):
+	with open(fname) as f:
+		return f.readline().strip()
 
 
-usage() {
-  echo "Usage:
+class InRepo:
+	def __init__(self, folder):
+		self.folder = folder
+		self.pwd = os.getcwd()
 
-  $0 [-v|--vyos vyos-1x-repo]
+	def __enter__(self):
+		os.chdir(self.folder)
+		self.folder = os.path.basename(os.getcwd())
+		return self
 
-Options:
-	-v, --vyos, the vyos-1x folder to build
-	-s, --smoke, the vyatta-cfg-system folder to build
-	-c, --cfg, the vyatta-cfg-system folder to build
-" >&2
-}
+	def __exit__(self, type, value, tb):
+		os.chdir(self.pwd)
 
-# Get configuration
+	def version(self):
+		line = readline(os.path.join('debian','changelog'))
+		found = re.match('[^(]+\((.*)\).*', line)
+		if found is None:
+			report(f'could not figure package version in {self.folder}')
+			failed()
+		return found.group(1)
 
-echo $( date ) parsing configuration
 
-wd=$( pwd )
-etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
-data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
+class Config(dict):
+	def __init__(self):
+		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
+		etc = os.path.join(wd, '..', 'etc', '*')
+		data = os.path.join(wd, '..', 'data')
 
-ssh_build_user=""
-ssh_build_port=""
-scp_build_port=""
+		for name in glob.glob(etc):
+			with open(name) as f:
+				base = os.path.basename(name)
+				part = base.split('_',1)
+				if len(part) == 1:
+					self[base] = f.readline().strip().replace('$HOME', HOME)
+					continue
+				self.setdefault(part[0],{})[part[1]] = f.readline().strip().replace('$HOME', HOME)
 
-ssh_router_port=""
-ssh_router_user=""
-scp_router_port=""
+	def ssh(self, where, command=''):
+		port = self[where]['port']
+		user = self[where]['user']
+		host = self[where]['host']
+		return f'ssh -p {port} {user}@{host} "{command}"'
 
-email=$config_email
-router_host=$config_router_host
-build_host=$config_build_host
-build_repo=$config_build_repo
-build_folder=$config_build_folder
+	def docker(self, repo, command):
+		build = self['build']['repo']
+		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
 
-echo $( date ) parsing command line
-# ---------------------------------
+	def rsync_in(self, src, dest):
+		port = self['build']['port']
+		user = self['build']['user']
+		host = self['build']['host']
+		return f'rsync -a -e "ssh -p {port}" {src} {user}@{host}:{dest}'
 
-option_backdoor=0
-option_vyos=""
-option_smoke=""
-option_vcfg=""
-option_tags=""
-option_extra="mc vim git"
+	def rsync_out(self, src, dest):
+		port = self['build']['port']
+		user = self['build']['user']
+		host = self['build']['host']
+		dest = remote.replace('$HOME', HOME)
+		return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
 
-while [[ "$#" -gt 0 ]]; do case $1 in
-	-v|--vyos) option_vyos="$2"; shift;;
-	-s|--smoke) option_smoke="$2"; shift;;
-	-c|--cfg) option_vcfg="$2"; shift;;
-	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
-esac; shift; done
+def unprefix(s, prefix):
+    return s[len(prefix):] if s.startswith(prefix) else s
 
-# check options
+_record = []
 
-echo $( date ) building commands
-# ------------------------------
+def record(s):
+	_record.append(s)
+	return s
 
-# variable building
+def report(s):
+	if CMDONLY:
+		if s.startswith('> '):
+			print(s[2:])
+		return
+	print(record(timed(s)))
 
-if [ "$config_build_user" != "" ]; then
-	ssh_build_user="$config_build_user@"
-fi
+def end(reason, code):
+	print()
+	print (timed(reason))
+	print ()
+	print()
+	for s in _record:
+		print(s)
+	sys.exit(code)
 
-if [ "$config_build_port" != "" ]; then
-	ssh_build_port="-p $config_build_port"
-	scp_build_port="-P $config_build_port"
-fi
+def failed():
+	end('failure',1)
 
-if [ "$config_router_user" != "" ]; then
-	ssh_router_user="$config_router_user@"
-	scp_router_port="-P $config_router_port"
-fi
+def completed():
+	if DEBUG:
+		end('completed',0)
+	sys.exit(0)
 
-if [ "$config_router_port" != "" ]; then
-	ssh_router_port="-p $config_router_port"
-	scp_router_port="-P $config_router_port"
-fi
+def check(out, ret):
+	if ret != 0:
+		print(out)
+		failed()
 
-dated="debian-$(date +%F:%T)"
+def run(command):
+	report(f'> {command}')
+	if CMDONLY:
+		return '', 0
+	p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+	return _popen(p)
 
-connect_build="ssh $ssh_build_port $ssh_build_user$build_host"
-connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
-docker_iso="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo vyos/vyos-build:current"
-docker_vyos="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyos-1x vyos/vyos-build:current"
-docker_smoke="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyos-smoketest vyos/vyos-build:current"
-docker_vcfg="docker run --rm --privileged -v $build_repo:$build_repo -w $build_repo/$dated/vyatta-cfg-system vyos/vyos-build:current"
+def chain(command1, command2):
+	report(f'> {command1} | {command2}')
+	if CMDONLY:
+		return '', 0
+	p1 = Popen(command1, stdout=PIPE, shell=True)
+	p2 = Popen(command2, stdin=p1.stdout, stdout=PIPE, shell=True)
+	return _popen(p2)
 
-if [ "$option_vyos" == "." ]; then
-	option_vyos=$(basename $(pwd))
-	cd ..
-fi
+def _popen (p):
+	msg = p.communicate()
+	ret = p.returncode
+	out = msg[0].decode().strip()
+	record(out)
+	err = msg[1]
+	if err:
+		record(err.decode().strip())
+	if ret != 0:
+		failed()
+	return unprefix(out,'Welcome to VyOS\n'), ret
 
-if [ "$option_smoke" == "." ]; then
-	option_smoke=$(basename $(pwd))
-	cd ..
-fi
+def install(repo, vyos, location):
+	with InRepo(args.vyos) as repo:
+		report(f'getting {vyos} version')
+		version = repo.version()
+		package = f'{vyos}_{version}_all.deb'
+		
+		check(*run(conf.rsync_in('.', f'{vyos_build}/{location}/{vyos}')))
+		check(*run(conf.ssh('build', f'rm {vyos_build}/{location}/{package} || true')))
+		check(*run(conf.ssh('build', conf.docker(f'{location}/{vyos}', 'dpkg-buildpackage -uc -us -tc -b'))))
+		check(*chain(
+			conf.ssh('build', f'cat {vyos_build}/{location}/{package}'),
+			conf.ssh('router', f'cat - > {package}')
+		))
+		check(*run(conf.ssh('router', f'sudo dpkg -i --force-all {package}')))
+		check(*run(conf.ssh('router', f'rm {package}')))
 
-if [ "$option_vcfg" == "." ]; then
-	option_vcfg=$(basename $(pwd))
-	cd ..
-fi
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
+	parser.add_argument('-s', '--smoke', type=str, help="vyos-smoke folder to build")
+	parser.add_argument('-c', '--cfg-system', type=str, help="vyatta-cfg-system folder to build")
+	parser.add_argument('-l', '--dry', help='only show what will be done', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
-echo $( date ) checking if the build machine is up
-# ------------------------------------------------
+	args = parser.parse_args()
 
-varh=$(echo '$HOME')
-home=$( $connect_build 'echo $HOME' )
-build_repo=`echo $build_repo | sed -e "s:$varh:$home:g"`
+	DEBUG=args.debug
+	CMDONLY=args.dry
 
-up=$( $connect_build 'echo up' 2> /dev/null )
-if [ "$up" != "up" ]; then
-	echo "could not $connect_build"
-	exit
-fi
+	conf = Config()
 
-echo $( date ) checking if the router is up
-# -----------------------------------------
+	vyos_build = conf['build']['repo']
+	location = 'compile'
 
-up=$( $connect_router 'echo up' 2> /dev/null )
-if [ "$up" != "up" ]; then
-	echo "could not $connect_router"
-	exit
-fi
+	check(*run(conf.ssh("build", f"cd {vyos_build}; git pull")))
+	check(*run(conf.ssh('build',
+                     f'mkdir -p {vyos_build}/{location} && '
+                     f'cd {vyos_build}/{location} && '
+                     f'mkdir -p vyos-1x vyos-smoketest vyatta-cfg-system vyatta-op'
+                     )))
 
-echo $( date ) updating vyos-build
-# --------------------------------
+	install(args.vyos, 'vyos-1x', location)
+	check(*run(conf.ssh('router', f'touch /tmp/vyos.ifconfig.debug')))
 
-$connect_build "cd $build_repo; git pull"
-
-echo $( date ) cleaning up repo
-# -----------------------------
-
-$connect_build mv $build_repo/debian-* /tmp/ 2> /dev/null
-$connect_build mkdir -p $build_repo/$dated/vyos-1x $build_repo/$dated/vyos-smoketest $build_repo/$dated/vyatta-cfg-system $build_repo/$dated/vyatta-op
-
-# enable debugging
-$connect_router "touch /tmp/vyos.ifconfig.debug"
-
-if [ "$option_vyos" == "." ]; then
-	option_vyos=$(basename $(pwd))
-	cd ..
-fi
-
-if [ "$option_vyos" != "" ]; then
-	echo $( date ) getting vyos-1x version
-	# ------------------------------------
-	version=`head -1 $option_vyos/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
-	echo $( date ) copying vyos-1x $version
-	# -------------------------------------
-	tar -zc -C $option_vyos -f - . | $connect_build "cd $build_repo/$dated/vyos-1x; tar zxf -"
-	echo $( date ) making vyos-1x
-	# -----------------------------
-	$connect_build $docker_vyos "dpkg-buildpackage -uc -us -tc -b"
-
-	echo $( date ) copying to router
-	# ------------------------------
-	$connect_build cat $build_repo/$dated/vyos-1x_${version}_all.deb | $connect_router "cat - > vyos-1x_${version}_all.deb"
-
-	$connect_router "sudo dpkg -i --force-all vyos-1x_${version}_all.deb"
-	$connect_router "rm vyos-1x_${version}_all.deb"
-fi
-
-if [ "$option_smoke" != "" ]; then
-	echo $( date ) getting vyos-smoketest version
-	# -------------------------------------------
-	version=`head -1 $option_smoke/debian/changelog | cut -f2 -d\( | cut -f1 -d\)`
-	echo $( date ) copying vyos-smoketest $version
-	# -----------------------------
-	tar -zc -C $option_smoke -f - . | $connect_build "cd $build_repo/$dated/vyos-smoketest; tar zxf -"
-	echo $( date ) making vyos-smoketest
-	# -----------------------------
-	$connect_build $docker_smoke "dpkg-buildpackage -uc -us -tc -b"
-
-	echo $( date ) copying to router
-	# ------------------------------
-	$connect_build cat $build_repo/$dated/vyos-smoketest_${version}_all.deb | $connect_router "cat - > vyos-smoketest_${version}_all.deb"
-
-	$connect_router "sudo dpkg -i --force-all vyos-smoketest_${version}_all.deb"
-	$connect_router "rm vyos-smoketest_${version}_all.deb"
-fi
-
-echo $( date ) complete
+	completed()
