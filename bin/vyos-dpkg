@@ -1,206 +1,49 @@
 #!/usr/bin/env python3
 
 import os
-import re
 import sys
-import glob
 import argparse
-from datetime import datetime
-from subprocess import Popen, PIPE, STDOUT
 
-CMDONLY = False
-DEBUG = False
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
+
+from vyostest import log
+from vyostest import cmd
+from vyostest import config
+from vyostest import repository
 
 HOME = '/home/vyos'
-
-def now():
-	return datetime.now().strftime('%H:%M:%S')
-
-def timed (s):
-	return f'{now()} {s}'
-
-
-class InRepo:
-	def __init__(self, folder):
-		self.folder = folder
-		self.pwd = os.getcwd()
-
-	def __enter__(self):
-		os.chdir(self.folder)
-		self.folder = os.path.basename(os.getcwd())
-		return self
-
-	def __exit__(self, type, value, tb):
-		os.chdir(self.pwd)
-
-	def version(self):
-		with open(os.path.join('debian', 'changelog')) as f:
-			line = f.readline().strip()
-		found = re.match('[^(]+\((.*)\).*', line)
-		if found is None:
-			report(f'could not figure package version in {self.folder}')
-			failed()
-		return found.group(1)
-
-
-class Config(dict):
-	def __init__(self):
-		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
-		etc = os.path.join(wd, '..', 'etc', '*')
-		self.data = os.path.join(wd, '..', 'data')
-
-		for name in glob.glob(etc):
-			with open(name) as f:
-				base = os.path.basename(name)
-				part = base.split('_',1)
-				if len(part) == 1:
-					self[base] = f.readline().strip().replace('$HOME', HOME)
-					continue
-				self.setdefault(part[0],{})[part[1]] = f.readline().strip().replace('$HOME', HOME)
-
-	def read(self, name):
-		with open(os.path.join(self.data, name)) as f:
-			return f.read()
-
-	def ssh(self, where, command=''):
-		port = self[where]['port']
-		user = self[where]['user']
-		host = self[where]['host']
-		return f'ssh -p {port} {user}@{host} "{command}"'
-
-	def docker(self, repo, command):
-		build = self['build']['repo']
-		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
-
-	def rsync_in(self, src, dest):
-		port = self['build']['port']
-		user = self['build']['user']
-		host = self['build']['host']
-		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
-
-	def rsync_out(self, src, dest):
-		port = self['build']['port']
-		user = self['build']['user']
-		host = self['build']['host']
-		dest = remote.replace('$HOME', HOME)
-		return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
-
-def unprefix(s, prefix):
-	return s[len(prefix):] if s.startswith(prefix) else s
-
-_record = []
-
-def record(s):
-	_record.append(s)
-	return s
-
-def report(s):
-	if CMDONLY:
-		if s.startswith('> '):
-			print(s[2:])
-		return
-	print(record(timed(s)))
-
-def end(reason, code):
-	print()
-	print (timed(reason))
-	print ()
-	print()
-	for s in _record:
-		print(s)
-	sys.exit(code)
-
-def failed():
-	end('failure',1)
-
-def completed():
-	if DEBUG:
-		end('completed',0)
-	sys.exit(0)
-
-def check(out, ret):
-	if ret != 0:
-		print(out)
-		failed()
-
-def run(command):
-	report(f'> {command}')
-	if CMDONLY:
-		return '', 0
-	p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
-	return _popen(p)
-
-def chain(command1, command2):
-	report(f'> {command1} | {command2}')
-	if CMDONLY:
-		return '', 0
-	p1 = Popen(command1, stdout=PIPE, shell=True)
-	p2 = Popen(command2, stdin=p1.stdout, stdout=PIPE, shell=True)
-	return _popen(p2)
-
-def _popen (p):
-	msg = p.communicate()
-	ret = p.returncode
-	out = msg[0].decode().strip()
-	record(out)
-	err = msg[1]
-	if err:
-		record(err.decode().strip())
-	if ret != 0:
-		failed()
-	return unprefix(out,'Welcome to VyOS\n'), ret
-
-def install(repo, vyos, location):
-	with InRepo(args.vyos) as repo:
-		report(f'getting {vyos} version')
-		version = repo.version()
-		package = f'{vyos}_{version}_all.deb'
-		
-		check(*run(conf.rsync_in('.', f'{vyos_build}/{location}/{vyos}')))
-		check(*run(conf.ssh('build', f'rm {vyos_build}/{location}/{package} || true')))
-		check(*run(conf.ssh('build', conf.docker(f'{location}/{vyos}', 'dpkg-buildpackage -uc -us -tc -b'))))
-		check(*chain(
-			conf.ssh('build', f'cat {vyos_build}/{location}/{package}'),
-			conf.ssh('router', f'cat - > {package}')
-		))
-		check(*run(conf.ssh('router', f'sudo dpkg -i --force-all {package}')))
-		check(*run(conf.ssh('router', f'rm {package}')))
+LOCATION = 'compiled'
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
-	parser.add_argument('-s', '--smoke', type=str, help="vyos-smoke folder to build")
+	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
 	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
 	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
-	parser.add_argument('-l', '--dry', help='only show what will be done', action='store_true')
+
+	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
+	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
+	conf = config.Config(HOME)
 
-	DEBUG=args.debug
-	CMDONLY=args.dry
-
-	conf = Config()
-
+	cmd.DRY = args.show
+	cmd.VERBOSE = args.verbose
 	vyos_build = conf['build']['repo']
-	location = 'compile'
 
-	check(*run(conf.ssh("build", f"cd {vyos_build}; git pull")))
-	check(*run(conf.ssh('build',
-					 f'mkdir -p {vyos_build}/{location} && '
-					 f'cd {vyos_build}/{location} && '
-					 f'mkdir -p vyos-1x vyos-smoketest vyatta-cfg-system vyatta-op'
-					 )))
+	todo = {
+		('vyos-1x', args.vyos),
+		('vyos-smoketest', args.smoke),
+		('vyatta-cfg-system', args.cfg),
+		('vyatta-op', args.op)
+	}
 
-	if args.vyos:
-		install(args.vyos, 'vyos-1x', location)
-	if args.smoke:
-		install(args.smoke, 'vyos-smoketest', location)
-	if args.cfg:
-		install(args.smoke, 'vyatta-cfg-system', location)
-	if args.op:
-		install(args.smoke, 'vyatta-op', location)
+	repository.update(conf, vyos_build)
+	for package, option in todo:
+		if option:
+			repository.build(conf, vyos_build, LOCATION, package, option)
+			repository.install(conf, vyos_build, LOCATION, package, option)
 
-	check(*run(conf.ssh('router', f'touch /tmp/vyos.ifconfig.debug')))
-
-	completed()
+	if args.debug:
+		log.completed()

@@ -1,5 +1,5 @@
-#!/bin/bash
 # data/live-build-config/hooks/live/99-localuser.chroot
+#!/bin/bash
 
 useradd -r -m -N -s /bin/vbash -G frrvty,vyattacfg,sudo,adm,dip,disk admin
-echo admin:{backdoor} | chpasswd
+echo {user}:{password} | chpasswd
