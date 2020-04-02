@@ -3,9 +3,9 @@
 It is not possible to compile VyOS on MacOS, therefore a VM environement need to be used.
 Ideally an host running Linux will be used, but if it is not possible, Virtualbox can be used.
 
-This solution is designed with VirtualBox 
+This solution was initially designed with VirtualBox, but due to the lack of support for KVM, a genuine Linux server or VM is recommended as otherwise you will not be able to test the VyOS ISO you are generating.
 
-It will be composed of:
+The development environment will be composed of:
   - A build VM (vyos-build) which will be used to build debian packages and iso
   - A test VM (vyos-router) which will be used to check the validity of the code
   - A set of tools to help the transfer the build image from one to the other (this repository)
@@ -14,14 +14,15 @@ The different vyos repositories will be placed in a code folder located in ~/Vyo
 
 ## Expectations
 
-For the purpose of this document, we will assume that you will perform your development in a `~/VyOS` folder. 
-To keep things simple, this repository will also be installed in the `~/VyOS` folder but it could be installed elsewhere.
+For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/VyOS` folder. 
+This repository will also be assumed to be installed in the `~/VyOS` folder but it could be installed elsewhere.
 
 You could, for example, create one folder per change PR you want to work on (perhaps calling the folder by the name of the phabricator task you are working on, but this document will assume the `~/VyOS` folder is the folder intended to contain the cloned repositories.
 
 # Local setup
 
-We assume you have git already installed on your system (most likely using [HomeBrew](https://brew.sh))
+We assume you have git and rsync already installed on your system.
+On mac, they can be installed with [HomeBrew](https://brew.sh))
 ```
 brew install git
 brew install rsync
@@ -35,7 +36,7 @@ mkdir ~/VyOS
 Installing from github
 ```
 cd ~/VyOS
-git clone git@github.com:thomas-mangin/vyos-osx-dev vyos-osx-dev
+git clone git@github.com:thomas-mangin/vyos-extra vyos-extra
 ```
 
 adding the scripts to your path
@@ -45,7 +46,7 @@ The `bin` folder of this repository could/should be added to the PATH.
 
 ```
 export path='$PATH'
-echo "export PATH=$path:$HOME/Vyos/vyos-osx-dev/bin" >> ~/.profile
+echo "export PATH=$path:$HOME/Vyos/vyos-extra/bin" >> ~/.profile
 ```
 
 You can also setup your local `~/.ssh/config` file to include the VM hosts, making sure the ssh key does exists
@@ -181,7 +182,7 @@ Assuming a ssh-rsa (the key type is the first word in the line of your SSH key i
 ```
 configure
 set system login user vyos authentication plaintext-password 'your-password'
-set system login user vyos authentication public-keys thomas@mangin.com type 'ssh-rsa'
+set system login user vyos authentication public-keys user@email type 'ssh-rsa'
 set system login user vyos authentication public-keys user@email key 'SSH-KEY-AS-IN-AUTHORIZED-KEYS'
 commit
 save
