@@ -58,7 +58,7 @@ if __name__ == '__main__':
 		repository.make(conf, 'iso')
 
 	if args.test:
-		cmd.make(conf, 'test')
+		repository.make(conf, 'test')
 
 	if not cmd.DRY:
 		log.completed()
