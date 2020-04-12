@@ -99,7 +99,7 @@ def setup(conf):
 	))
 
 	check(*run(conf.ssh('router', f'sudo apt-get --yes update')))
-	check(*run(conf.ssh('router', f'sudo apt-get --yes upgrade')))
+	# check(*run(conf.ssh('router', f'sudo apt-get --yes upgrade')))
 	check(*run(conf.ssh('router', f'sudo apt-get --yes install {packages}')))
 
 	check(*run(conf.ssh('router', f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')))
