@@ -28,6 +28,7 @@ if __name__ == '__main__':
 	parser.add_argument('-f', '--force', help="make without custom package", action='store_true')
 	parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
 
+	parser.add_argument('-7', '--setup', help='setup for use by this program', action='store_true')
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
@@ -46,6 +47,9 @@ if __name__ == '__main__':
 		('vyatta-cfg-system', args.cfg),
 		('vyatta-op', args.op)
 	}
+
+	if args.setup:
+		repository.setup(conf)
 
 	repository.update(conf, vyos_build)
 	for package, option in todo:
