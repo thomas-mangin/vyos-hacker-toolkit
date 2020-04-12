@@ -102,9 +102,9 @@ def setup(conf):
 	check(*run(conf.ssh('router', f'sudo apt-get --yes upgrade')))
 	check(*run(conf.ssh('router', f'sudo apt-get --yes install {packages}')))
 
-	check(*run(conf.ssh('router', f'ln -s /usr/lib/python3/dist-packages/vyos vyos')))
-	check(*run(conf.ssh('router', f'ln -s /usr/libexec/vyos/conf_mode conf')))
-	check(*run(conf.ssh('router', f'ln -s /usr/libexec/vyos/op_mode op')))
+	check(*run(conf.ssh('router', f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')))
+	check(*run(conf.ssh('router', f'ln -sf /usr/libexec/vyos/conf_mode conf')))
+	check(*run(conf.ssh('router', f'ln -sf /usr/libexec/vyos/op_mode op')))
 
 	for src, dst in move:
 		check(*run(conf.ssh('router', f'sudo chgrp -R vyattacfg {dst}')))
