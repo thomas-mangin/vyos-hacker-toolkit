@@ -8,6 +8,11 @@ from .cmd import run
 from .cmd import chain
 from .cmd import check
 
+move = [
+    ('python/vyos/*', '/usr/lib/python3/dist-packages/vyos/'),
+    ('src/conf_mode/*', '/usr/libexec/vyos/conf_mode/'),
+    ('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
+]
 
 class InRepo:
 	def __init__(self, folder):
@@ -52,7 +57,7 @@ def build(conf, vyos_build, location, repo, folder):
 		elif not cmd.DRY:
 			log.report(f'building package {package}')
 
-		check(*run(conf.rsync_in('.', f'{vyos_build}/{location}/{repo}')))
+		check(*run(conf.rsync('.', f'{vyos_build}/{location}/{repo}')))
 		check(*run(conf.ssh('build', f'rm {vyos_build}/{location}/{package} || true')))
 		check(*run(conf.ssh('build', conf.docker(f'{location}/{repo}', 'dpkg-buildpackage -uc -us -tc -b'))))
 
@@ -75,6 +80,43 @@ def install(conf, vyos_build, location, repo, folder):
 	check(*run(conf.ssh('router', f'rm {package}')))
 	return True
 
+
+def setup(conf):
+	# on my local VM which goes to sleep when I close my laptop
+	# time can easily get out of sync, which prevent apt to work
+	now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+	check(*run(conf.ssh('router', f"sudo date -s '{now}'")))
+
+	check(*run(conf.ssh('router', f'sudo chgrp vyattacfg /etc/apt/sources.list')))
+	check(*run(conf.ssh('router', f'sudo chmod g+rw /etc/apt/sources.list')))
+
+	data = ''.join(conf.readlines('source.list'))
+	check(*chain(
+		conf.printf(data),
+		conf.ssh('router', f'cat - > /etc/apt/sources.list')
+	))
+
+	check(*run(conf.ssh('router', f'sudo apt-get --yes update')))
+	check(*run(conf.ssh('router', f'sudo apt-get --yes upgrade')))
+	check(*run(conf.ssh('router', f'sudo apt-get --yes install vim git')))
+
+	check(*run(conf.ssh('router', f'ln -s /usr/lib/python3/dist-packages/vyos vyos')))
+	check(*run(conf.ssh('router', f'ln -s /usr/libexec/vyos/conf_mode conf')))
+	check(*run(conf.ssh('router', f'ln -s /usr/libexec/vyos/op_mode conf')))
+
+	for src, dst in move:
+		check(*run(conf.ssh('router', f'sudo chgrp -R vyattacfg {dst}')))
+		check(*run(conf.ssh('router', f'sudo chmod -R g+rxw {dst}')))
+
+	return True
+
+
+def copy(conf, vyos_build, location, repo, folder):
+	with InRepo(folder) as debian:
+		for src, dst in move:
+			check(*run(conf.scp('router', src, dst)))
+
+	return True
 
 def backdoor(conf, vyos_build, password):
 	lines = conf.readlines('vyos-iso-backdoor')

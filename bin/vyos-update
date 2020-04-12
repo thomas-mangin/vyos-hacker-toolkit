@@ -1,86 +1,51 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-if [ $# -eq 0 ]
-then
-	echo "Usage:"
-	echo "$0 followed by the name of the repo to build (ie: T31)"
-	exit
-fi
+import os
+import sys
+import argparse
 
-# Get configuration
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
-wd=$( pwd )
-etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
-data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
+from vyostest import log
+from vyostest import cmd
+from vyostest import config
+from vyostest import repository
 
-ssh_router_user=""
-ssh_router_port=""
-scp_router_port=""
+HOME = '/home/vyos'
+LOCATION = 'compiled'
 
-build_host=$config_build_host
-router_host=$config_router_host
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
+	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
+	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
+	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
 
+	parser.add_argument('-7', '--setup', help='setup for use by this program', action='store_true')
+	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
+	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
-echo $( date ) parsing command line
-# ---------------------------------
+	args = parser.parse_args()
+	conf = config.Config(HOME)
 
-option_vyos=""
-option_vcfg=""
+	cmd.DRY = args.show
+	cmd.VERBOSE = args.verbose
+	vyos_build = conf['build']['repo']
 
-while [[ "$#" -gt 0 ]]; do case $1 in
-	-v|--vyos) option_vyos="$2"; shift;;
-	-c|--cfg) option_vcfg="$2"; shift;;
-	*) echo "Unknown parameter passed: $1"; usage; exit 1;;
-esac; shift; done
+	todo = {
+		('vyos-1x', args.vyos),
+		('vyos-smoketest', args.smoke),
+		('vyatta-cfg-system', args.cfg),
+		('vyatta-op', args.op)
+	}
 
-# check options
+	if args.setup:
+		repository.setup(conf)
 
-if [ "$option_vyos" == "" ]; then
-	echo "missing vyos-1x repository"
-	usage
-	exit
-fi
+	for package, option in todo:
+		if option:
+			repository.copy(conf, vyos_build, LOCATION, package, option)
 
-echo $( date ) building commands
-# ------------------------------
-
-if [ "$config_router_user" != "" ]; then
-	ssh_router_user=" $config_router_user@"
-fi
-
-if [ "$config_router_port" != "" ]; then
-	ssh_router_port="-p $config_router_port"
-	scp_router_port="-P $config_router_port"
-fi
-
-connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
-
-echo $( date ) checking if the router is up
-# -----------------------------------------
-
-echo "checking if the router is up"
-up=$( $connect_router 'echo up' 2> /dev/null )
-if [ "$up" != "up" ]; then
-	echo "could not $connect_router"
-	exit
-fi
-
-if [ "$option_vyos" != "" ]; then
-	echo $( date ) updating
-	# ---------------------
-
-	config_files=`find $option_vyos/src/conf_mode/ -name '*.py'`
-	python_files=`find $option_vyos/python/vyos/   -name '*.py'`
-
-	$connect_router sudo chown -R $config_router_user /usr/libexec/vyos/conf_mode
-	$connect_router sudo chown -R $config_router_user /usr/lib/python3/dist-packages/vyos
-
-	scp $scp_router_port $config_files $ssh_router_user$router_host:/usr/libexec/vyos/conf_mode
-	scp $scp_router_port $python_files $ssh_router_user$router_host:/usr/lib/python3/dist-packages/vyos
-
-	$connect_router sudo chown -R root /usr/libexec/vyos/conf_mode
-	$connect_router sudo chown -R root /usr/lib/python3/dist-packages/vyos
-fi
-
-echo $( date ) complete
+	if args.debug:
+		log.completed()

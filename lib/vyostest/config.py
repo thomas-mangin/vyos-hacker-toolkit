@@ -28,22 +28,28 @@ class Config(dict):
 		host = self[where]['host']
 		return f'ssh -p {port} {user}@{host} "{command}"'
 
+	def scp(self, where, src, dst):
+		port = self[where]['port']
+		user = self[where]['user']
+		host = self[where]['host']
+		return f'scp -r -P {port} {src} {user}@{host}:{dst}'
+
 	def docker(self, repo, command):
 		build = self['build']['repo']
 		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
 
-	def rsync_in(self, src, dest):
+	def rsync(self, src, dest):
 		port = self['build']['port']
 		user = self['build']['user']
 		host = self['build']['host']
 		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
 
-	def rsync_out(self, src, dest):
-		port = self['build']['port']
-		user = self['build']['user']
-		host = self['build']['host']
-		dest = remote.replace('$HOME', HOME)
-		return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
+	# def rsync_out(self, src, dest):
+	# 	port = self['build']['port']
+	# 	user = self['build']['user']
+	# 	host = self['build']['host']
+	# 	dest = remote.replace('$HOME', HOME)
+	# 	return f'rsync -a -e "ssh -p {port}" {user}@{host}:{src} {dest}'
 
 	def printf(self, data):
 		return 'printf "' + data.replace('\n', '\\n').replace('"', '\"') + '"'
