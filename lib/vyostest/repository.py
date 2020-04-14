@@ -14,7 +14,7 @@ move = [
     ('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 ]
 
-packages = 'vim git gdb strace apt-rdepends'
+packages = 'vim git jq gdb strace apt-rdepends'
 
 class InRepo:
 	def __init__(self, folder):
@@ -110,12 +110,19 @@ def setup(conf):
 		check(*run(conf.ssh('router', f'sudo chgrp -R vyattacfg {dst}')))
 		check(*run(conf.ssh('router', f'sudo chmod -R g+rxw {dst}')))
 
+	check(*run(conf.ssh('router', f'touch /tmp/vyos.ifconfig.debug')))
+	check(*run(conf.ssh('router', f'touch /tmp/vyos.developer.debug')))
+	check(*run(conf.ssh('router', f'touch /tmp/vyos.command.debug')))
+	check(*run(conf.ssh('router', f'touch /tmp/vyos.log.debug')))
+
 	return True
 
 
 def copy(conf, vyos_build, location, repo, folder):
 	with InRepo(folder) as debian:
 		for src, dst in move:
+			check(*run(conf.ssh('router', f'sudo chgrp -R vyattacfg {dst}')))
+			check(*run(conf.ssh('router', f'sudo chmod -R g+rxw {dst}')))
 			check(*run(conf.scp('router', src, dst)))
 
 	return True
