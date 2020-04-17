@@ -14,7 +14,7 @@ move = [
     ('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 ]
 
-packages = 'vim git jq gdb strace apt-rdepends'
+packages = 'vim git jq gdb strace apt-rdepends rsync'
 
 class InRepo:
 	def __init__(self, folder):
