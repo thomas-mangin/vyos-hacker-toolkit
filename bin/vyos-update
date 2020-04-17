@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 	cmd.DRY = args.show
 	cmd.VERBOSE = args.verbose
-	vyos_build = conf['build']['repo']
+	vyos_build = conf['build_repo']
 
 	todo = {
 		('vyos-1x', args.vyos),
