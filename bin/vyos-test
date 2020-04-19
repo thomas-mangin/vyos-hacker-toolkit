@@ -1,69 +1,342 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# Get configuration
+# based on https://github.com/sever-sever/vyos-checks/blob/master/main.yml
 
-wd=$( pwd )
-etc="$( cd "$(dirname "$0")"/../etc ; pwd ; cd - > /dev/null 2>/dev/null )"
-data="$( cd "$(dirname "$0")"/../data ; pwd ; cd - > /dev/null 2>/dev/null )"
-cd $etc; for name in `ls`; do declare config_$name=$( cat $name ); done; cd - > /dev/null 2>/dev/null
+import os
+import sys
+import argparse
 
-local_folder=$( echo $config_local_folder | sed -e "s,\$HOME,$HOME," )
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
-ssh_router_user=""
-ssh_router_port=""
-scp_router_port=""
+from vyostest import log
+from vyostest import cmd
 
-build_host=$config_build_host
-router_host=$config_router_host
+commands = [
+	'show bridge',
+	'show cluster status',
+	'show interfaces ethernet',
+	'show conntrack ignore ',
+	'show conntrack table ipv4',
+	'show conntrack table ipv6',
+	'show conntrack-sync external-cache',
+	'show conntrack-sync external-cache expect',
+	'show conntrack-sync external-cache main',
+	'show conntrack-sync internal-cache',
+	'show conntrack-sync internal-cache expect',
+	'show conntrack-sync internal-cache main',
+	'show conntrack-sync statistics',
+	'show conntrack-sync statistics expect',
+	'show conntrack-sync statistics main',
+	'show conntrack-sync status',
+	'show date',
+	'show date utc',
+	'show dhcp client leases',
+	'show dhcp server leases',
+	'show dhcp server leases pool DHCP',
+	'show dhcp server leases pool is',
+	'show dhcp server leases pool not',
+	'show dhcp server leases pool service',
+	'show dhcp server leases sort DHCP',
+	'show dhcp server leases sort is',
+	'show dhcp server leases sort not',
+	'show dhcp server leases sort service',
+	'show dhcp server leases state DHCP',
+	'show dhcp server leases state is',
+	'show dhcp server leases state not',
+	'show dhcp server leases state service',
+	'show dhcp server statistics',
+	'show dhcp server statistics pool DHCP',
+	'show dhcp server statistics pool is',
+	'show dhcp server statistics pool not',
+	'show dhcp server statistics pool service',
+	'show dhcpv6 client leases',
+	'show dhcpv6 server leases ',
+	'show dhcpv6 server leases pool DHCPv6',
+	'show dhcpv6 server leases pool is',
+	'show dhcpv6 server leases pool not',
+	'show dhcpv6 server leases pool service',
+	'show dhcpv6 server leases sort DHCPv6',
+	'show dhcpv6 server leases sort is',
+	'show dhcpv6 server leases sort not',
+	'show dhcpv6 server leases sort service',
+	'show dhcpv6 server leases state DHCPv6',
+	'show dhcpv6 server leases state is',
+	'show dhcpv6 server leases state not',
+	'show dhcpv6 server leases state service',
+	'show dns dynamic status',
+	'show dns forwarding statistics',
+	'show firewall',
+	'show firewall group',
+	'show firewall ipv6-name',
+	'show firewall name',
+	'show firewall statistics',
+	'show firewall summary',
+	'show flow-accounting',
+	'show flow-accounting interface eth0',
+	'show hardware cpu',
+	'show hardware dmi',
+	'show hardware mem',
+	'show hardware pci',
+	'show hardware scsi',
+	'show hardware cpu',
+	'show history',
+	'show history 2',
+	'show history brief',
+	'show host date',
+	'show host domain',
+	'show host lookup 1.1.1.1',
+	'show host name',
+	'show host os',
+	'show incoming',
+	'show incoming bonding',
+	'show incoming ethernet',
+	'show incoming input',
+	'show incoming pppoe',
+	'show incoming pseudo-ethernet',
+	'show incoming tunnel',
+	'show incoming vrrp',
+	'show incoming vti',
+	'show incoming wireless',
+	'show interfaces',
+	'show interfaces bonding',
+	'show interfaces bonding detail',
+	'show interfaces bonding slaves',
+	'show interfaces bridge',
+	'show interfaces bridge detail',
+	'show interfaces counters',
+	'show interfaces detail | head -6',
+	'show interfaces dummy',
+	'show interfaces dummy detail',
+	'show interfaces ethernet',
+	'show interfaces ethernet detail | head -6',
+	'show interfaces ethernet eth0 | head -6',
+	'show interfaces ethernet eth0 brief',
+	'show interfaces ethernet eth0 physical',
+	'show interfaces ethernet eth0 queue',
+	'show interfaces ethernet eth0 statistics',
+	'show interfaces ethernet eth0 transceiver',
+	'show interfaces ethernet eth0 vif 5',
+	'show interfaces input ',
+	'show interfaces input detail',
+	'show interfaces l2tpv3',
+	'show interfaces l2tpv3 detail',
+	'show interfaces loopback',
+	'show interfaces loopback detail | head -6',
+	'show interfaces openvpn detail',
+	'show interfaces pseudo-ethernet',
+	'show interfaces system | head -6',
+	'show interfaces system enabled | head -6',
+	'show interfaces tunnel',
+	'show interfaces vrrp',
+	'show interfaces vti',
+	'show interfaces vxlan',
+#    'show interfaces wireguard wg999',
+	'show interfaces wireless',
+	'show interfaces wireless detail',
+	'show interfaces wireless info',
+#    'show ip',
+	'show ipoe-server sessions',
+	'show ipoe-server statistics',
+#    'show ipv6',
+	'show l2tp-server sessions',
+	'show l2tp-server statistics',
+	'show license',
+	'show lldp neighbors',
+	'show lldp neighbors detail',
+	'show lldp neighbors interface eth0',
+#    'show log',
+	'show login',
+	'show login groups',
+	'show login level',
+	'show login user',
+	'show monitoring',
+#    'show mpls',
+	'show nat destination rules',
+	'show nat destination statistics',
+	'show nat destination translations',
+	'show nat destination translations address 1.1.1.1',
+	'show nat destination translations detail',
+	'show nat source rules',
+	'show nat source statistics',
+	'show nat source translations',
+	'show nat source translations address 1.1.1.1',
+	'show nat source translations detail',
+	'show nhrp interface',
+	'show nhrp tunnel',
+	'show ntp',
+	'show ntp info | head -6',
+	'show policy',
+	'show policy route',
+	'show policy route statistics',
+	'show policy ipv6-route',
+	'show policy ipv6-route statistics',
+	'show poweroff',
+	'show pppoe-server interfaces',
+	'show pppoe-server sessions',
+	'show pppoe-server statistics',
+	'show pptp-server sessions',
+	'show pptp-server statistics',
+	'show protocols bfd peer',
+	'show protocols bfd peer counters',
+	'show protocols static arp',
+	'show protocols static arp interface eth0',
+	'show queueing',
+	'show queueing bonding',
+	'show queueing ethernet',
+	'show queueing input',
+	'show queueing pppoe',
+	'show queueing pseudo-ethernet',
+	'show queueing tunnel',
+	'show queueing vrrp',
+	'show queueing vti',
+	'show queueing wireless',
+	'show reboot',
+	'show remote-config openvpn vtun0 remote-platform openvpn',
+	'show remote-config openvpn vtun0 remote-platform vyos',
+	'show route-map',
+	'show rpki cache-connection',
+	'show rpki cache-server',
+	'show rpki prefix-table',
+	'show snmp mib ifmib',
+	'show snmp v3',
+	'show snmp v3 certificates',
+	'show snmp v3 group',
+	'show snmp v3 trap-target',
+	'show snmp v3 user',
+	'show snmp v3 view',
+	'show sstp-server sessions',
+	'show sstp-server statistics',
+	'show system acceleration qat',
+	'show system acceleration qat interrupts',
+	'show system acceleration qat status',
+	'show system commit',
+#    'show system connections',
+	'show system image',
+	'show system image storage',
+	'show system image version',
+#    'show system integrity',
+#    'show system kernel-messages',
+	'show system login users',
+	'show system login users all',
+	'show system login users locked',
+	'show system login users other',
+	'show system login users vyos',
+	'show system memory',
+	'show system memory cache',
+	'show system memory detail',
+	'show system memory routing-daemons',
+	'show system processes',
+	'show system processes extensive',
+	'show system processes summary',
+	'show system processes tree',
+	'show system routing-daemons',
+	'show system storage',
+	'show system uptime',
+	'show table',
+#    'show tech-support',
+	'show users',
+	'show users recent',
+	'show version',
+#    'show version all',
+	'show version funny',
+	'show version quagga',
+#    'show vpn debug',
+	'show vpn ike rsa-keys',
+	'show vpn ike sa',
+	'show vpn ike sa nat-traversal',
+	'show vpn ike secrets',
+	'show vpn ike status',
+	'show vpn ipsec policy',
+	'show vpn ipsec sa',
+	'show vpn ipsec sa verbose',
+	'show vpn ipsec state',
+	'show vpn ipsec status',
+	'show vpn remote-access',
+	'show vrf',
+	'show vrf foo',
+	'show vrrp',
+	'show vrrp detail',
+	'show wan-load-balance',
+	'show wan-load-balance connection',
+	'show wan-load-balance status',
+	'show wan-load-balance status with-dns',
+	'show webproxy blacklist categories',
+	'show webproxy blacklist domains',
+#    'show webproxy blacklist log',
+	'show webproxy blacklist urls',
+#    'show wireguard',
+]
 
-if [ "$config_router_user" != "" ]; then
-	ssh_router_user=" $config_router_user@"
-fi
+errors = [
+	'error',
+	'fail',
+	'Traceback',
+	'unable to connect',
+	'No such file or directory',
+	'pm line',
+]
 
-if [ "$config_router_port" != "" ]; then
-	ssh_router_port="-p $config_router_port"
-	scp_router_port="-P $config_router_port"
-fi
+class color:
+    HEADER = '\033[95m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-connect_router="ssh $ssh_router_port $ssh_router_user$router_host"
+    RUN = '\033[94m'
+    SKIP = '\033[93m'
+    PASS = '\033[92m'
+    FAIL = '\033[91m'
 
-# Check if remote router is up
+    END = '\033[0m'
 
-echo "checking if the router is up"
-up=$( $connect_router 'echo up' 2> /dev/null )
-if [ "$up" != "up" ]; then
-	echo "could not $connect_router"
-	exit
-fi
 
-echo $( date ) updating
+def running(command):
+	sys.stdout.write(f'[{color.RUN}test{color.END}] {command}')
 
-cd $local_folder/vyos-smoketest 2> /dev/null
+def skipped(command):
+	sys.stdout.write(f'\r[{color.SKIP}skip{color.END}] {command}\n')
 
-if [ "$?" != "0" ]; then
-	cd $local_folder/
-	if [ "$?" != "0" ]; then
-		echo "failed to access $local_folder"
-		exit
-	fi
-	git clone git@github.com:vyos/vyos-smoketest.git
-else
-	git pull
-fi
+def passed(command):
+	sys.stdout.write(f'\r[{color.PASS}pass{color.END}] {command}\n')
 
-cd $local_folder/vyos-smoketest 2> /dev/null
+def failed(command, out, err, reason=''):
+	sys.stdout.write(f'\r[{color.FAIL}fail{color.END}] {command}\n')
+	if reason:
+		print(f'reason: {reason}')
+	print(out)
+	print(err)
 
-if [ "$?" != "0" ]; then
-	echo "failed to use vyos-smoketest folder at $local_folder"
-	exit
-fi
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
+	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
-cd $local_folder 2> /dev/null
-scp $scp_router_port -r vyos-smoketest $ssh_router_user$router_host:
+	args = parser.parse_args()
+	cmd.DRY = args.show
+	cmd.VERBOSE = args.verbose
 
-echo $( date ) testing
+	cmds = cmd.Command()
 
-$connect_router python3 ./vyos-smoketest/bin/vyos-smoketest
+	for command in commands:
+		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'
+		running(command)
+		out, err = cmds.communicate(cmds.config.ssh('router', show))
 
-echo $( date ) complete
+		# some command reply on stderr ! sigh !
 
+		if err:
+			if 'not configured' in err:
+				skipped(command)
+				continue
+
+			for errror in errors:
+				if errror in err:
+					failed(command, out, err, errror)
+					continue
+
+		for errror in errors:
+			if errror in out:
+				failed(command, out, err, errror)
+				continue
+		
+		passed(command)

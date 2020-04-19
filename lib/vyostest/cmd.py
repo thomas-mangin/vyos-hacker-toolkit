@@ -35,7 +35,7 @@ class Run(object):
 			log.failed('could not complete action requested')
 
 	@classmethod
-	def run(cls, cmd, ignore=''):
+	def _run(cls, cmd, ignore=''):
 		command = f'{cmd}'
 		log.command(command)
 		if DRY or VERBOSE:
@@ -46,7 +46,20 @@ class Run(object):
 		popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
 		com = popen.communicate()
 		cls.check(cmd, popen, com)
+		return com
+
+	@classmethod
+	def run(cls, cmd, ignore=''):
+		com = self._run(cmd, ignore)
 		return cls._unprefix(com[0].decode().strip())
+
+	@classmethod
+	def communicate(cls, cmd, ignore=''):
+		com = cls._run(cmd, ignore)
+		return (
+			cls._unprefix(com[0].decode().strip()),
+			com[0].decode().strip(),
+		)
 
 	@classmethod
 	def chain(cls, cmd1, cmd2, ignore=''):
@@ -70,14 +83,14 @@ class Run(object):
 
 
 class Command(Run):
-	def __init__(self, home):
+	def __init__(self, home='/home/vyos'):
 		self.config = Config(home)
 
 	def ssh(self, where, cmd, ignore=''):
-		self.run(self.config.ssh(where, cmd), ignore)
+		return self.run(self.config.ssh(where, cmd), ignore)
 
 	def scp(self, where, src, dst):
-		self.run(self.config.scp(src, dst))
+		return self.run(self.config.scp(src, dst))
 
 	def update_build(self):
 		build_repo = self.config.values['build_repo']
