@@ -10,20 +10,23 @@ def _now():
 def _timed(s):
 	return f'{_now()} {s}'
 
-def _end(reason, code):
+def _end(reason, code, enabled):
 	print(_timed(reason))
 	special = []
+
 	for c, t, w, s in _records:
 		# make iso reports error with 'E: ' lines
 		if w == 'answer' and s.startswith('E: '):
 			special.append()
-		print(f'{t} {c:>3} {w} {s}')
+		if enabled:
+			print(f'{t} {c:>3} {w} {s}')
 
 	if special:
 		print()
 		print('noteworthy:')
 		for s in special:
 			print(s)
+		print()
 
 	sys.exit(code)
 
@@ -48,8 +51,10 @@ def answer(s):
 	return _record(s)
 
 def failed(s='failure'):
-	_end(s, 1)
+	_end(s, 1, True)
 
-def completed(s='completed'):
-	_end(s, 0)
+def completed(enabled, s='completed'):
+	_end(s, 0, enabled)
 	sys.exit(0)
+
+print(_timed('starting'))

@@ -8,8 +8,6 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "
 
 from vyostest import log
 from vyostest import cmd
-from vyostest import config
-from vyostest import repository
 
 
 HOME = '/home/vyos'
@@ -34,12 +32,10 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
-	conf = config.Config(HOME)
-	done = False
-
 	cmd.DRY = args.show
 	cmd.VERBOSE = args.verbose
-	vyos_build = conf['build_repo']
+
+	cmds = cmd.Command(HOME)
 
 	todo = {
 		('vyos-1x', args.vyos),
@@ -49,20 +45,19 @@ if __name__ == '__main__':
 	}
 
 	if args.setup:
-		repository.setup(conf)
+		cmds.setup_router()
 
-	repository.update(conf, vyos_build)
+	cmds.update_build()
 	for package, option in todo:
 		if option:
-			done = repository.build(conf, vyos_build, LOCATION, package, option)
+			done = cmds.build(LOCATION, package, option)
 
 	if done or args.force:
-		repository.configure(conf, vyos_build, LOCATION, conf['email'], args.extra, args.name)
-		repository.backdoor(conf, vyos_build, args.backdoor)
-		repository.make(conf, 'iso')
+		cmds.configure(LOCATION, args.extra, args.name)
+		cmds.backdoor(args.backdoor)
+		cmds.make('iso')
 
 	if args.test:
-		repository.make(conf, 'test')
+		cmds.make('test')
 
-	if not cmd.DRY:
-		log.completed()
+	log.completed(args.debug,'iso built and tested')

@@ -27,11 +27,10 @@ if __name__ == '__main__':
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
-	conf = config.Config(HOME)
-
 	cmd.DRY = args.show
 	cmd.VERBOSE = args.verbose
-	vyos_build = conf['build_repo']
+
+	cmds = cmd.Command(HOME)
 
 	todo = {
 		('vyos-1x', args.vyos),
@@ -41,13 +40,12 @@ if __name__ == '__main__':
 	}
 
 	if args.setup:
-		repository.setup(conf)
+		cmds.setup_router()
 
-	repository.update(conf, vyos_build)
+	cmds.update_build()
 	for package, option in todo:
 		if option:
-			repository.build(conf, vyos_build, LOCATION, package, option)
-			repository.install(conf, vyos_build, LOCATION, package, option)
+			cmds.build(LOCATION, package, option)
+			cmds.install(LOCATION, package, option)
 
-	if args.debug:
-		log.completed()
+	log.completed(args.debug, 'package(s) installed')
