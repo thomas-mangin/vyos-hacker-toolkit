@@ -27,7 +27,7 @@ class Run(object):
 				continue
 			string = cls._unprefix(message.decode().strip())
 			log.answer(string)
-			if VERBOSE:
+			if string and VERBOSE:
 				print(string)
 
 		if err:
@@ -83,6 +83,12 @@ class Run(object):
 
 
 class Command(Run):
+	move = [
+				('python/vyos/*', '/usr/lib/python3/dist-packages/vyos/'),
+				('src/conf_mode/*', '/usr/libexec/vyos/conf_mode/'),
+				('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
+			]
+
 	def __init__(self, home='/home/vyos'):
 		self.config = Config(home)
 
@@ -90,7 +96,7 @@ class Command(Run):
 		return self.run(self.config.ssh(where, cmd), ignore)
 
 	def scp(self, where, src, dst):
-		return self.run(self.config.scp(src, dst))
+		return self.run(self.config.scp(where, src, dst))
 
 	def update_build(self):
 		build_repo = self.config.values['build_repo']
@@ -157,13 +163,7 @@ class Command(Run):
 		self.ssh('router', f'ln -sf /usr/libexec/vyos/conf_mode conf')
 		self.ssh('router', f'ln -sf /usr/libexec/vyos/op_mode op')
 
-		move = [
-          ('python/vyos/*', '/usr/lib/python3/dist-packages/vyos/'),
-          ('src/conf_mode/*', '/usr/libexec/vyos/conf_mode/'),
-          ('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
-        ]
-
-		for src, dst in move:
+		for src, dst in self.move:
 			self.ssh('router', f'sudo chgrp -R vyattacfg {dst}')
 			self.ssh('router', f'sudo chmod -R g+rxw {dst}')
 
@@ -176,7 +176,7 @@ class Command(Run):
 
 	def copy(self, location, repo, folder):
 		with InRepo(folder) as debian:
-			for src, dst in move:
+			for src, dst in self.move:
 				self.ssh('router', f'sudo chgrp -R vyattacfg {dst}')
 				self.ssh('router', f'sudo chmod -R g+rxw {dst}')
 				self.scp('router', src, dst)
