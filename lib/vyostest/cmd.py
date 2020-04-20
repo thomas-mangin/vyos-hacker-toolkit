@@ -50,7 +50,7 @@ class Run(object):
 
 	@classmethod
 	def run(cls, cmd, ignore=''):
-		com = self._run(cmd, ignore)
+		com = cls._run(cmd, ignore)
 		return cls._unprefix(com[0].decode().strip())
 
 	@classmethod
