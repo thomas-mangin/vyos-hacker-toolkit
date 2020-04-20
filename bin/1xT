@@ -8,9 +8,9 @@ cd ~/Vyos/vyos-1x
 cd -
 
 cd ~/Vyos
-	cp -a vyos-1x vyos-T$1
+	cp -a vyos-1x vyos-$1
 cd -
 
-cd ~/Vyos/vyos-T$1
-	git checkout -b T$1
+cd ~/Vyos/vyos-$1
+	git checkout -b $1
 cd -
