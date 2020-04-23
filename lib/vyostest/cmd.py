@@ -151,7 +151,7 @@ class Command(Run):
 		data = ''.join(self.config.readlines('source.list'))
 		self.chain(
 			self.config.printf(data),
-			self.config.ssh('router', 'cat - > /etc/apt/sources.list.d/vyos-extra')
+			self.config.ssh('router', 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
 		)
 
 		packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'

@@ -1,16 +1,19 @@
 #!/bin/sh
 
-cd ~/Vyos/vyos-1x
+cd ~/vyos/1x/vyos-1x
 	git checkout current
 	# git remote add upstream git://github.com/vyos/vyos-1x
 	git pull upstream current
 	git push
 cd -
 
-cd ~/Vyos
-	cp -a vyos-1x vyos-$1
+cd ~/vyos/1x
+	cp -a vyos-1x $1
 cd -
 
-cd ~/Vyos/vyos-$1
+cd ~/vyos/1x/$1
 	git checkout -b $1
 cd -
+
+cd ~/vyos/1x/$1
+exec $SHELL

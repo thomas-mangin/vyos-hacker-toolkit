@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd ~/Vyos/vyos-1x
+cd ~/vyos/1x/vyos-1x
 	git checkout current
 	git pull upstream current
 	git push
