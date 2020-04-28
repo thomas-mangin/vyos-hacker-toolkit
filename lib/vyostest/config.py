@@ -16,6 +16,14 @@ class Config(object):
 		'router_user':     'vyos',
 	}
 
+	conversion = {
+		'build_host':      lambda host: host.lower(),
+		'build_port':      lambda port: int(port),
+		'router_host':     lambda host: host.lower(),
+		'router_port':     lambda port: int(port),
+	}
+
+
 	description = {
 		'build_folder':    '...',
 		'build_host':      'the build server hostname or IP',
@@ -59,6 +67,7 @@ class Config(object):
 
 	def set (self, option, value, home):
 		value = value.strip().replace('$HOME', home)
+		value = self.conversion.get(option, lambda _: _)(value)
 		self.values[option] = value
 
 	def readlines(self, name):
@@ -69,15 +78,19 @@ class Config(object):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
 
 	def ssh(self, where, command=''):
-		port = self.values[f'{where}_port']
-		user = self.values[f'{where}_user']
 		host = self.values[f'{where}_host']
+		user = self.values[f'{where}_user']
+		port = self.values[f'{where}_port']
+		if where == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
+			return command
 		return f'ssh -p {port} {user}@{host} "{command}"'
 
 	def scp(self, where, src, dst):
-		port = self.values[f'{where}_port']
-		user = self.values[f'{where}_user']
 		host = self.values[f'{where}_host']
+		user = self.values[f'{where}_user']
+		port = self.values[f'{where}_port']
+		if where == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
+			return command
 		return f'scp -r -P {port} {src} {user}@{host}:{dst}'
 
 	def docker(self, repo, command):
@@ -85,7 +98,9 @@ class Config(object):
 		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
 
 	def rsync(self, src, dest):
-		port = self.values['build_port']
-		user = self.values['build_user']
 		host = self.values['build_host']
+		if host in ('localhost', '127.0.0.1', '::1') and port == 22:
+			return f'rsync -avh --delete {src} {dest}'
+		user = self.values['build_user']
+		port = self.values['build_port']
 		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
