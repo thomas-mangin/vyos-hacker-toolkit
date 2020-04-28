@@ -50,7 +50,14 @@ class Config(object):
 		self.data = os.path.join(wd, '..', 'data')
 
 		config = configparser.ConfigParser()
-		config.read(self.etc + '/vyos.extra')
+
+		fname = self.etc + '/vyos-extra.conf'
+		if not os.path.exists(fname):
+			self.etc = '/etc'
+			fname = self.etc + '/vyos-extra.conf'
+
+		if os.path.exists(fname):
+			config.read(fname)
 
 		for option in self.default:
 			env_name = f'VYOS_{option.upper()}'
