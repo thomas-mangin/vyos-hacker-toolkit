@@ -56,5 +56,3 @@ def failed(s='failure'):
 def completed(enabled, s='completed'):
 	_end(s, 0, enabled)
 	sys.exit(0)
-
-print(_timed('starting'))
