@@ -6,8 +6,8 @@ import argparse
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
-from vyostest import log
-from vyostest import cmd
+from vyosextra import log
+from vyosextra import cmd
 
 
 HOME = '/home/vyos'

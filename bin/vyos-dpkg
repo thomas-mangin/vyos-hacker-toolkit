@@ -6,10 +6,10 @@ import argparse
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
-from vyostest import log
-from vyostest import cmd
-from vyostest import config
-from vyostest import repository
+from vyosextra import log
+from vyosextra import cmd
+from vyosextra import config
+from vyosextra import repository
 
 HOME = '/home/vyos'
 LOCATION = 'compiled'
