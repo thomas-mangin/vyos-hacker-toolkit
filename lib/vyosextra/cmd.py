@@ -38,6 +38,7 @@ class Run(object):
 	def _run(cls, cmd, ignore=''):
 		command = f'{cmd}'
 		log.command(command)
+
 		if DRY or VERBOSE:
 			print(command)
 		if DRY:
@@ -51,7 +52,9 @@ class Run(object):
 	@classmethod
 	def run(cls, cmd, ignore=''):
 		com = cls._run(cmd, ignore)
-		return cls._unprefix(com[0].decode().strip())
+		if com:
+			return cls._unprefix(com[0].decode().strip())
+		return ''
 
 	@classmethod
 	def communicate(cls, cmd, ignore=''):
