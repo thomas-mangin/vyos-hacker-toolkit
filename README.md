@@ -14,10 +14,10 @@ The different vyos repositories will be placed in a code folder located in ~/Vyo
 
 ## Expectations
 
-For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/VyOS` folder. 
-This repository will also be assumed to be installed in the `~/VyOS` folder but it could be installed elsewhere.
+For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/vyos` folder. 
+This repository will also be assumed to be installed in the `~/vyos` folder but it could be installed elsewhere.
 
-You could, for example, create one folder per change PR you want to work on (perhaps calling the folder by the name of the phabricator task you are working on, but this document will assume the `~/VyOS` folder is the folder intended to contain the cloned repositories.
+You could, for example, create one folder per change PR you want to work on (perhaps calling the folder by the name of the phabricator task you are working on, but this document will assume the `~/vyos` folder is the folder intended to contain the cloned repositories.
 
 # Local setup
 
@@ -30,23 +30,33 @@ brew install rsync
 
 Making the VyOS folder
 ```
-mkdir ~/VyOS
+mkdir -p ~/vyos/1x
 ```
 
 Installing from github
 ```
-cd ~/VyOS
-git clone git@github.com:thomas-mangin/vyos-extra vyos-extra
+cd ~/vyos
+git clone git@github.com:thomas-mangin/vyos-extra extra
 ```
 
 adding the scripts to your path
 
-All the users, IPs and ports used to connect to the VM can be configured using the variables in `etc`.
+All the users, IPs and ports used to connect to the VM can be configured using the file in
+the `etc` folder. Each file contain the value of the variable with the name of the file.
+
+it is also possible to use environment variable, prepending the name with "VYOS_",
+and using the same name in upper case. For example (export VYOS_BUILD_HOST=127.0.0.1)
+
 The `bin` folder of this repository could/should be added to the PATH.
 
 ```
 export path='$PATH'
-echo "export PATH=$path:$HOME/Vyos/vyos-extra/bin" >> ~/.profile
+echo "export PATH=$path:$HOME/vyos/extra/bin" >> ~/.profile
+```
+
+Some helpers aliases are present in the shell folder and can be enabled using for example:
+``` 
+source ~/vyos/extra/shell/bashrc
 ```
 
 You can also setup your local `~/.ssh/config` file to include the VM hosts, making sure the ssh key does exists
@@ -71,17 +81,23 @@ It will allow you to ssh using the name `vyos-build` and `vyos-router`
 
 Finally, clone the vyos-1x project
 ```
-cd ~/VyOS
+cd ~/vyos/1x
 git clone git@github.com:vyos/vyos-1x vyos-1x
 ```
 
+The shell scripts provided can the use this repository to make copies of it and auto-create branches for you.
+
 # vyos-build VM
+
+Should you run Linux and want to use your local machine for the build system, instead of running a VM.
+You can set the build_host to 127.0.0.1/localhost and the port to 22. The tools will then not call
+ssh but run the commands on the local machine.
 
 ## Base Install
 
 The machine is built using Debian 10, as it is the same based OS vyos is using.
 ```
-cd ~/VyOS
+cd ~/vyos
 curl https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.3.0-amd64-netinst.iso -o debian-10.3.0-amd64-netinst.iso
 ```
 
@@ -163,7 +179,7 @@ reboot
 ### Mount the local vyos development folder to the VM
 
 On the network interface, Host port 127.0.0.1 port 2200 to your Guest VM IP port 22
-Also create a "Shared Folder" called VyOS mapping ~/Vyos to /vyos
+Also create a "Shared Folder" called VyOS mapping ~/vyos (on your machine) to /vyos (on the VM)
 
 Then have the system automount the folder
 ```
