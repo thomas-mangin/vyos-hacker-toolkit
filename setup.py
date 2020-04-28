@@ -23,3 +23,5 @@ setuptools.setup(
 )
 
 os.system(f'{FOLDER}/sbin/gendata --delete')
+os.system(f'rm -rf {FOLDER}/build')
+os.system(f'rm -rf {FOLDER}/lib/vyos_extra.egg-info')
