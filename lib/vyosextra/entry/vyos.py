@@ -24,9 +24,24 @@ optional arguments:
 """)
 	sys.exit(0)
 
-def add_help():
-	if len(sys.argv) == 1:
+
+def make_sys(extract=0, help=True):
+	prog = sys.argv[0]
+	cmd = sys.argv[1]
+	sys.argv = sys.argv[1:]
+
+	if extract and len(sys.argv) >= extract:
+		extracted = sys.argv[:extract]
+		sys.argv = sys.argv[extract:]
+	else:
+		extracted = []
+
+	sys.argv = [f'{prog}-{cmd}'] + sys.argv[1:]
+
+	if help and len(sys.argv) == 1:
 		sys.argv.append('-h')
+
+	return extracted
 
 def vyos():
 	usage = len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help', 'help')
@@ -35,29 +50,35 @@ def vyos():
 		help()
 
 	command = sys.argv[1]
-	sys.argv = [f'{sys.argv[0]}-{command}'] + sys.argv[2:]
 
 	if command == 'update':
-		add_help()
+		make_sys()
 		update()
 		return
 
 	if command == 'dpkg':
-		add_help()
+		make_sys()
 		dpkg()
 		return
 
+	if command in ('make',):
+		target = make_sys(extract=1, help=False)
+		if target:
+			make(target[0])
+			return
+
 	if command in ('iso',):
-		add_help()
+		make_sys()
 		make(command)
 		return
 
 	if command == 'download':
+		make_sys(help=False)
 		download()
 		return
 
 	if command == 'test':
-		add_help()
+		make_sys()
 		test()
 		return
 

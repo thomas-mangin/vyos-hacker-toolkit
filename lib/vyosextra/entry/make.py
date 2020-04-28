@@ -39,6 +39,7 @@ def make(what='iso'):
 		('vyatta-cfg-system', args.cfg),
 		('vyatta-op', args.op)
 	}
+	done = False
 
 	if args.setup:
 		cmds.setup_router()
