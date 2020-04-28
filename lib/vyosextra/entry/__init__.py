@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from vyosextra.entry.download import download
 from vyosextra.entry.update import update
 from vyosextra.entry.dpkg import dpkg
 from vyosextra.entry.make import make

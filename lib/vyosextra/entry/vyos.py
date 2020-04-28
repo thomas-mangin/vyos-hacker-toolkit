@@ -3,6 +3,7 @@
 
 import sys
 
+from vyosextra.entry.download import download
 from vyosextra.entry.update import update
 from vyosextra.entry.dpkg import dpkg
 from vyosextra.entry.make import make
@@ -23,6 +24,9 @@ optional arguments:
 """)
 	sys.exit(0)
 
+def add_help():
+	if len(sys.argv) == 1:
+		sys.argv.append('-h')
 
 def vyos():
 	usage = len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help', 'help')
@@ -33,22 +37,27 @@ def vyos():
 	command = sys.argv[1]
 	sys.argv = [f'{sys.argv[0]}-{command}'] + sys.argv[2:]
 
-	if len(sys.argv) == 1:
-		sys.argv.append('-h')
-
 	if command == 'update':
+		add_help()
 		update()
 		return
 
 	if command == 'dpkg':
+		add_help()
 		dpkg()
 		return
 
 	if command in ('iso',):
+		add_help()
 		make(command)
 		return
 
+	if command == 'download':
+		download()
+		return
+
 	if command == 'test':
+		add_help()
 		test()
 		return
 
