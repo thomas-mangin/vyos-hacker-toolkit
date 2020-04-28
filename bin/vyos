@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+"""
+__main__.py
+
+Created by Thomas Mangin on 2010-01-15.
+Copyright (c) 2009-2017 Exa Networks. All rights reserved.
+License: 3-clause BSD. (See the COPYRIGHT file)
+"""
+
+import os
+import sys
+
+FOLDER = os.path.dirname(os.path.realpath(__file__))
+IMPORT = os.path.abspath(os.path.join(FOLDER, "..", "lib"))
+if os.path.exists(IMPORT):
+	sys.path.append(IMPORT)
+
+from vyosextra import entry
+
+
+def help():
+	print(f"""\
+usage: vyos [-h] COMMAND [COMMAND options]
+
+helper functions for vyos, OPTIONS are:
+  update                update a VyOS router with vyos-1x
+  dpkg                  build a VyOS package (vyos-1x, ...)
+  iso                   build a VyOS iso image
+  test                  test a VyOS router
+
+optional arguments:
+  -h, --help            show this help message and exit
+""")
+	sys.exit(0)
+
+def main():
+	usage = len(sys.argv) == 2 and sys.argv[1] in ('-h', '--help', 'help')
+
+	if usage:
+		help()
+
+	command = sys.argv[1]
+	sys.argv = [f'{sys.argv[0]}-{command}'] +sys.argv[2:]
+
+	if len(sys.argv) == 1:
+		sys.argv.append('-h')
+
+	if command == 'update':
+		entry.update()
+		return
+
+	if command == 'dpkg':
+		entry.dpkg()
+		return
+
+	if command in ('iso',):
+		entry.make(command)
+		return
+
+	if command == 'test':
+		entry.test()
+		return
+
+	help()
+
+if __name__ == '__main__':
+	main()
+

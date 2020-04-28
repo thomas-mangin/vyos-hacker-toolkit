@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-import os
-import sys
 import argparse
-
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
 from vyosextra import log
 from vyosextra import cmd
@@ -14,7 +10,7 @@ from vyosextra import repository
 HOME = '/home/vyos'
 LOCATION = 'compiled'
 
-if __name__ == '__main__':
+def dpkg():
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
 	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
@@ -49,3 +45,7 @@ if __name__ == '__main__':
 			cmds.install(LOCATION, package, option)
 
 	log.completed(args.debug, 'package(s) installed')
+
+
+if __name__ == '__main__':
+	dpkg()

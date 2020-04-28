@@ -2,11 +2,8 @@
 
 # based on https://github.com/sever-sever/vyos-checks/blob/master/main.yml
 
-import os
 import sys
 import argparse
-
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", "lib"))
 
 from vyosextra import log
 from vyosextra import cmd
@@ -305,7 +302,7 @@ def failed(command, out, err, reason=''):
 	print(out)
 	print(err)
 
-if __name__ == '__main__':
+def test():
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
@@ -340,3 +337,7 @@ if __name__ == '__main__':
 				continue
 		
 		passed(command)
+
+
+if __name__ == '__main__':
+	test()
