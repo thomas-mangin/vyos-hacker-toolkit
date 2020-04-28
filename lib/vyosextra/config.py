@@ -2,15 +2,15 @@ import os
 import sys
 import glob
 
+import configparser
+
 class Config(object):
 	default = {
-		'build_folder':    '/vyos',
 		'build_host':      '127.0.0.1',
 		'build_port':      '22',
 		'build_repo':      '$HOME/vyos/vyos-build',
 		'build_user':      'vyos',
-		'email':           'no-one@no-domain.com',
-		'local_folder':    '$HOME/VyOS',
+		'local_email':     'no-one@no-domain.com',
 		'router_host':     '127.0.0.2',
 		'router_port':     '22',
 		'router_user':     'vyos',
@@ -25,13 +25,11 @@ class Config(object):
 
 
 	description = {
-		'build_folder':    '...',
 		'build_host':      'the build server hostname or IP',
 		'build_port':      'the build server ssh port',
 		'build_repo':      'location of the vyos-build repository',
 		'build_user':      'the build server ssh user',
-		'email':           'no-one@no-domain.com',
-		'local_folder':    '...',
+		'local_email':     'the email address to use for the VySO ISO',
 		'router_host':     'the target vyos router hostname or IP',
 		'router_port':     'the target vyos router ssh port',
 		'router_user':     'the target vyos router ssh user',
@@ -51,6 +49,9 @@ class Config(object):
 		self.etc = os.path.join(wd, '..', 'etc')
 		self.data = os.path.join(wd, '..', 'data')
 
+		config = configparser.ConfigParser()
+		config.read(self.etc + '/vyos.extra')
+
 		for option in self.default:
 			env_name = f'VYOS_{option.upper()}'
 			env_value = os.environ.get(env_name, '')
@@ -58,12 +59,9 @@ class Config(object):
 				self.set(option, env_value, home)
 				continue
 
-			file_name = os.path.join(self.etc, option)
-			if not os.path.exists(file_name):
-				continue
-
-			with open(file_name) as f:
-				self.set(option, f.readline(), home)
+			section, key = option.split('_')
+			value = config.get(section, key, fallback=self.default[option])
+			self.set(option, value, home)
 
 	def set (self, option, value, home):
 		value = value.strip().replace('$HOME', home)

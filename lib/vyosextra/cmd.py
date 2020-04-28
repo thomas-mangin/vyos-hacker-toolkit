@@ -200,7 +200,7 @@ class Command(Run):
 		)
 
 	def configure(self, location,  extra, name):
-		email = self.config.values['email']
+		email = self.config.values['local_email']
 
 		date = datetime.now().strftime('%Y%m%d%H%M')
 		name = name if name else 'rolling'
