@@ -1,58 +1,74 @@
-# Setup on Mac
+"vyos-extra" is my toolset to build and test VyOS. It is shared with the hope it can make building VyOS easier for all
 
-It is not possible to compile VyOS on MacOS, therefore a VM environement need to be used.
-Ideally an host running Linux will be used, but if it is not possible, Virtualbox can be used.
+# Tools
 
-This solution was initially designed with VirtualBox, but due to the lack of support for KVM, a genuine Linux server or VM is recommended as otherwise you will not be able to test the VyOS ISO you are generating.
+There are:
+| Command     | Description |
+| ---         | --- |
+| vyos update | copy the most common changed files from vyos-1x to the router
+| vyos dpkg   | build and install the package on a router
+| vyos iso    | build a vyos rolling ISO (and possibly test it)
+| vyos test   | perform some test on the VM
 
-The development environment will be composed of:
+Only a few files are copied by `vyos update`, make sure all your changes are copied across.
+
+It relies on a working linux build maching (locally or accessed via SSH), and installed VyOS router to test changes.
+
+# Setup
+
+The tools were created as it is not possible to compile VyOS directly MacOS (even using Docker), therefore a VM environement neededs to be used.
+Any VM platform can be used, including local KVM.
+The tools can also use a native Linux desktop/server, but if it is not possible.
+
+This solution was initially designed with VirtualBox, but due to the lack of support for KVM a genuine Linux server or VM is recommended as otherwise you will not be able to test the VyOS ISO you are generating. It is however be possible to build VyOS on VirtualBox.
+
+This document explains how to setup a development environment composed of:
   - A build VM (vyos-build) which will be used to build debian packages and iso
-  - A test VM (vyos-router) which will be used to check the validity of the code
-  - A set of tools to help the transfer the build image from one to the other (this repository)
+  - A router VM (vyos-router) which will be used to check the validity of the code
+  - And this repository
 
-The different vyos repositories will be placed in a code folder located in ~/Vyos, which will be shared with the build machine on /vyos
 
-## Expectations
+# Expectations
 
-For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/vyos` folder. 
-This repository will also be assumed to be installed in the `~/vyos` folder but it could be installed elsewhere.
+For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/vyos` folder, but the tools could be configured to be installed elsewhere. The folder `~/vyos/1x` will contain the cloned repositories, one folder per clone.
 
-You could, for example, create one folder per change PR you want to work on (perhaps calling the folder by the name of the phabricator task you are working on, but this document will assume the `~/vyos` folder is the folder intended to contain the cloned repositories.
+The expected workflow include the creation of one repository per Phabricator entry you want to work on (perhaps calling the folder by the name of the phabricator task you are working on.
+
+It is expected that you will fork the vyos-1x repository under your own github account and use this repository for development. It is suggested to add a reference to the original repository with the name "upstream" using `git remote add`.
+
 
 # Local setup
 
-We assume you have git and rsync already installed on your system.
+For performance rsync is used to transfer files between hosts.
+
 On mac, they can be installed with [HomeBrew](https://brew.sh))
 ```
 brew install git
 brew install rsync
 ```
 
-Making the VyOS folder
+Making the VyOS folders
 ```
 mkdir -p ~/vyos/1x
 ```
 
-Installing from github
+Installing this repository from github
 ```
-cd ~/vyos
+cd ~/vyos/
 git clone git@github.com:thomas-mangin/vyos-extra extra
 ```
 
-adding the scripts to your path
+The `bin` folder of this repository could/should be added to the PATH, it can be done by hand:
+```
+source ~/vyos/extra/shell/bashrc
+```
+and adding this file at the end of `~/.profile`
 
 All the users, IPs and ports used to connect to the VM can be configured using the file in
 the `etc` folder. Each file contain the value of the variable with the name of the file.
 
 it is also possible to use environment variable, prepending the name with "VYOS_",
 and using the same name in upper case. For example (export VYOS_BUILD_HOST=127.0.0.1)
-
-The `bin` folder of this repository could/should be added to the PATH.
-
-```
-export path='$PATH'
-echo "export PATH=$path:$HOME/vyos/extra/bin" >> ~/.profile
-```
 
 Some helpers aliases are present in the shell folder and can be enabled using for example:
 ``` 
@@ -203,13 +219,3 @@ set system login user vyos authentication public-keys user@email key 'SSH-KEY-AS
 commit
 save
 ```
-
-# Tools
-
-There are:
- * vyos-iso <repo-name>, build and test the iso
- * vyos-dpkg <repo-name>, build and install the package on the router
- * vyos-update, copy the most common changed files from vyos-1x to the router (faster than making a debian package)
- * vyos-test, install smoketest on the VM and run it
-
-Only a few files are copied by vyos-update, make sure all your changes are copied across.
