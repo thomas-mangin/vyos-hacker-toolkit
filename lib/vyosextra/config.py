@@ -76,8 +76,17 @@ class Config(object):
 		self.values[option] = value
 
 	def readlines(self, name):
-		with open(os.path.join(self.data, name)) as f:
-			return f.readlines()
+		# This is a trick to not rely on the data folder when
+		# the application is installed with pip
+		try:
+			with open(os.path.join(self.data, name)) as f:
+				return f.readlines()
+		except Exception as OErr:
+			try:
+				from vyosextra.data import data
+				return data[name].split('\n')
+			except ImportError:
+				raise OErr
 
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
