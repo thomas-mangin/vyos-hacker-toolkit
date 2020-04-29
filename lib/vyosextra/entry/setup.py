@@ -47,7 +47,7 @@ class Command(cmd.Command):
 		now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		self.ssh(where, f"sudo date -s '{now}'")
 
-		packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io'
+		packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
 		self.ssh(where, f'sudo apt-get --yes update')
 		self.ssh(where, f'sudo apt-get --yes upgrade')
 		self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
