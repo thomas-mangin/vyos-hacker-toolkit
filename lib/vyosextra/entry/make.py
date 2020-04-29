@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+from datetime import datetime
 
 from vyosextra import log
 from vyosextra import cmd
