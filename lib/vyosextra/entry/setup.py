@@ -83,8 +83,7 @@ def setup():
 	elif role == 'build':
 		cmds.setup_build(args.machine)
 	else:
-		print('the machine "{args.machine}" is not correctly setup')
-
+		log.completed(args.debug, 'the machine "{args.machine}" is not correctly setup')
 
 if __name__ == '__main__':
 	setup()

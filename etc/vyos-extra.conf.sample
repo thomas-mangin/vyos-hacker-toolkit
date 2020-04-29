@@ -1,0 +1,28 @@
+# [name to give to the machine]
+# role: either router or build
+# host: IP or hostname to ssh
+# port: port to ssh to
+# user: user to ssh as
+# file: SSH Identity file
+# repo: if role is build, where is the vyos-build repository located
+
+# [global]
+# email: email to use when building the VyOS image
+
+[build]
+role = build
+host = 127.0.0.1
+port = 22
+user = vyos
+file = 
+repo = $HOME/vyos/vyos-build
+
+[router]
+role = router
+host = 127.0.0.1
+port = 2200
+file = 
+user = vyos
+
+[global]
+email = nobody@nowhere

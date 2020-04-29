@@ -11,11 +11,12 @@ class Config(object):
             'email': 'no-one@no-domain.com',
 		},
 		'machine': {
+			'role': 'router',
 			'host': '127.0.0.1',
 			'port': '22',
-			'repo': '$HOME/vyos/vyos-build',
 			'user': 'vyos',
-			'role': 'router',
+			'file': '',
+			'repo': '$HOME/vyos/vyos-build',
 		},
 	}
 
@@ -115,12 +116,16 @@ class Config(object):
 		user = self.values[where]['user']
 		port = self.values[where]['port']
 		role = self.values[where]['role']
+		file = self.values[where]['file']
+
+		if file:
+			extra += f' -i {file}'
 
 		# optimisation in case we installed / are installing locally
 		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return command
 		command = command.replace('$', '\$')
-		return f'ssh {extra} -p {port} {user}@{host} "{command}"'
+		return f'ssh {extra} -p {port} {user}@{host} {command}'
 
 	def scp(self, where, src, dst):
 		host = self.values[where]['host']

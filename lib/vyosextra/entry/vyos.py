@@ -9,18 +9,20 @@ from vyosextra.entry.dpkg import dpkg
 from vyosextra.entry.make import make
 from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
+from vyosextra.entry.ssh import ssh
 
 def help():
 	print(f"""\
 usage: vyos [-h] COMMAND [COMMAND options]
 
 helper functions for vyos, OPTIONS are:
-  setup                 setup a VyOS machine for use
-  update                update a VyOS router with vyos-1x
+  download              download the lastest VyOS image
   dpkg                  build a VyOS package (vyos-1x, ...)
   iso                   build a VyOS iso image
-  download              download the lastest VyOS image
+  setup                 setup a VyOS machine for use
+  ssh                   ssh to a server
   test                  test a VyOS router
+  update                update a VyOS router with vyos-1x
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -81,6 +83,11 @@ def vyos():
 	if command == 'setup':
 		make_sys()
 		setup()
+		return
+
+	if command == 'ssh':
+		make_sys()
+		ssh()
 		return
 
 	if command == 'test':

@@ -6,5 +6,6 @@ from vyosextra.entry.dpkg import dpkg
 from vyosextra.entry.make import make
 from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
+from vyosextra.entry.ssh import ssh
 
 from vyosextra.entry.vyos import vyos
