@@ -1,14 +1,25 @@
 import os
 import sys
 import glob
-
 import configparser
+
+from os.path import join
+from os.path import abspath
+
+
+
+def absolute_path(fname):
+	for home in ('~/','$HOME/'):
+		if fname.startswith(home):
+			return abspath(join(os.getenv("HOME"),fname[len(home):]))
+	return abspath(fname)
 
 
 class Config(object):
 	__default = {
 		'global': {
             'email': 'no-one@no-domain.com',
+			'store': '/tmp',
 		},
 		'machine': {
 			'role': 'router',
@@ -23,6 +34,7 @@ class Config(object):
 	conversion = {
 		'host':      lambda host: host.lower(),
 		'port':      lambda port: int(port),
+		'store':     absolute_path,
 	}
 
 	__instance = None
@@ -35,11 +47,11 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
-		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
-		self.etc = os.path.join(wd, '..', 'etc')
-		self.data = os.path.join(wd, '..', 'data')
+		wd = abspath(os.path.dirname(sys.argv[0]))
+		self.etc = join(wd, '..', 'etc')
+		self.data = join(wd, '..', 'data')
 
-		self.values = configparser.ConfigParser()
+		self.values = {}
 
 		self._read_config()
 		self._parse_env()
@@ -54,13 +66,20 @@ class Config(object):
 		return default[key]
 
 	def _read_config(self):
+		config = configparser.ConfigParser()
+
 		fname = self.etc + '/vyos-extra.conf'
 		if not os.path.exists(fname):
 			self.etc = '/etc'
 			fname = self.etc + '/vyos-extra.conf'
 
-		if os.path.exists(fname):
-			self.values.read(fname)
+		if not os.path.exists(fname):
+			return
+
+		config.read(fname)
+		for section in config.sections():
+			for key in config[section]:
+				self.set(section, key, config[section][key])
 
 	def _parse_env(self):
 		for env_name in os.environ:
@@ -80,13 +99,16 @@ class Config(object):
 			self.set(option, value)
 
 	def _set_default(self):
-		for name in self.values.sections():
+		sections = list(self.values)
+		sections.append('global')
+
+		for name in set(sections):
 			section = self.values[name]
 			default = self._default(name)
 
 			for key in default:
 				if key not in section:
-					self.set(name,key,self._default(name,key))
+					self.set(name, key, self._default(name, key))
 
 	def get(self, section, key):
 		return self.values.setdefault(section,{}).get(key,'')

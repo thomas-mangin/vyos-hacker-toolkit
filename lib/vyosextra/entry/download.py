@@ -8,6 +8,7 @@ import argparse
 import datetime
 import urllib.request
 
+from vyosextra.config import Config
 
 vyos_rolling = '(vyos-1.3-rolling-[0-9]+-amd64.iso)'
 
@@ -52,6 +53,9 @@ def makeup(filename):
 
 	if not location:
 		location = name
+
+	if not location.startswith('/'):
+		location = os.path.join(Config().get('global', 'store'), location)
 
 	url = f'https://downloads.vyos.io/rolling/current/amd64/{name}'
 
