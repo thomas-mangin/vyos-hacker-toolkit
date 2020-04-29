@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import subprocess
 import argparse
 
 from vyosextra import log
@@ -29,7 +30,8 @@ def ssh():
 	if args.show:
 		return
 
-	os.system(connect)
+	fullssh = subprocess.check_output(['which','ssh']).decode().strip()
+	os.execvp(fullssh,connect.split())
 	log.completed(args.debug, 'session terminated')
 
 

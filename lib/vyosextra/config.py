@@ -18,7 +18,7 @@ def absolute_path(fname):
 class Config(object):
 	__default = {
 		'global': {
-            'email': 'no-one@no-domain.com',
+			'email': 'no-one@no-domain.com',
 			'store': '/tmp',
 		},
 		'machine': {
@@ -34,6 +34,7 @@ class Config(object):
 	conversion = {
 		'host':      lambda host: host.lower(),
 		'port':      lambda port: int(port),
+		'file':      absolute_path,
 		'store':     absolute_path,
 	}
 
