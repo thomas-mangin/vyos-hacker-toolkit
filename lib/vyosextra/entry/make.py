@@ -51,8 +51,10 @@ class Command(cmd.Command):
 
 
 
-def make(what='iso'):
+def make(target=''):
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	if not target:
+		parser.add_argument("target", help='make target')
 	parser.add_argument("machine", help='machine on which the action will be performed')
 
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
@@ -71,6 +73,9 @@ def make(what='iso'):
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
+
+	if not target:
+		target = args.target
 
 	cmds = Command(args.show, args.verbose)
 
@@ -95,9 +100,9 @@ def make(what='iso'):
 	if done or args.force:
 		cmds.configure(args.machine, LOCATION, args.extra, args.name)
 		cmds.backdoor(args.machine, args.backdoor)
-		cmds.make(args.machine, what)
+		cmds.make(args.machine, target)
 
-	if what == 'iso' and args.test:
+	if target == 'iso' and args.test:
 		cmds.make(args.machine, 'test')
 
 	log.completed(args.debug,'iso built and tested')

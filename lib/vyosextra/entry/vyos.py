@@ -65,10 +65,8 @@ def vyos():
 		return
 
 	if command in ('make',):
-		target = make_sys(extract=1, help=False)
-		if target:
-			make(target[0])
-			return
+		target = make_sys()
+		make()
 
 	if command in ('iso',):
 		make_sys()
