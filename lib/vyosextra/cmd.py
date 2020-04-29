@@ -9,10 +9,11 @@ from .config import Config
 from .repository import InRepo
 from . import log
 
-DRY = False
-VERBOSE = False
 
 class Run(object):
+	dry = False
+	verbose = False
+
 	@staticmethod
 	def _unprefix(s, prefix='Welcome to VyOS'):
 		return '\n'.join(_ for _ in s.split('\n') if _ and _ != prefix)
@@ -25,9 +26,9 @@ class Run(object):
 		for message in (communicate[0], communicate[1]):
 			if not message:
 				continue
-			string = cls._unprefix(message.decode().strip())
+			string = cls._unprefix(message.decode(errors='ignore').strip())
 			log.answer(string)
-			if string and VERBOSE:
+			if string and cls.verbose:
 				print(string)
 
 		if err:
@@ -39,9 +40,9 @@ class Run(object):
 		command = f'{cmd}'
 		log.command(command)
 
-		if DRY or VERBOSE:
+		if cls.dry or cls.verbose:
 			print(command)
-		if DRY:
+		if cls.dry:
 			return ''
 
 		popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
@@ -68,9 +69,9 @@ class Run(object):
 	def chain(cls, cmd1, cmd2, ignore=''):
 		command = f'{cmd1} | {cmd2}'
 		log.command(command)
-		if DRY or VERBOSE:
+		if cls.dry or cls.verbose:
 			print(command)
-		if DRY:
+		if cls.dry:
 			return ''
 
 		popen1 = Popen(cmd1, stdout=PIPE, stderr=DEVNULL, shell=True)
@@ -92,8 +93,10 @@ class Command(Run):
 				('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 			]
 
-	def __init__(self, home='/home/vyos'):
-		self.config = Config(home)
+	def __init__(self, dry=False, verbose=False):
+		Run.dry = dry
+		Run.verbose = verbose
+		self.config = Config()
 
 	def ssh(self, where, cmd, ignore=''):
 		return self.run(self.config.ssh(where, cmd), ignore)
@@ -101,124 +104,26 @@ class Command(Run):
 	def scp(self, where, src, dst):
 		return self.run(self.config.scp(where, src, dst))
 
-	def update_build(self):
-		build_repo = self.config.values['build_repo']
-		self.ssh('build', f'cd {build_repo} && git pull',
+	def update_build(self, where):
+		build_repo = self.config.values[where]['repo']
+		self.ssh(where, f'cd {build_repo} && git pull',
 			'Already up to date.'
 		)
 
-	def build(self, location, repo, folder):
-		build_repo = self.config.values['build_repo']
-		self.ssh('build', f'mkdir -p {build_repo}/{location}/{repo}')
+	def build(self, where, location, vyos_repo, folder):
+		build_repo = self.config.values[where]['repo']
+		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
 
 		with InRepo(folder) as debian:
-			package = debian.package(repo)
+			package = debian.package(vyos_repo)
 			if not package:
-				log.failed(f'could not find {repo} package version')
-			elif not DRY:
+				log.failed(f'could not find {vyos_repo} package version')
+			elif not self.dry:
 				log.report(f'building package {package}')
 
-			self.run(self.config.rsync('.', f'{build_repo}/{location}/{repo}'))
-			self.ssh('build', f'rm {build_repo}/{location}/{package} || true')
-			self.ssh('build', self.config.docker(f'{location}/{repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+			self.run(self.config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
+			self.ssh(where, f'rm {build_repo}/{location}/{package} || true')
+			self.ssh(where, self.config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
 		return True
 
-	def install(self, location, repo, folder):
-		build_repo=self.config.values['build_repo']
-
-		with InRepo(folder) as debian:
-			package = debian.package(repo)
-			if not package:
-				log.failed(f'could not find {repo} package name')
-			if not DRY:
-				log.report(f'installing {package}')
-
-		self.chain(
-			self.config.ssh('build', f'cat {build_repo}/{location}/{package}'),
-			self.config.ssh('router', f'cat - > {package}')
-		)
-		self.ssh('router', f'sudo dpkg -i --force-all {package}')
-		self.ssh('router', f'rm {package}')
-		return True
-
-	def setup_router(self):
-		# on my local VM which goes to sleep when I close my laptop
-		# time can easily get out of sync, which prevent apt to work
-		now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		self.ssh('router', f"sudo date -s '{now}'")
-
-		self.ssh('router', f'sudo chgrp vyattacfg /etc/apt/sources.list.d')
-		self.ssh('router', f'sudo chmod g+rwx /etc/apt/sources.list.d')
-
-		data = ''.join(self.config.readlines('source.list'))
-		self.chain(
-			self.config.printf(data),
-			self.config.ssh('router', 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
-		)
-
-		packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
-		self.ssh('router', f'sudo apt-get --yes update')
-		# self.ssh('router', f'sudo apt-get --yes upgrade')))
-		self.ssh('router', f'sudo apt-get --yes install {packages}')
-
-		self.ssh('router', f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')
-		self.ssh('router', f'ln -sf /usr/libexec/vyos/conf_mode conf')
-		self.ssh('router', f'ln -sf /usr/libexec/vyos/op_mode op')
-
-		for src, dst in self.move:
-			self.ssh('router', f'sudo chgrp -R vyattacfg {dst}')
-			self.ssh('router', f'sudo chmod -R g+rxw {dst}')
-
-		self.ssh('router', f'touch /tmp/vyos.ifconfig.debug')
-		self.ssh('router', f'touch /tmp/vyos.developer.debug')
-		self.ssh('router', f'touch /tmp/vyos.cmd.debug')
-		self.ssh('router', f'touch /tmp/vyos.log.debug')
-
-		return True
-
-	def copy(self, location, repo, folder):
-		with InRepo(folder) as debian:
-			for src, dst in self.move:
-				self.ssh('router', f'sudo chgrp -R vyattacfg {dst}')
-				self.ssh('router', f'sudo chmod -R g+rxw {dst}')
-				self.scp('router', src, dst)
-
-		return True
-
-	def backdoor(self, password):
-		build_repo=self.config.values['build_repo']
-
-		lines = self.config.readlines('vyos-iso-backdoor')
-		location = lines.pop(0).lstrip().lstrip('#').strip()
-
-		if not password:
-			self.ssh("build", f"rm {build_repo}/{location} || true")
-			return
-
-		data = ''.join(lines).format(user='admin', password=password)
-		self.chain(
-			self.config.printf(data),
-			self.config.ssh('build', f'cat - > {build_repo}/{location}')
-		)
-
-	def configure(self, location,  extra, name):
-		email = self.config.values['local_email']
-
-		date = datetime.now().strftime('%Y%m%d%H%M')
-		name = name if name else 'rolling'
-		version = f'1.3-{name}-{date}'
-
-		configure = f"--build-by {email}"
-		configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
-		configure += f" --version {version}"
-		configure += f" --build-type release"
-		if extra:
-			configure += f"  --custom-package '{extra}'"
-
-		self.ssh('build', self.config.docker('', 'pwd'))
-		self.ssh('build', self.config.docker('', f'./configure {configure}'))
-
-
-	def make(self, target):
-		self.ssh('build', self.config.docker('', f'sudo make {target}'))

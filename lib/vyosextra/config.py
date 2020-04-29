@@ -4,76 +4,95 @@ import glob
 
 import configparser
 
+
 class Config(object):
-	default = {
-		'build_host':      '127.0.0.1',
-		'build_port':      '22',
-		'build_repo':      '$HOME/vyos/vyos-build',
-		'build_user':      'vyos',
-		'local_email':     'no-one@no-domain.com',
-		'router_host':     '127.0.0.2',
-		'router_port':     '22',
-		'router_user':     'vyos',
+	__default = {
+		'global': {
+            'email': 'no-one@no-domain.com',
+		},
+		'machine': {
+			'host': '127.0.0.1',
+			'port': '22',
+			'repo': '$HOME/vyos/vyos-build',
+			'user': 'vyos',
+			'role': 'router',
+		},
 	}
 
 	conversion = {
-		'build_host':      lambda host: host.lower(),
-		'build_port':      lambda port: int(port),
-		'router_host':     lambda host: host.lower(),
-		'router_port':     lambda port: int(port),
-	}
-
-
-	description = {
-		'build_host':      'the build server hostname or IP',
-		'build_port':      'the build server ssh port',
-		'build_repo':      'location of the vyos-build repository',
-		'build_user':      'the build server ssh user',
-		'local_email':     'the email address to use for the VySO ISO',
-		'router_host':     'the target vyos router hostname or IP',
-		'router_port':     'the target vyos router ssh port',
-		'router_user':     'the target vyos router ssh user',
+		'host':      lambda host: host.lower(),
+		'port':      lambda port: int(port),
 	}
 
 	__instance = None
 	values = {}
 
 	# This class is a singleton
-	def __new__(cls, home):
+	def __new__(cls):
 		if not cls.__instance:
 			cls.__instance = object.__new__(cls)
 		return cls.__instance
 
-	def __init__(self, home):
+	def __init__(self):
 		wd = os.path.abspath(os.path.dirname(sys.argv[0]))
 		self.etc = os.path.join(wd, '..', 'etc')
 		self.data = os.path.join(wd, '..', 'data')
 
-		config = configparser.ConfigParser()
+		self.values = configparser.ConfigParser()
 
+		self._read_config()
+		self._parse_env()
+		self._set_default()
+
+	def _default(self, section, key=None):
+		default = self.__default.get(section, {})
+		if not default:
+			default = self.__default['machine']
+		if key is None:
+			return default
+		return default[key]
+
+	def _read_config(self):
 		fname = self.etc + '/vyos-extra.conf'
 		if not os.path.exists(fname):
 			self.etc = '/etc'
 			fname = self.etc + '/vyos-extra.conf'
 
 		if os.path.exists(fname):
-			config.read(fname)
+			self.values.read(fname)
 
-		for option in self.default:
-			env_name = f'VYOS_{option.upper()}'
-			env_value = os.environ.get(env_name, '')
-			if env_value:
-				self.set(option, env_value, home)
+	def _parse_env(self):
+		for env_name in os.environ:
+			if not env_name.startswith('VYOS_'):
 				continue
 
-			section, key = option.split('_')
-			value = config.get(section, key, fallback=self.default[option])
-			self.set(option, value, home)
+			part = env_name.lower().split('_')
+			if len(part) != 3:
+				continue
+			section, key = part[1], part[2]
 
-	def set (self, option, value, home):
-		value = value.strip().replace('$HOME', home)
-		value = self.conversion.get(option, lambda _: _)(value)
-		self.values[option] = value
+			if env_value:
+				self.set(section, key, value)
+				continue
+
+			value = config.get(section, key, fallback=self._default(section,key))
+			self.set(option, value)
+
+	def _set_default(self):
+		for name in self.values.sections():
+			section = self.values[name]
+			default = self._default(name)
+
+			for key in default:
+				if key not in section:
+					self.set(name,key,self._default(name,key))
+
+	def get(self, section, key):
+		return self.values.setdefault(section,{}).get(key,'')
+
+	def set (self, section, key, value):
+		value = self.conversion.get(key, lambda _: _)(value)
+		self.values.setdefault(section,{})[key] = value
 
 	def readlines(self, name):
 		# This is a trick to not rely on the data folder when
@@ -91,30 +110,38 @@ class Config(object):
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
 
-	def ssh(self, where, command=''):
-		host = self.values[f'{where}_host']
-		user = self.values[f'{where}_user']
-		port = self.values[f'{where}_port']
-		if where == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
+	def ssh(self, where, command='', extra=''):
+		host = self.values[where]['host']
+		user = self.values[where]['user']
+		port = self.values[where]['port']
+		role = self.values[where]['role']
+
+		# optimisation in case we installed / are installing locally
+		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return command
-		return f'ssh -p {port} {user}@{host} "{command}"'
+		command = command.replace('$', '\$')
+		return f'ssh {extra} -p {port} {user}@{host} "{command}"'
 
 	def scp(self, where, src, dst):
-		host = self.values[f'{where}_host']
-		user = self.values[f'{where}_user']
-		port = self.values[f'{where}_port']
-		if where == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
+		host = self.values[where]['host']
+		user = self.values[where]['user']
+		port = self.values[where]['port']
+		role = self.values[where]['role']
+		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return command
+		command = command.replace('$', '\$')
 		return f'scp -r -P {port} {src} {user}@{host}:{dst}'
 
-	def docker(self, repo, command):
-		build = self.values['build_repo']
-		return f'docker run --rm --privileged -v {build}:{build} -w {build}/{repo} vyos/vyos-build:current {command}'
+	def docker(self, where, rwd, command):
+		# rwd: relative working directory
+		repo = self.values[where]['repo']
+		return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:current {command}'
 
-	def rsync(self, src, dest):
-		host = self.values['build_host']
+	def rsync(self, where, src, dest):
+		host = self.values[where]['host']
+		user = self.values[where]['user']
+		port = self.values[where]['port']
 		if host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return f'rsync -avh --delete {src} {dest}'
-		user = self.values['build_user']
-		port = self.values['build_port']
+		dest = dest.replace('$', '\$')
 		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'

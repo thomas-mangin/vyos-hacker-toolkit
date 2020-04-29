@@ -304,20 +304,20 @@ def failed(command, out, err, reason=''):
 
 def test():
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument("machine", help='machine on which the action will be performed')
+
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
-	cmd.DRY = args.show
-	cmd.VERBOSE = args.verbose
 
-	cmds = cmd.Command()
+	cmds = cmd.Command(dry=args.show, verbose=args.verbose)
 
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'
 		running(command)
-		out, err = cmds.communicate(cmds.config.ssh('router', show))
+		out, err = cmds.communicate(cmds.config.ssh(args.machine, show))
 
 		# some command reply on stderr ! sigh !
 

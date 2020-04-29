@@ -8,15 +8,18 @@ from vyosextra.entry.update import update
 from vyosextra.entry.dpkg import dpkg
 from vyosextra.entry.make import make
 from vyosextra.entry.test import test
+from vyosextra.entry.setup import setup
 
 def help():
 	print(f"""\
 usage: vyos [-h] COMMAND [COMMAND options]
 
 helper functions for vyos, OPTIONS are:
+  setup                 setup a VyOS machine for use
   update                update a VyOS router with vyos-1x
   dpkg                  build a VyOS package (vyos-1x, ...)
   iso                   build a VyOS iso image
+  download              download the lastest VyOS image
   test                  test a VyOS router
 
 optional arguments:
@@ -75,6 +78,11 @@ def vyos():
 	if command == 'download':
 		make_sys(help=False)
 		download()
+		return
+
+	if command == 'setup':
+		make_sys()
+		setup()
 		return
 
 	if command == 'test':

@@ -4,12 +4,25 @@ import argparse
 
 from vyosextra import log
 from vyosextra import cmd
+from vyosextra.repository import InRepo
 
-HOME = '/home/vyos'
+
 LOCATION = 'compiled'
+
+
+class Command(cmd.Command):
+	def copy(self, where, location, repo, folder):
+		with InRepo(folder) as debian:
+			for src, dst in self.move:
+				self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
+				self.ssh(where, f'sudo chmod -R g+rxw {dst}')
+				self.scp(where, src, dst)
+
 
 def update():
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument("machine", help='machine on which the action will be performed')
+
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
 	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
 	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
@@ -21,10 +34,8 @@ def update():
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
-	cmd.DRY = args.show
-	cmd.VERBOSE = args.verbose
 
-	cmds = cmd.Command(HOME)
+	cmds = Command(args.show, args.verbose)
 
 	todo = {
 		('vyos-1x', args.vyos),
@@ -33,12 +44,9 @@ def update():
 		('vyatta-op', args.op)
 	}
 
-	if args.setup:
-		cmds.setup_router()
-
 	for package, option in todo:
 		if option:
-			cmds.copy(LOCATION, package, option)
+			cmds.copy(args.machine, LOCATION, package, option)
 
 	log.completed(args.debug, 'router updated')
 	

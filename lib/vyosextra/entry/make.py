@@ -1,16 +1,60 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 
 from vyosextra import log
 from vyosextra import cmd
+from vyosextra import config
 
 
-HOME = '/home/vyos'
 LOCATION = 'packages'
+
+
+class Command(cmd.Command):
+	def make(self, where, target):
+		self.ssh(where, self.config.docker('', f'sudo make {target}'))
+
+	def backdoor(self, where, password):
+		build_repo = self.config.values[where]['repo']
+
+		lines = self.config.readlines('vyos-iso-backdoor')
+		location = lines.pop(0).lstrip().lstrip('#').strip()
+
+		if not password:
+			self.ssh("build", f"rm {build_repo}/{location} || true")
+			return
+
+		data = ''.join(lines).format(user='admin', password=password)
+		self.chain(
+			self.config.printf(data),
+			self.config.ssh(where, f'cat - > {build_repo}/{location}')
+		)
+
+	def configure(self, where, location,  extra, name):
+		email = self.config.values['global']['email']
+
+		date = datetime.now().strftime('%Y%m%d%H%M')
+		name = name if name else 'rolling'
+		version = f'1.3-{name}-{date}'
+
+		configure = f"--build-by {email}"
+		configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
+		configure += f" --version {version}"
+		configure += f" --build-type release"
+		if extra:
+			configure += f"  --custom-package '{extra}'"
+
+		self.ssh(where, self.config.docker('', 'pwd'))
+		self.ssh(where, self.config.docker('', f'./configure {configure}'))
+
+
+
 
 def make(what='iso'):
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
+	parser.add_argument("machine", help='machine on which the action will be performed')
+
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
 	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
 	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
@@ -22,16 +66,18 @@ def make(what='iso'):
 	parser.add_argument('-f', '--force', help="make without custom package", action='store_true')
 	parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
 
-	parser.add_argument('-7', '--setup', help='setup for use by this program', action='store_true')
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
 	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 	args = parser.parse_args()
-	cmd.DRY = args.show
-	cmd.VERBOSE = args.verbose
 
-	cmds = cmd.Command(HOME)
+	cmds = Command(args.show, args.verbose)
+
+	role = cmds.config.get(args.machine,'role')
+	if role != 'build':
+		sys.stderr.write(f'target "{args.machine}" is not a build machine\n')
+		sys.exit(1)
 
 	todo = {
 		('vyos-1x', args.vyos),
@@ -41,21 +87,18 @@ def make(what='iso'):
 	}
 	done = False
 
-	if args.setup:
-		cmds.setup_router()
-
-	cmds.update_build()
+	cmds.update_build(args.machine)
 	for package, option in todo:
 		if option:
-			done = cmds.build(LOCATION, package, option)
+			done = cmds.build(args.machine, LOCATION, package, option)
 
 	if done or args.force:
-		cmds.configure(LOCATION, args.extra, args.name)
-		cmds.backdoor(args.backdoor)
-		cmds.make(what)
+		cmds.configure(args.machine, LOCATION, args.extra, args.name)
+		cmds.backdoor(args.machine, args.backdoor)
+		cmds.make(args.machine, what)
 
 	if what == 'iso' and args.test:
-		cmds.make('test')
+		cmds.make(args.machine, 'test')
 
 	log.completed(args.debug,'iso built and tested')
 
