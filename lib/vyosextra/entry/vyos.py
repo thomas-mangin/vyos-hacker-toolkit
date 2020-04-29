@@ -10,6 +10,7 @@ from vyosextra.entry.make import make
 from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
 from vyosextra.entry.ssh import ssh
+from vyosextra.entry.upgrade import upgrade
 
 def help():
 	print(f"""\
@@ -59,6 +60,11 @@ def vyos():
 	if command == 'update':
 		make_sys()
 		update()
+		return
+
+	if command == 'upgrade':
+		make_sys()
+		upgrade()
 		return
 
 	if command == 'dpkg':

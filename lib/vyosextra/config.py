@@ -5,7 +5,7 @@ import configparser
 
 from os.path import join
 from os.path import abspath
-
+from os.path import dirname
 
 
 def absolute_path(fname):
@@ -47,9 +47,9 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
-		wd = abspath(os.path.dirname(sys.argv[0]))
-		self.etc = join(wd, '..', 'etc')
-		self.data = join(wd, '..', 'data')
+		root = abspath(join(dirname(__file__),'..','..'))
+		self.etc = join(root, 'etc')
+		self.data = join(root, 'data')
 
 		self.values = {}
 
@@ -70,7 +70,6 @@ class Config(object):
 
 		fname = self.etc + '/vyos-extra.conf'
 		if not os.path.exists(fname):
-			self.etc = '/etc'
 			fname = self.etc + '/vyos-extra.conf'
 
 		if not os.path.exists(fname):

@@ -67,13 +67,17 @@ def download():
 	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
 	args = parser.parse_args()
 
-	name, location, url = makeup(args.file)
+	code = fetch(args.file)
+	return code
+
+def fetch(image=''):
+	name, location, url = makeup(image)
 	print(f'downloading {url}')
 	print(f'to          {location}')
 
 	if os.path.exists(location):
 		print(f'already downloaded iso file {name}')
-		sys.exit(1)
+		return 1
 
 	# modified from:
 	# https://blog.shichao.io/2012/10/04/progress_speed_indicator_for_urlretrieve_in_python.html
@@ -94,6 +98,7 @@ def download():
 	try:
 		urllib.request.urlretrieve(url, location, hook)
 		print('\ndownload complete')
+		return 0
 	except KeyboardInterrupt:
 		print(f'\nremoving {location}')
 		os.remove(location)
@@ -102,7 +107,6 @@ def download():
 		print(f'\nremoving {location}')
 		os.remove(location)
 		sys.exit(3)
-
 
 if __name__ == '__main__':
 	download()
