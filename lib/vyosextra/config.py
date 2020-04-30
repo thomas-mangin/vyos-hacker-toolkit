@@ -140,8 +140,8 @@ class Config(object):
 		# optimisation in case we installed / are installing locally
 		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return command
-		command = command.replace('$', '\$')
 
+		command = command.replace('$', '\$')
 		if ' ' in command:
 			command = f'"{command}"'
 
@@ -153,8 +153,8 @@ class Config(object):
 		port = self.values[where]['port']
 		role = self.values[where]['role']
 		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
-			return command
-		command = command.replace('$', '\$')
+			return f'scp -r {src} {dst}'
+		dst = dst.replace('$', '\$')
 		return f'scp -r -P {port} {src} {user}@{host}:{dst}'
 
 	def docker(self, where, rwd, command):
