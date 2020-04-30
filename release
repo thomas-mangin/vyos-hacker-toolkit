@@ -10,6 +10,7 @@ import shutil
 import zipapp
 import argparse
 
+# To late for it .. but here as a reminder that it can be done
 os.environ['PYTHONDONTWRITEBYTECODE'] = ""
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
