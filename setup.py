@@ -7,11 +7,10 @@ import setuptools
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
 IMPORT = os.path.abspath(os.path.join(FOLDER, 'lib','vyosextra','entry'))
-if os.path.exists(IMPORT):
-	sys.path.append(IMPORT)
-else:
-	sys.exit('could not determine the version')
+if not os.path.exists(IMPORT):
+	sys.exit(f'could not import "{IMPORT}"')
 
+sys.path.append(IMPORT)
 VERSION = importlib.import_module('version').VERSION
 
 ret = os.system(f'{FOLDER}/sbin/gendata --create')
