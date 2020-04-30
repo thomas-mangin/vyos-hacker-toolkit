@@ -26,7 +26,7 @@ def make_sys(extract=0, help=True):
 	else:
 		extracted = []
 
-	sys.argv = [f'{prog}-{cmd}'] + sys.argv[1:]
+	sys.argv = [f'{prog} {cmd}'] + sys.argv[1:]
 
 	if help and len(sys.argv) == 1:
 		sys.argv.append('-h')
@@ -61,7 +61,7 @@ command options:
 		nargs='?',
         choices=['download', 'iso', 'setup', 'ssh', 'test', 'update', 'upgrade'])
 
-	args = parser.parse_args()
+	args, _ = parser.parse_known_args()
 
 	if not args.command and args.help:
 		parser.print_help()
