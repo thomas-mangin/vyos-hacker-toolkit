@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+import time
 import socket
 import shutil
 import argparse
@@ -50,9 +52,6 @@ def start_server(path, file, port):
 	sys.exit(1)
 
 def web(name, location, port):
-	if not os.path.exists(location):
-		fetch()
-
 	daemon = Thread(
 		name='serve VyOS',
 		target=start_server,
@@ -69,18 +68,25 @@ def upgrade():
 	parser.add_argument('-i', '--ip', type=str, help="ip to bind the webserver")
 	parser.add_argument('-p', '--port', type=int, help="port to bind the webserver", default=8888)
 
+	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
+	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
+
 	args = parser.parse_args()
 
-	cmds = Command()
+	cmds = Command(args.show, args.verbose)
 
 	ip = args.ip if args.ip else socket.gethostbyname(socket.gethostname())
 	port = args.port
-
 	name, location, url = makeup('')
-	daemon = web(name, location, port)
 
-	print(f'http://{ip}:{port}/{name}')
-	web(name, location, port)
+	fetch()
+
+	if not args.show:
+		print(f'serving on: http://{ip}:{port}/{name}')
+		web(name, location, port)
+
+	time.sleep(0.1)
 	cmds.upgrade(args.machine, f'http://{ip}:{port}/{name}')
 
 if __name__ == '__main__':

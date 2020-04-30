@@ -70,14 +70,18 @@ def download():
 	code = fetch(args.file)
 	return code
 
-def fetch(image=''):
+def fetch(image='', show=False):
 	name, location, url = makeup(image)
-	print(f'downloading {url}')
-	print(f'to          {location}')
 
 	if os.path.exists(location):
 		print(f'already downloaded iso file {name}')
 		return 1
+
+	print(f'downloading {url}')
+	print(f'to          {location}')
+
+	if show:
+		return 0
 
 	# modified from:
 	# https://blog.shichao.io/2012/10/04/progress_speed_indicator_for_urlretrieve_in_python.html
