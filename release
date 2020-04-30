@@ -6,7 +6,11 @@
 import os
 import sys
 import glob
+import shutil
 import zipapp
+import argparse
+
+os.environ['PYTHONDONTWRITEBYTECODE'] = ""
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
 IMPORT = os.path.abspath(os.path.join(FOLDER, 'lib'))
@@ -17,18 +21,40 @@ sys.path.append(IMPORT)
 from vyosextra.insource import generate
 from vyosextra.insource import location
 
-if __name__ == '__main__':
+
+def remove_cache():
+	for name in glob.glob('./lib/*/__pycache__'):
+		shutil.rmtree(name)
+	for name in glob.glob('./lib/*/*/__pycache__'):
+		shutil.rmtree(name)
+
+	for name in glob.glob('./lib/*/*.pyc'):
+		os.remove(name)
+	for name in glob.glob('./lib/*/*/*.pyc'):
+		os.remove(name)
+
+def release(target):
 	here = os.path.dirname(os.path.realpath(__file__))
 	folder = os.path.abspath(os.path.join(here, 'data'))
 
 	generate(folder)
 
+	remove_cache()
+
 	zipapp.create_archive(
 		source='lib',
-		target='./vyos',
-		interpreter='/usr/bin/python3',
+		target=target,
+		interpreter='/usr/bin/env python3',
 		main='vyosextra.entry:vyos',
 		compressed=True,
 	)
 
 	os.remove(location())
+
+
+if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='build vyos tool')
+	parser.add_argument('target', help='name of the binary to create', default='./vyos')
+	args = parser.parse_args()
+
+	release(args.target)
