@@ -5,9 +5,9 @@ from datetime import datetime
 from subprocess import Popen
 from subprocess import PIPE, STDOUT, DEVNULL
 
-from .config import Config
-from .repository import InRepo
-from . import log
+from vyosextra.config import Config
+from vyosextra.repository import InRepo
+from vyosextra import log
 
 
 class Run(object):

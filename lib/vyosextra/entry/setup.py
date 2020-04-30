@@ -17,9 +17,8 @@ class Command(cmd.Command):
 		self.ssh(where, f'sudo chgrp vyattacfg /etc/apt/sources.list.d')
 		self.ssh(where, f'sudo chmod g+rwx /etc/apt/sources.list.d')
 
-		data = ''.join(self.config.readlines('source.list'))
 		self.chain(
-			self.config.printf(data),
+			self.config.printf(self.config.read('source.list')),
 			self.config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
 		)
 

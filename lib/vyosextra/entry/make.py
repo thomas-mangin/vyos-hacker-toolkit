@@ -19,7 +19,7 @@ class Command(cmd.Command):
 	def backdoor(self, where, password):
 		build_repo = self.config.values[where]['repo']
 
-		lines = self.config.readlines('vyos-iso-backdoor')
+		lines = self.config.read('vyos-iso-backdoor').split('\n')
 		location = lines.pop(0).lstrip().lstrip('#').strip()
 
 		if not password:

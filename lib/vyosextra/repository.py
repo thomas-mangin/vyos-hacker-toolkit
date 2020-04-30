@@ -1,7 +1,7 @@
 import os
 import re
 
-from . import log
+from vyosextra import log
 
 
 class InRepo:

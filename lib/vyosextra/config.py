@@ -7,6 +7,7 @@ from os.path import join
 from os.path import abspath
 from os.path import dirname
 
+from vyosextra.insource import read
 
 def absolute_path(fname):
 	for home in ('~/','$HOME/'):
@@ -117,18 +118,8 @@ class Config(object):
 		value = self.conversion.get(key, lambda _: _)(value)
 		self.values.setdefault(section,{})[key] = value
 
-	def readlines(self, name):
-		# This is a trick to not rely on the data folder when
-		# the application is installed with pip
-		try:
-			with open(os.path.join(self.data, name)) as f:
-				return f.readlines()
-		except Exception as OErr:
-			try:
-				from vyosextra.data import data
-				return data[name].split('\n')
-			except ImportError:
-				raise OErr
+	def read(self, name):
+		return read(name).split('\n')
 
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
