@@ -63,7 +63,7 @@ def web(name, location, port):
 
 def upgrade():
 	parser = argparse.ArgumentParser(description='upgrade router to latest VyOS image')
-	parser.add_argument("router", help='machine on which the action will be performed')
+	parser.add_argument('router', help='machine on which the action will be performed')
 
 	parser.add_argument('-i', '--ip', type=str, help="ip to bind the webserver")
 	parser.add_argument('-p', '--port', type=int, help="port to bind the webserver", default=8888)

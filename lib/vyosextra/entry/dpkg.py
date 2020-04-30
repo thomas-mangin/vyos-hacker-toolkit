@@ -36,7 +36,7 @@ class Command(cmd.Command):
 def dpkg():
 	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
 	parser.add_argument("server", help='server on which the action will be performed')
-	parser.add_argument("router", help='router on which the packages will be installed')
+	parser.add_argument('router', help='router on which the packages will be installed')
 
 	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
 	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
