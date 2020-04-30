@@ -99,7 +99,7 @@ class Command(Run):
 		self.config = Config()
 
 	def ssh(self, where, cmd, ignore=''):
-		return self.run(self.config.ssh(where, f'"{cmd}"'), ignore)
+		return self.run(self.config.ssh(where, cmd), ignore)
 
 	def scp(self, where, src, dst):
 		return self.run(self.config.scp(where, src, dst))

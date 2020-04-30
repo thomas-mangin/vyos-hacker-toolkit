@@ -51,9 +51,22 @@ def dpkg():
 
 	cmds = Command(args.show, args.verbose)
 
+	if not cmds.config.exists(args.server):
+		sys.stderr.write(f'machine "{args.server}" is not configured\n')
+		sys.exit(1)
+
+	if not cmds.config.exists(args.router):
+		sys.stderr.write(f'machine "{args.router}" is not configured\n')
+		sys.exit(1)
+
 	role = cmds.config.get(args.server, 'role')
 	if role != 'build':
 		sys.stderr.write(f'target "{args.server}" is not a build machine\n')
+		sys.exit(1)
+
+	role = cmds.config.get(args.router, 'role')
+	if role != 'router':
+		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)
 
 	todo = {

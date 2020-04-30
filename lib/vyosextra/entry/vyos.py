@@ -41,7 +41,7 @@ def vyos():
 		formatter_class=argparse.RawDescriptionHelpFormatter,
 		epilog = """\
 command options:
-   setup                 setup a VyOS machine for use.
+   setup                 setup a VyOS machine for development.
    ssh                   ssh to a configured server.
 
    download              download the lastest VyOS image.
@@ -59,7 +59,7 @@ command options:
 	parser.add_argument('command', 
 		help='command to run',
 		nargs='?',
-        choices=['download', 'iso', 'setup', 'ssh', 'test', 'update', 'upgrade'])
+        choices=['download', 'dpkg', 'iso', 'setup', 'ssh', 'test', 'update', 'upgrade'])
 
 	args, _ = parser.parse_known_args()
 
@@ -88,7 +88,7 @@ command options:
 
 	if args.command in ('iso',):
 		make_sys()
-		make(command)
+		make(args.command)
 		return
 
 	if args.command == 'download':

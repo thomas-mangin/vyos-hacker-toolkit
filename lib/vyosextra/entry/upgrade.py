@@ -63,7 +63,7 @@ def web(name, location, port):
 
 def upgrade():
 	parser = argparse.ArgumentParser(description='upgrade router to latest VyOS image')
-	parser.add_argument("machine", help='machine on which the action will be performed')
+	parser.add_argument("router", help='machine on which the action will be performed')
 
 	parser.add_argument('-i', '--ip', type=str, help="ip to bind the webserver")
 	parser.add_argument('-p', '--port', type=int, help="port to bind the webserver", default=8888)
@@ -76,6 +76,15 @@ def upgrade():
 
 	cmds = Command(args.show, args.verbose)
 
+	if not cmds.config.exists(args.router):
+		sys.stderr.write(f'machine "{args.router}" is not configured\n')
+		sys.exit(1)
+
+	role = cmds.config.get(args.router, 'role')
+	if role != 'router':
+		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
+		sys.exit(1)
+
 	ip = args.ip if args.ip else socket.gethostbyname(socket.gethostname())
 	port = args.port
 	name, location, url = makeup('')
@@ -87,7 +96,7 @@ def upgrade():
 		web(name, location, port)
 
 	time.sleep(0.1)
-	cmds.upgrade(args.machine, f'http://{ip}:{port}/{name}')
+	cmds.upgrade(args.router, f'http://{ip}:{port}/{name}')
 
 if __name__ == '__main__':
 	upgrade()

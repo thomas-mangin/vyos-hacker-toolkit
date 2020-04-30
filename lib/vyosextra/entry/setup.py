@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 from datetime import datetime
 
@@ -73,7 +74,11 @@ def setup():
 
 	cmds = Command(args.show, args.verbose)
 
-	role = cmds.config.get(args.machine,'role')
+	if not cmds.config.exists(args.machine):
+		sys.stderr.write(f'machine "{args.machine}" is not configured\n')
+		sys.exit(1)
+
+	role = cmds.config.get(args.machine, 'role')
 	if not role:
 		print('the machine "{args.machine}" is not setup')
 

@@ -111,6 +111,9 @@ class Config(object):
 				if key not in section:
 					self.set(name, key, self._default(name, key))
 
+	def exists(self, machine):
+		return machine in self.values
+
 	def get(self, section, key):
 		return self.values.setdefault(section,{}).get(key,'')
 
@@ -119,7 +122,7 @@ class Config(object):
 		self.values.setdefault(section,{})[key] = value
 
 	def read(self, name):
-		return read(name).split('\n')
+		return read(self.data,name)
 
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
@@ -138,6 +141,10 @@ class Config(object):
 		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return command
 		command = command.replace('$', '\$')
+
+		if ' ' in command:
+			command = f'"{command}"'
+
 		return f'ssh {extra} -p {port} {user}@{host} {command}'
 
 	def scp(self, where, src, dst):
