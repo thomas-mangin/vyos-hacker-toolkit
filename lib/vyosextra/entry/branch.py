@@ -23,10 +23,6 @@ class Command(edit.Command):
 		if not self.dry:
 			os.chdir(dir)
 
-	def edit(self, location):
-		editor = self.config.get('editor')
-		self.run(f'{editor} {location}')
-
 	def inside (self, directory):
 		if not os.path.exists(directory):
 			self.make(directory)
@@ -43,31 +39,30 @@ class Command(edit.Command):
 			self.dir(working)
 			self.run(f'git remote add upstream git://github.com/vyos/{repo}')
 
-		branch = 'master'
-		if repo == 'vyos-1x':
-			branch = 'current'
+		branch = 'current'
+		if repo in ('vyos-smoketest',):
+			branch = 'master'
 		self.inside(working)
 		self.run(f'git pull upstream {branch}')
 		self.run(f'git push origin {branch}')
 
-	def setup_branch(self, repo, phabricator):
-		branch = os.path.join(self.config.get('global', 'working_dir'), phabricator)
-		working = os.path.join(branch, repo)
-
-		if os.path.exists(working):
-			return
-
+	def setup_branch(self, branch, repo):
 		cloning = os.path.join(self.config.get('global', 'cloning_dir'), repo)
+		folder = os.path.join(self.config.get('global', 'working_dir'), branch)
+		working = os.path.join(folder, repo)
 
-		self.inside(branch)
-		self.run(f'cp -a {cloning} {repo}')
+		if not os.path.exists(working):
+			self.make(folder)
+			self.run(f'cp -a {cloning} {repo}')
+
 		self.dir(working)
-		self.run(f'git checkout -b {phabricator}')
+		self.run(f'git checkout -b {branch}')
+
 
 def branch():
 	parser = argparse.ArgumentParser(description='edit code')
+	parser.add_argument("branch", help='the phabricator/branch to work on')
 	parser.add_argument("repository", help='the repository to work on')
-	parser.add_argument("phabricator", help='the phabricator/branch to work on')
 
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
@@ -75,13 +70,14 @@ def branch():
 	parser.add_argument('-e', '--edit', help='start editor once branched', action='store_true')
 
 	args = parser.parse_args()
+	edit.query_valid_vyos(args.branch, args.repository)
 
 	cmds = Command(args.show, args.verbose)
 	cmds.setup_source(args.repository)
-	cmds.setup_branch(args.repository, args.phabricator)
+	cmds.setup_branch(args.branch, args.repository)
 
 	if args.edit:
-		cmds(args.repository, args.phabricator)
+		cmds.edit(cmds.branched_repo(args.branch, args.repository))
 
 if __name__ == '__main__':
 	branch()

@@ -11,14 +11,6 @@ from os.path import exists
 from vyosextra.insource import read
 
 
-def absolute_path(*path):
-	fname = join(*path)
-	for home in ('~/','$HOME/'):
-		if fname.startswith(home):
-			return abspath(join(os.getenv("HOME"),fname[len(home):]))
-	return abspath(fname).replace(' ','\\ ')
-
-
 class Config(object):
 	__default = {
 		'global': {
@@ -39,15 +31,13 @@ class Config(object):
 		},
 	}
 
-	conversion = {
-		'host':      lambda host: host.lower(),
-		'port':      lambda port: int(port),
-		'file':      absolute_path,
-		'store':     absolute_path,
-		'editor':    absolute_path,
-		'cloning_dir': absolute_path,
-		'working_dir': absolute_path,
-	}
+	@staticmethod
+	def absolute_path(*path):
+		fname = join(*path)
+		for home in ('~/', '$HOME/'):
+			if fname.startswith(home):
+				return abspath(join(os.getenv("HOME"), fname[len(home):]))
+		return abspath(fname).replace(' ', '\\ ')
 
 	__instance = None
 	values = {}
@@ -59,8 +49,18 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
-		self.root = absolute_path(dirname(__file__), '..', '..')
+		self.root = self.absolute_path(dirname(__file__), '..', '..')
 		self.values = {}
+
+		self.conversion = {
+			'host':        lambda host: host.lower(),
+			'port':        lambda port: int(port),
+			'file':        self.absolute_path,
+			'store':       self.absolute_path,
+			'editor':      self.absolute_path,
+			'cloning_dir': self.absolute_path,
+			'working_dir': self.absolute_path,
+		}
 
 		self._read_config()
 		self._parse_env()
@@ -77,8 +77,8 @@ class Config(object):
 	def _conf_file(self, name):
 		etcs = ['/etc', '/usr/local/etc']
 		if exists(join(self.root, 'lib/vyosextra')):
-			etcs = [absolute_path(self.root, 'etc')] + etcs
-			etcs = [absolute_path('$HOME', 'etc')] + etcs
+			etcs = [self.absolute_path(self.root, 'etc')] + etcs
+			etcs = [self.absolute_path('$HOME', 'etc')] + etcs
 
 		for etc in etcs:
 			fname = join(etc,name)
