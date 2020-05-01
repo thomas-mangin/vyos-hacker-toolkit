@@ -34,7 +34,7 @@ def remove_cache():
 	for name in glob.glob('./lib/*/*/*.pyc'):
 		os.remove(name)
 
-def release(target):
+def release(target, debug):
 	here = os.path.dirname(os.path.realpath(__file__))
 	folder = os.path.abspath(os.path.join(here, 'data'))
 
@@ -42,10 +42,12 @@ def release(target):
 
 	remove_cache()
 
+	python = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3' if debug else '/usr/bin/env python3'
+
 	zipapp.create_archive(
 		source='lib',
 		target=target,
-		interpreter='/usr/bin/env python3',
+		interpreter=python,
 		main='vyosextra.entry:vyos',
 		compressed=True,
 	)
@@ -56,6 +58,7 @@ def release(target):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='build vyos tool')
 	parser.add_argument('target', help='name of the binary to create', default='./vyos')
+	parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
 	args = parser.parse_args()
 
-	release(args.target)
+	release(args.target, args.debug)

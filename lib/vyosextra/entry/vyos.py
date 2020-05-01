@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import os
 import sys
 import textwrap
 import argparse
@@ -35,6 +36,14 @@ def make_sys(extract=0, help=True):
 
 
 def vyos():
+	if os.environ.get('VYOSEXTRA_DEBUG',None) is not None:
+		def intercept(dtype, value, trace):
+			import traceback
+			traceback.print_exception(dtype, value, trace)
+			import pdb
+			pdb.pm()
+		sys.excepthook = intercept
+
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
 		add_help=False,
