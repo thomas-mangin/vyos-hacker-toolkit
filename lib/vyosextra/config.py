@@ -9,18 +9,23 @@ from os.path import dirname
 
 from vyosextra.insource import read
 
+
 def absolute_path(fname):
 	for home in ('~/','$HOME/'):
 		if fname.startswith(home):
 			return abspath(join(os.getenv("HOME"),fname[len(home):]))
-	return abspath(fname)
+	return abspath(fname).replace(' ','\\ ')
 
 
 class Config(object):
 	__default = {
 		'global': {
-			'email': 'no-one@no-domain.com',
 			'store': '/tmp',
+			'email': 'no-one@no-domain.com',
+			'github': '',
+			'editor': 'vi',
+			'cloning_dir': '~/vyos/clone',
+			'working_dir': '~/vyos',
 		},
 		'machine': {
 			'role': 'router',
@@ -37,6 +42,9 @@ class Config(object):
 		'port':      lambda port: int(port),
 		'file':      absolute_path,
 		'store':     absolute_path,
+		'editor':    absolute_path,
+		'cloning_dir': absolute_path,
+		'working_dir': absolute_path,
 	}
 
 	__instance = None

@@ -14,6 +14,7 @@ from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
 from vyosextra.entry.ssh import ssh
 from vyosextra.entry.upgrade import upgrade
+from vyosextra.entry.code import code
 
 
 def make_sys(extract=0, help=True):
@@ -44,6 +45,19 @@ def vyos():
 			pdb.pm()
 		sys.excepthook = intercept
 
+	dispatch = {
+		'update': update,
+		'upgrade': upgrade,
+		'dpkg': dpkg,
+		'make': make,
+		'iso': make,
+		'download': download,
+		'setup': setup,
+		'ssh': ssh,
+		'code': code,
+		'test': test,
+	}
+
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
 		add_help=False,
@@ -53,11 +67,13 @@ command options:
    setup                 setup a VyOS machine for development.
    ssh                   ssh to a configured server.
 
+   code                  setup a branch for VyOS development
    download              download the lastest VyOS image.
    upgrade               download (if required), cache, and serve locally the lastest rolling
 
    dpkg                  build and install a VyOS package (vyos-1x, ...).
    iso                   build (and possibly test) VyOS iso image.
+   make                  call vyos-build make within docker
    update                update a VyOS router with vyos-1x.
 
    test                  test a VyOS router.
@@ -68,7 +84,7 @@ command options:
 	parser.add_argument('command', 
 		help='command to run',
 		nargs='?',
-        choices=['download', 'dpkg', 'iso', 'setup', 'ssh', 'test', 'update', 'upgrade'])
+        choices=dispatch.keys())
 
 	args, _ = parser.parse_known_args()
 
@@ -76,51 +92,17 @@ command options:
 		parser.print_help()
 		return
 
-	if args.command == 'update':
-		make_sys()
-		update()
+
+	helping = {
+		'download': False,
+	}
+
+	if args.command not in dispatch:
+		parser.print_help()
 		return
 
-	if args.command == 'upgrade':
-		make_sys()
-		upgrade()
-		return
-
-	if args.command == 'dpkg':
-		make_sys()
-		dpkg()
-		return
-
-	if args.command in ('make',):
-		target = make_sys()
-		make()
-
-	if args.command in ('iso',):
-		make_sys()
-		make(args.command)
-		return
-
-	if args.command == 'download':
-		make_sys(help=False)
-		download()
-		return
-
-	if args.command == 'setup':
-		make_sys()
-		setup()
-		return
-
-	if args.command == 'ssh':
-		make_sys()
-		ssh()
-		return
-
-	if args.command == 'test':
-		make_sys()
-		test()
-		return
-
-	parser.print_help()
+	make_sys(help=helping.get(args.command, True))
+	dispatch[args.command]()
 
 
 if __name__ == '__main__':

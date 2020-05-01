@@ -7,7 +7,13 @@
 # repo: if role is build, where is the vyos-build repository located
 
 # [global]
+# store: where the vyos image downloaded are kept
 # email: email to use when building the VyOS image
+# editor: editor to use
+# github: github account
+# cloning_dir: where repository should be cloned
+# working_dir: where upstream repository should be saved
+
 
 [build]
 role = build
@@ -25,5 +31,9 @@ file =
 user = vyos
 
 [global]
-email = nobody@nowhere
 store = /tmp/
+email = nobody@nowhere
+github = noone
+editor = vi
+cloning_dir = ~/vyos/clone
+working_dir = ~/vyos/
