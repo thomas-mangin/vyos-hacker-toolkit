@@ -98,8 +98,8 @@ class Command(Run):
 		Run.verbose = verbose
 		self.config = Config()
 
-	def ssh(self, where, cmd, ignore=''):
-		return self.run(self.config.ssh(where, cmd), ignore)
+	def ssh(self, where, cmd, ignore='', extra=''):
+		return self.run(self.config.ssh(where, cmd, extra), ignore)
 
 	def scp(self, where, src, dst):
 		return self.run(self.config.scp(where, src, dst))

@@ -10,12 +10,16 @@ import urllib.request
 
 from vyosextra.config import Config
 
-vyos_rolling = '(vyos-1.3-rolling-[0-9]+-amd64.iso)'
+
+regex_rolling = '(vyos-1.3-rolling-[0-9]+-amd64.iso)'
 
 
-def latest():
+def latest(filename):
+	if filename:
+		return filename.split('/')[-1]
+
 	vyos_listing = "https://downloads.vyos.io/?dir=rolling/current/amd64"
-	regex = re.compile(f'data-name="{vyos_rolling}"')
+	regex = re.compile(f'data-name="{regex_rolling}"')
 
 	try:
 		opener = urllib.request.FancyURLopener({})
@@ -28,60 +32,38 @@ def latest():
 		found.sort()
 		return found[-1]
 	except Exception:
-		return ''
+		# should not happen, but something is better than nothing
+		return 'vyos-rolling-latest.iso'
 
 
-def makeup(filename):
-	name = ''
-	location = ''
+def makeup(target):
+	if target.startswith('http'):
+		image = target.split('/')[-1]
+		location = os.path.join(Config().get('global', 'store'), image)
+	elif target.startswith('/'):
+		image = target.split('/')[-1]
+		location = target
+	else:
+		image = latest(target)
+		location = os.path.join(Config().get('global', 'store'), image)
 
-	if filename:
-		base = filename.split('/')[-1]
-		if re.match(vyos_rolling, base):
-			if not filename.startswith('https://'):
-				location = filename
-			name = base
-
-	if not name:
-		try:
-			name = latest()
-		except KeyboardInterrupt:
-			sys.exit(2)
-		except Exception:
-			# should not happen, but something is better than nothing
-			name = 'vyos-rolling-latest.iso'
-
-	if not location:
-		location = name
-
-	if not location.startswith('/'):
-		location = os.path.join(Config().get('global', 'store'), location)
-
-	url = f'https://downloads.vyos.io/rolling/current/amd64/{name}'
-
-	return (name, os.path.abspath(location), url)
+	url = f'https://downloads.vyos.io/rolling/current/amd64/{image}'
+	return image, location, url
 
 
-def download():
-	parser = argparse.ArgumentParser(description='download latest VyOS image')
-	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
-	args = parser.parse_args()
-
-	code = fetch(args.file)
-	return code
-
-def fetch(image='', show=False):
-	name, location, url = makeup(image)
+def fetch(target='', show=False):
+	image, location, url = makeup(target)
 
 	if os.path.exists(location):
-		print(f'already downloaded iso file {name}')
-		return 1
+		print(f'already downloaded iso file {image}')
+		return location
 
 	print(f'downloading {url}')
 	print(f'to          {location}')
+	print('progress:')
 
 	if show:
-		return 0
+		return location
 
 	# modified from:
 	# https://blog.shichao.io/2012/10/04/progress_speed_indicator_for_urlretrieve_in_python.html
@@ -95,22 +77,35 @@ def fetch(image='', show=False):
 		speed = int(progress / (1024 * (int(duration) + 1)))
 		percent = min(int(count*block_size*100/total_size), 100)
 		progress_mb = progress / (1024 * 1024)
-		report = f'  {name} {percent:>3}%, {progress_mb:3.2f} MB, {speed:>5} KB/s, {elapsed} seconds passed \r'
+		report = f'   {image} {percent:>3}%, {progress_mb:3.2f} MB, {speed:>5} KB/s, {elapsed} seconds passed \r'
 		sys.stdout.write(report)
 		sys.stdout.flush()
 
 	try:
 		urllib.request.urlretrieve(url, location, hook)
 		print('\ndownload complete')
-		return 0
+		return location
 	except KeyboardInterrupt:
+		print('\ndownload interrupted')
 		print(f'\nremoving {location}')
 		os.remove(location)
 		sys.exit(2)
-	except Exception:
+	except Exception as excp:
+		print(f'\nissue while downloading {image}')
+		print(excp)
 		print(f'\nremoving {location}')
 		os.remove(location)
 		sys.exit(3)
+
+
+def download():
+	parser = argparse.ArgumentParser(description='download latest VyOS image')
+	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
+	args = parser.parse_args()
+
+	code = fetch(args.file)
+	return code
+
 
 if __name__ == '__main__':
 	download()

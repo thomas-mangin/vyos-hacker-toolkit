@@ -14,17 +14,29 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from vyosextra import cmd
 from vyosextra.config import Config
 
-from vyosextra.entry.download import makeup
 from vyosextra.entry.download import fetch
 
 
 class Command(cmd.Command):
-	def upgrade(self, where, url):
-		# on my local VM which goes to sleep when I close my laptop
-		# time can easily get out of sync, which prevent apt to work
-		now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		self.ssh(where, f"sudo date -s '{now}'")
-		self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}")
+	def upgrade(self, where, location, local, remote, show):
+		# local: your computer port
+		# remote: the router port
+		image = location.split('/')[-1]
+
+		if local and remote:
+			url = f'http://127.0.0.1:{remote}/{image}'
+			extra = f'-R {remote}:127.0.0.1:{local}'
+		else:
+			ip = args.ip if args.ip else socket.gethostbyname(socket.gethostname())
+			url = f'http://{ip}:{local}/{image}'
+			extra = ''
+
+		if not show:
+			print(f'serving on: {url}')
+			print(f'from image: {location}')
+			web(location, image, local)
+
+		self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
 		self.ssh(where, 'printf 1 | /opt/vyatta/bin/vyatta-boot-image.pl --select')
 		self.ssh(where, 'sudo reboot')
 
@@ -51,7 +63,8 @@ def start_server(path, file, port):
 	httpd.serve_forever()
 	sys.exit(1)
 
-def web(name, location, port):
+
+def web(location, name, port):
 	daemon = Thread(
 		name='serve VyOS',
 		target=start_server,
@@ -65,8 +78,9 @@ def upgrade():
 	parser = argparse.ArgumentParser(description='upgrade router to latest VyOS image')
 	parser.add_argument('router', help='machine on which the action will be performed')
 
-	parser.add_argument('-i', '--ip', type=str, help="ip to bind the webserver")
-	parser.add_argument('-p', '--port', type=int, help="port to bind the webserver", default=8888)
+	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
+	parser.add_argument('-r', '--remote', type=int, help="port to bind the router")
+	parser.add_argument('-l', '--local', type=int, help="port to bind the webserver", default=8088)
 
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
@@ -85,18 +99,17 @@ def upgrade():
 		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	ip = args.ip if args.ip else socket.gethostbyname(socket.gethostname())
-	port = args.port
-	name, location, url = makeup('')
+	location = fetch(args.file)
 
-	fetch()
-
-	if not args.show:
-		print(f'serving on: http://{ip}:{port}/{name}')
-		web(name, location, port)
+	if args.remote and not args.local:
+		local = args.remote
+		remote = args.remote
+	else:
+		local = args.local
+		remote = args.remote
 
 	time.sleep(0.1)
-	cmds.upgrade(args.router, f'http://{ip}:{port}/{name}')
+	cmds.upgrade(args.router, location, local, remote, args.show)
 
 if __name__ == '__main__':
 	upgrade()
