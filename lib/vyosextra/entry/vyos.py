@@ -14,7 +14,8 @@ from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
 from vyosextra.entry.ssh import ssh
 from vyosextra.entry.upgrade import upgrade
-from vyosextra.entry.code import code
+from vyosextra.entry.branch import branch
+from vyosextra.entry.edit import edit
 
 
 def make_sys(extract=0, help=True):
@@ -46,38 +47,26 @@ def vyos():
 		sys.excepthook = intercept
 
 	dispatch = {
-		'update': update,
-		'upgrade': upgrade,
-		'dpkg': dpkg,
-		'make': make,
-		'iso': make,
-		'download': download,
-		'setup': setup,
-		'ssh': ssh,
-		'code': code,
-		'test': test,
+		'update':   (update, 'update a VyOS router with vyos-1x'),
+		'upgrade':  (upgrade, 'download (if required), cache, and serve locally the lastest rolling'),
+		'package':  (dpkg, 'build and install a VyOS package (vyos-1x, ...)'),
+		'make':     (make, 'call vyos-build make within docker'),
+		'iso':      (make, 'build (and possibly test) VyOS iso image'),
+		'download': (download, 'download the lastest VyOS image'),
+		'setup':    (setup, 'setup a VyOS machine for development'),
+		'ssh':      (ssh, 'ssh to a configured server'),
+		'branch':   (branch, 'setup a branch for VyOS development'),
+		'edit':     (edit, 'start your editor for a branch'),
+		'test':     (test, 'test a VyOS router'),
 	}
+
+	epilog = '\n'.join([f'   {k:<22} {v[1]}' for (k, v) in dispatch.items()])
 
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
 		add_help=False,
 		formatter_class=argparse.RawDescriptionHelpFormatter,
-		epilog = """\
-command options:
-   setup                 setup a VyOS machine for development.
-   ssh                   ssh to a configured server.
-
-   code                  setup a branch for VyOS development
-   download              download the lastest VyOS image.
-   upgrade               download (if required), cache, and serve locally the lastest rolling
-
-   dpkg                  build and install a VyOS package (vyos-1x, ...).
-   iso                   build (and possibly test) VyOS iso image.
-   make                  call vyos-build make within docker
-   update                update a VyOS router with vyos-1x.
-
-   test                  test a VyOS router.
-	""")
+		epilog = f'command options:\n   {epilog}')
 	parser.add_argument('-h', '--help', 
 		help='show this help message and exit', 
 		action='store_true')
@@ -102,7 +91,7 @@ command options:
 		return
 
 	make_sys(help=helping.get(args.command, True))
-	dispatch[args.command]()
+	dispatch[args.command][0]()
 
 
 if __name__ == '__main__':

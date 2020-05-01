@@ -8,5 +8,7 @@ from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
 from vyosextra.entry.ssh import ssh
 from vyosextra.entry.upgrade import upgrade
+from vyosextra.entry.branch import branch
+from vyosextra.entry.edit import edit
 
 from vyosextra.entry.vyos import vyos
