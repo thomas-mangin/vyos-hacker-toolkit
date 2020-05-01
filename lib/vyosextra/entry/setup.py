@@ -55,6 +55,8 @@ class Command(cmd.Command):
 		self.ssh(where, 'sudo adduser vyos libvirt')
 		self.ssh(where, 'sudo usermod -aG docker ${USER}')
 
+		# may need reboot ?
+
 		self.ssh(where, 'docker pull vyos/vyos-build: current')
 
 		self.ssh(where, 'mkdir ~/vyos')

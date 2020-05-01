@@ -1,219 +1,111 @@
-"vyos-extra" is my toolset to build and test VyOS. It is shared with the hope it can make building VyOS easier for all
+vyos-extra provide a toold to help build and test VyOS.
+
+# Rationale
+
+As it is not possible to compile VyOS directly MacOS (even using Docker), a Linux Virtual Machine is needed
+to develop and test on vyos-1x. This tool make some common operation easier:
+ * compiling and installing vyox-1x
+ * building and testing the VyOS ISO
+ * pushing code change to a router
+ * updating a router to the latest VyOS image
+
+In the case of a build server (used to compile VyOS) using 127.0.0.1 and port 22,
+will skip using SSH and use the local machine, so the tool not require a VM.
+
+# Quick Installation
+
+The tools can be run directly from the source code folder but it may be easiest
+to build a zipapp from the provided tools and move it in your $PATH.
+
+```
+cd
+git clone git@github.com:thomas-mangin/vyos-extra extra
+cd vyos-extra
+./release vyos
+sudo mv vyos /usr/local/bin/
+sudo cp ./etc/vyos-extra.conf.sample /etc/vyos-extra.conf
+cd ..
+rm -rf vyos-extra
+```
+
+It can also be installed using `setup.py`.
+
+Then edit `/etc/vyos-extra.conf` to configure your build server(s) and router(s).
+
+it is also possible to use environment variable, prepending the name with "VYOS_",
+and using the same name in upper case. For example
+```
+export VYOS_BUILD_HOST=10.0.0.1
+export VYOS_BUILD_HOST=22
+export VYOS_GLOBAL_EMAIL=me@home.com
+```
 
 # Tools
 
-There are:
-| Command     | Description |
-| ---         | --- |
-| vyos update | copy the most common changed files from vyos-1x to the router
-| vyos dpkg   | build and install the package on a router
-| vyos iso    | build a vyos rolling ISO (and possibly test it)
-| vyos test   | perform some test on the VM
+All the tools are available through the `vyos` entry point, the commands are:
 
-Only a few files are copied by `vyos update`, make sure all your changes are copied across.
+| names     | Description |
+| ---       | --- |
+| setup     | setup a VyOS machine (build or router) for development.
+| ssh       | ssh to a configured server
+| download  | download (if required) and cache the lastest VyOS rolling
+| dpkg      | build and install a VyOS package (vyos-1x, ...).
+| iso       | build a vyos rolling ISO (and possibly test it)
+| make      | call other make function than iso
+| update    | update a VyOS router with vyos-1x.
+| test      | perform some test on the VM
 
-It relies on a working linux build maching (locally or accessed via SSH), and installed VyOS router to test changes.
+
+It relies on a working VyOS development environment (locally or accessed via SSH). This can be done by using the the `setup` command for Debian/Ubuntu (only OS supported ATM).
+
+using `-s/--show` will present you with what the tool is going to do without running any command.
+```
+# ./bin/vyos ssh router --show
+ssh  -i /Users/thomas/.ssh/id_rsa.personal -p 2200 vyos@127.0.0.1
+```
+
+Using the `update` feature require the router to have been prepared with `setup`.
+
+Note: 
+ * Only a few files are copied by `vyos update` make sure all your changes are copied across
+ * The syntax of the tools is still changing
 
 # Setup
 
-The tools were created as it is not possible to compile VyOS directly MacOS (even using Docker), therefore a VM environement neededs to be used.
-Any VM platform can be used, including local KVM.
+For the build, any VM platform can be used, including local KVM, it is also possible to use 
 The tools can also use a native Linux desktop/server, but if it is not possible.
+
+In the configuration file, create a name for yours hosts and define how to connect to them.
+In the case of a build server (used to compile VyOS) using 127.0.0.1 and port 22, will skip using SSH.
 
 This solution was initially designed with VirtualBox, but due to the lack of support for KVM a genuine Linux server or VM is recommended as otherwise you will not be able to test the VyOS ISO you are generating. It is however be possible to build VyOS on VirtualBox.
 
-This document explains how to setup a development environment composed of:
-  - A build VM (vyos-build) which will be used to build debian packages and iso
-  - A router VM (vyos-router) which will be used to check the validity of the code
-  - And this repository
-
-
-# Expectations
-
-For the purpose of this document, we will assume that you will perform your development on a Unix like machine (OSX, BSD, Linux, ..) in a `~/vyos` folder, but the tools could be configured to be installed elsewhere. The folder `~/vyos/1x` will contain the cloned repositories, one folder per clone.
-
-The expected workflow include the creation of one repository per Phabricator entry you want to work on (perhaps calling the folder by the name of the phabricator task you are working on.
-
-It is expected that you will fork the vyos-1x repository under your own github account and use this repository for development. It is suggested to add a reference to the original repository with the name "upstream" using `git remote add`.
-
-
 # Local setup
 
-For performance rsync is used to transfer files between hosts.
-
-On mac, they can be installed with [HomeBrew](https://brew.sh))
+On mac, the following tools shoulld installed with [HomeBrew](https://brew.sh)) for the tool to work.
 ```
 brew install git
 brew install rsync
 ```
 
-Making the VyOS folders
-```
-mkdir -p ~/vyos/1x
-```
+# Build Machine
 
-Installing this repository from github
-```
-cd ~/vyos/
-git clone git@github.com:thomas-mangin/vyos-extra extra
-```
+The machine can be Ubuntu or Debian 10. For Debian, please see the wiki on how to setup sudo.
 
-The `bin` folder of this repository could/should be added to the PATH, it can be done by hand:
-```
-source ~/vyos/extra/shell/bashrc
-```
-and adding this file at the end of `~/.profile`
+Create a non-administrative user, matching your configuration file. Make sure to have the ssh package installed during the setup and add your SSH key to your user under ~vyos/.ssh/authorized_keys so that you can ssh without password.
 
-All the users, IPs and ports used to connect to the VM can be configured using the file in
-the `etc` folder. Each file contain the value of the variable with the name of the file.
+All the following step can also be performed with `vyos setup build` if you called your build machine `build`. This is still being tested and installing docker may require a reboot and re-run of the command.
 
-it is also possible to use environment variable, prepending the name with "VYOS_",
-and using the same name in upper case. For example (export VYOS_BUILD_HOST=127.0.0.1)
+# Routers
 
-Some helpers aliases are present in the shell folder and can be enabled using for example:
-``` 
-source ~/vyos/extra/shell/bashrc
-```
+The virtual box immage is running a normal VyOS image on a VM
+ * with the local ssh port mapped for remote access
+ * with your ssh key so the tools can ssh without password using ssh-askpass
 
-You can also setup your local `~/.ssh/config` file to include the VM hosts, making sure the ssh key does exists
-For example:
-```
-cat <EOF >> ~/.ssh/config
-
-Host vyos-build
-        HostName 127.0.0.1
-        User vyos
-        Port 2200
-        IdentityFile ~/.ssh/id_rsa.personal
-
-Host vyos-router
-        HostName 127.0.0.1
-        User vyos
-        Port 2201
-        IdentityFile ~/.ssh/id_rsa.personal
-EOF
-```
-It will allow you to ssh using the name `vyos-build` and `vyos-router`
-
-Finally, clone the vyos-1x project
-```
-cd ~/vyos/1x
-git clone git@github.com:vyos/vyos-1x vyos-1x
-```
-
-The shell scripts provided can the use this repository to make copies of it and auto-create branches for you.
-
-# vyos-build VM
-
-Should you run Linux and want to use your local machine for the build system, instead of running a VM.
-You can set the build_host to 127.0.0.1/localhost and the port to 22. The tools will then not call
-ssh but run the commands on the local machine.
-
-## Base Install
-
-The machine is built using Debian 10, as it is the same based OS vyos is using.
-```
-cd ~/vyos
-curl https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.3.0-amd64-netinst.iso -o debian-10.3.0-amd64-netinst.iso
-```
-
-Create a non-administrative user called vyos
-Make sure to have the ssh package installed during the setup of
-add your SSH key to your user under ~vyos/.ssh/authorized_keys so that you can ssh without password
-
-## Install sudo
-
-```
-su -
-apt install --yes sudo
-adduser ${USER} sudo
-exit
-exit
-```
-
-## Enabling  KVM
-
-At the time of writing, it does not work on virtual. So qemu will be slllooowww and this prevent the testing of the ISO.
-https://forums.virtualbox.org/viewtopic.php?f=3&t=97035
-
-Attempted with:
-VirtualBox: Settings > System > Processor and tick "Enable Nested VT-x/AMD-V"
-
-```
-sudo apt-get install --yes --no-install-recommends qemu-kvm libvirt-clients libvirt-daemon-system
-sudo adduser vyos libvirt
-```
-
-## Install git, rsync and docker
-
-Install Docker
-```
-sudo apt install --yes git
-sudo apt install --yes rsync
-sudo apt install --yes docker.io
-sudo usermod -aG docker ${USER}
-reboot
-```
-
-## Install the vyos-builder container
-
-Using Docker registry
-```
-docker pull vyos/vyos-build:current
-```
-
-Or manual installation (ATM, it will require editing the scripts to use this image)
-```
-mkdir ~/vyos
-cd ~/vyos
-
-git clone https://github.com/vyos/vyos-build.git
-cd vyos-build/
-docker build -t vyos-builder docker
-```
-
-## VirtualBox specifics
-
-If you are running VirtualBox, you should/can also do the following:
-
-### Add VirtualBox guest OS additions
-
-running debian 10 with virtual box integration tool installed
-Download VboxGuestAditions.iso on your mac and mount it on the VM CDROM
-```
-latest=$( curl https://download.virtualbox.org/virtualbox/LATEST.TXT )
-curl https://download.virtualbox.org/virtualbox/$latest/VBoxGuestAdditions_$latest.iso -o VBoxGuestAdditions.iso
-```
-
-```
-sudo apt install build-essential dkms linux-headers-$(uname -r)
-mount /media/cdrom
-sudo /mnt/media/VBoxLinuxAdditions.run
-reboot
-```
-
-### Mount the local vyos development folder to the VM
-
-On the network interface, Host port 127.0.0.1 port 2200 to your Guest VM IP port 22
-Also create a "Shared Folder" called VyOS mapping ~/vyos (on your machine) to /vyos (on the VM)
-
-Then have the system automount the folder
-```
-echo "vyos		/vyos		vboxsf rw,dev,uid=1000,gid=1000    0       0" >> /etc/fstab
-```
-
-
-# vyos-router
-
-The virtual box immage is running a normal VyOS image 
- * with the local ssh port mapped to 127.0.0.1 port 2201
- * adding your ssh key to a vyos (default) user
-
-Assuming a ssh-rsa (the key type is the first word in the line of your SSH key in ./ssh/authorized_keys)
+Assuming a ssh-rsa (the key `type` is the first word in the line of your SSH key in ./ssh/authorized_keys)
 
 ```
 configure
-set system login user vyos authentication plaintext-password 'your-password'
 set system login user vyos authentication public-keys user@email type 'ssh-rsa'
 set system login user vyos authentication public-keys user@email key 'SSH-KEY-AS-IN-AUTHORIZED-KEYS'
 commit
