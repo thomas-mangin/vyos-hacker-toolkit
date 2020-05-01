@@ -104,7 +104,7 @@ class Config(object):
 		sections.append('global')
 
 		for name in set(sections):
-			section = self.values[name]
+			section = self.values.get(name,{})
 			default = self._default(name)
 
 			for key in default:
