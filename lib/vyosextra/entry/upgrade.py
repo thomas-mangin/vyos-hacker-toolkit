@@ -31,9 +31,9 @@ class Command(cmd.Command):
 			url = f'http://{ip}:{local}/{image}'
 			extra = ''
 
+		print(f'serving on: {url}')
+		print(f'from image: {location}')
 		if not show:
-			print(f'serving on: {url}')
-			print(f'from image: {location}')
 			web(location, image, local)
 
 		self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
