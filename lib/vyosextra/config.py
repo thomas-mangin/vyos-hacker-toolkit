@@ -6,11 +6,13 @@ import configparser
 from os.path import join
 from os.path import abspath
 from os.path import dirname
+from os.path import exists
 
 from vyosextra.insource import read
 
 
-def absolute_path(fname):
+def absolute_path(*path):
+	fname = join(*path)
 	for home in ('~/','$HOME/'):
 		if fname.startswith(home):
 			return abspath(join(os.getenv("HOME"),fname[len(home):]))
@@ -57,10 +59,7 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
-		root = abspath(join(dirname(__file__),'..','..'))
-		self.etc = join(root, 'etc')
-		self.data = join(root, 'data')
-
+		self.root = absolute_path(dirname(__file__), '..', '..')
 		self.values = {}
 
 		self._read_config()
@@ -75,16 +74,24 @@ class Config(object):
 			return default
 		return default[key]
 
+	def _conf_file(self, name):
+		etcs = ['/etc', '/usr/local/etc']
+		if exists(join(self.root, 'lib/vyosextra')):
+			etcs = [absolute_path(self.root, 'etc')] + etcs
+			etcs = [absolute_path('$HOME', 'etc')] + etcs
+
+		for etc in etcs:
+			fname = join(etc,name)
+			if exists(fname):
+				return fname
+		return ''
+
 	def _read_config(self):
-		config = configparser.ConfigParser()
-
-		fname = self.etc + '/vyos-extra.conf'
-		if not os.path.exists(fname):
-			fname = self.etc + '/vyos-extra.conf'
-
-		if not os.path.exists(fname):
+		fname = self._conf_file('vyos-extra.conf')
+		if not exists(fname):
 			return
 
+		config = configparser.ConfigParser()
 		config.read(fname)
 		for section in config.sections():
 			for key in config[section]:
@@ -130,7 +137,7 @@ class Config(object):
 		self.values.setdefault(section,{})[key] = value
 
 	def read(self, name):
-		return read(self.data,name)
+		return read(join(self.root, 'data'), name)
 
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
