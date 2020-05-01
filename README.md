@@ -1,43 +1,44 @@
-vyos-extra provide a toold to help build and test VyOS.
+Hacking VyOS should be easy, this tools helps with the groundwork.
 
-# Rationale
+My day to day machine runs OSX, unfortunately it is not possible to compile the VyOS ISO directly on MacOS (even using Docker - at least until they implement mknod), so I needed a Linux Virtual Machine for it. I also like to have an agreable workflow so I started working on some code to automate my most common tasks, which evolved from a small number of shell script to this python project.
 
-As it is not possible to compile VyOS directly MacOS (even using Docker), a Linux Virtual Machine is needed
-to develop and test on vyos-1x. This tool make some common operation easier:
- * compiling and installing vyox-1x
- * building and testing the VyOS ISO
- * pushing code change to a router
- * updating a router to the latest VyOS image
+But should you be developing on Linux, setting your build server to 127.0.0.1:22 will cause the program to use the current user on the local machine and will surely make hacking on VyOS easier and more agreable.
 
-In the case of a build server (used to compile VyOS) using 127.0.0.1 and port 22,
-will skip using SSH and use the local machine, so the tool not require a VM.
+So if you need to:
+ * build (and test) the VyOS ISO
+ * update VyOS to the latest rolling (including using the latest rolling)
+ * branch and edit code from your VyOS github repository
+ * push codes change to a router
+
+Then read on.
 
 # Quick Installation
 
-The tools can be run directly from the source code folder but it may be easiest
-to build a zipapp from the provided tools and move it in your $PATH.
+The tools can be run directly from the source code folder but it may be easiest to build a zipapp (a self contain python program) from the provided tools and move it in your $PATH.
 
+It can be done as following:
 ```
-cd
 git clone git@github.com:thomas-mangin/vyos-extra extra
 cd vyos-extra
 ./release vyos
-sudo mv vyos /usr/local/bin/
-sudo cp ./etc/vyos-extra.conf.sample /etc/vyos-extra.conf
-cd ..
-rm -rf vyos-extra
+mv vyos /usr/local/bin/
+cp ./etc/vyos-extra.conf.sample /usr/local/etc/vyos-extra.conf
+vi /usr/local/etc/vyos-extra.conf
+vyos setup build
 ```
 
-It can also be installed using `setup.py`.
+The application can also be installed using `setup.py`, or ran directly from the repository, but until there is a PyPI release, this is not the recommended way.
 
-Then edit `/etc/vyos-extra.conf` to configure your build server(s) and router(s).
+Then edit `/usr/local/etc/vyos-extra.conf` to configure your build server(s) and router(s).
 
-it is also possible to use environment variable, prepending the name with "VYOS_",
-and using the same name in upper case. For example
+You should setup one build server (normally called build) where the tools will setup a VyOS development environment, and one router where you can test new image / code change.
+
+While the configuration file is the prefered configuration way, it is also possible to use environment variable (which will take precedence), prepending the name with "VYOS_", and using the same name in upper case.
+
+For example, doing this to change which email get into a VyOS ISO
 ```
-export VYOS_BUILD_HOST=10.0.0.1
-export VYOS_BUILD_HOST=22
-export VYOS_GLOBAL_EMAIL=me@home.com
+env VYOS_GLOBAL_EMAIL=ci@buiness.com vyos make iso
+env VYOS_ROUTER_USER=vyos vyos ssh router
 ```
 
 # Tools
@@ -46,17 +47,21 @@ All the tools are available through the `vyos` entry point, the commands are:
 
 | names     | Description |
 | ---       | --- |
-| setup     | setup a VyOS machine (build or router) for development.
-| ssh       | ssh to a configured server
+| branch    | clone and branch a VyOS repository
 | download  | download (if required) and cache the lastest VyOS rolling
-| dpkg      | build and install a VyOS package (vyos-1x, ...).
+| edit      | work on a branch repository
 | iso       | build a vyos rolling ISO (and possibly test it)
 | make      | call other make function than iso
-| update    | update a VyOS router with vyos-1x.
+| package   | build and install a VyOS package (vyos-1x, ...).
+| setup     | setup a VyOS machine (build or router) for development.
+| ssh       | ssh to a configured server
 | test      | perform some test on the VM
+| update    | update a VyOS router with vyos-1x.
+| upgrade   | download (if required), cache, and serve locally the lastest rolling
 
+the command `make`, `iso` and `update` will require a working build server.
 
-It relies on a working VyOS development environment (locally or accessed via SSH). This can be done by using the the `setup` command for Debian/Ubuntu (only OS supported ATM).
+This can be done by using the the `setup` command for Debian/Ubuntu (only OS supported ATM).
 
 using `-s/--show` will present you with what the tool is going to do without running any command.
 ```
@@ -66,19 +71,34 @@ ssh  -i /Users/thomas/.ssh/id_rsa.personal -p 2200 vyos@127.0.0.1
 
 Using the `update` feature require the router to have been prepared with `setup`.
 
-Note: 
+Note:
+ * This is a developer tool, we expect its user to be able to self-help and only report bugs
  * Only a few files are copied by `vyos update` make sure all your changes are copied across
  * The syntax of the tools is still changing
 
 # Setup
 
-For the build, any VM platform can be used, including local KVM, it is also possible to use 
-The tools can also use a native Linux desktop/server, but if it is not possible.
-
 In the configuration file, create a name for yours hosts and define how to connect to them.
 In the case of a build server (used to compile VyOS) using 127.0.0.1 and port 22, will skip using SSH.
 
-This solution was initially designed with VirtualBox, but due to the lack of support for KVM a genuine Linux server or VM is recommended as otherwise you will not be able to test the VyOS ISO you are generating. It is however be possible to build VyOS on VirtualBox.
+For example, here we will use our local machine `build` and and connect to a vyos router called `router`:
+
+```
+[build]
+role = build
+host = 127.0.0.1
+port = 22
+user = 
+file = 
+repo = $HOME/vyos/vyos-build
+
+[router]
+role = router
+host = 127.0.0.1
+port = 2200
+user = vyos
+file = ~/.ssh/mykey
+```
 
 # Local setup
 
@@ -90,11 +110,11 @@ brew install rsync
 
 # Build Machine
 
-The machine can be Ubuntu or Debian 10. For Debian, please see the wiki on how to setup sudo.
+The code should work with both Ubuntu or Debian 10. For Debian, please see the wiki on how to install and configure sudo before attempting setup.
 
-Create a non-administrative user, matching your configuration file. Make sure to have the ssh package installed during the setup and add your SSH key to your user under ~vyos/.ssh/authorized_keys so that you can ssh without password.
+Make sure to have the ssh package installed during the setup and add your SSH key to you an unprivileged user to allow ssh without password (once ssh-askpass saved it).
 
-All the following step can also be performed with `vyos setup build` if you called your build machine `build`. This is still being tested and installing docker may require a reboot and re-run of the command.
+This build tool is still being tested and installing docker may require to reboot the machine and re-run of the command ATM.
 
 # Routers
 
