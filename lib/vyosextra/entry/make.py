@@ -17,7 +17,7 @@ class Command(cmd.Command):
 		self.ssh(where, self.config.docker(where, '', f'sudo make {target}'))
 
 	def backdoor(self, where, password):
-		build_repo = self.config.values[where]['repo']
+		build_repo = self.config.get(where,'repo')
 
 		lines = self.config.read('vyos-iso-backdoor').split('\n')
 		location = lines.pop(0).lstrip().lstrip('#').strip()
@@ -33,7 +33,7 @@ class Command(cmd.Command):
 		)
 
 	def configure(self, where, location,  extra, name):
-		email = self.config.values['global']['email']
+		email = self.config.get('global','email')
 
 		date = datetime.now().strftime('%Y%m%d%H%M')
 		name = name if name else 'rolling'

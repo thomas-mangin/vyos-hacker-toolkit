@@ -105,13 +105,13 @@ class Command(Run):
 		return self.run(self.config.scp(where, src, dst))
 
 	def update_build(self, where):
-		build_repo = self.config.values[where]['repo']
+		build_repo = self.config.get(where,'repo')
 		self.ssh(where, f'cd {build_repo} && git pull',
 			'Already up to date.'
 		)
 
 	def build(self, where, location, vyos_repo, folder):
-		build_repo = self.config.values[where]['repo']
+		build_repo = self.config.get(where,'repo')
 		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
 
 		with InRepo(folder) as debian:

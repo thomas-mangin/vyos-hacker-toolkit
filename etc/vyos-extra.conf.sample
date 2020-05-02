@@ -22,11 +22,20 @@ port = 22
 user = vyos
 file = 
 repo = $HOME/vyos/vyos-build
+default = True
 
 [router]
 role = router
 host = 127.0.0.1
 port = 2200
+file = 
+user = vyos
+default = True
+
+[production]
+role = router
+host = 10.0.0.1
+port = 22
 file = 
 user = vyos
 

@@ -15,7 +15,7 @@ LOCATION = 'compiled'
 
 class Command(cmd.Command):
 	def install(self, server, router, location, vyos_repo, folder):
-		build_repo = self.config.values[server]['repo']
+		build_repo = self.config.get(server,'repo')
 
 		with InRepo(folder) as debian:
 			package = debian.package(vyos_repo)

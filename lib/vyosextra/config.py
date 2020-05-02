@@ -28,6 +28,7 @@ class Config(object):
 			'user': 'vyos',
 			'file': '',
 			'repo': '$HOME/vyos/vyos-build',
+			'default': False,
 		},
 	}
 
@@ -40,7 +41,9 @@ class Config(object):
 		return abspath(fname).replace(' ', '\\ ')
 
 	__instance = None
-	values = {}
+	_values = {}
+	default = {}
+	root = self.absolute_path(dirname(__file__), '..', '..')
 
 	# This class is a singleton
 	def __new__(cls):
@@ -49,9 +52,6 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
-		self.root = self.absolute_path(dirname(__file__), '..', '..')
-		self.values = {}
-
 		self.conversion = {
 			'host':        lambda host: host.lower(),
 			'port':        lambda port: int(port),
@@ -115,26 +115,34 @@ class Config(object):
 			self.set(option, value)
 
 	def _set_default(self):
-		sections = list(self.values)
+		sections = list(self._values)
 		sections.append('global')
 
 		for name in set(sections):
-			section = self.values.get(name,{})
+			section = self._values.get(name,{})
 			default = self._default(name)
 
 			for key in default:
 				if key not in section:
 					self.set(name, key, self._default(name, key))
 
+		for machine in self._values:
+			if not self._values['default']:
+				continue
+			role = self._values['role']
+			if self.default.get(role, ''):
+				log.failed('only one machine can be set as default "{role}"')
+			self.default[role] = machine
+
 	def exists(self, machine):
-		return machine in self.values
+		return machine in self._values
 
 	def get(self, section, key):
-		return self.values.setdefault(section,{}).get(key,'')
+		return self._values.setdefault(section,{}).get(key,'')
 
 	def set (self, section, key, value):
 		value = self.conversion.get(key, lambda _: _)(value)
-		self.values.setdefault(section,{})[key] = value
+		self._values.setdefault(section,{})[key] = value
 
 	def read(self, name):
 		return read(join(self.root, 'data'), name)
@@ -143,11 +151,11 @@ class Config(object):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
 
 	def ssh(self, where, command='', extra=''):
-		host = self.values[where]['host']
-		user = self.values[where]['user']
-		port = self.values[where]['port']
-		role = self.values[where]['role']
-		file = self.values[where]['file']
+		host = self._values[where]['host']
+		user = self._values[where]['user']
+		port = self._values[where]['port']
+		role = self._values[where]['role']
+		file = self._values[where]['file']
 
 		if file:
 			extra += f' -i {file}'
@@ -163,10 +171,10 @@ class Config(object):
 		return f'ssh {extra} -p {port} {user}@{host} {command}'
 
 	def scp(self, where, src, dst):
-		host = self.values[where]['host']
-		user = self.values[where]['user']
-		port = self.values[where]['port']
-		role = self.values[where]['role']
+		host = self._values[where]['host']
+		user = self._values[where]['user']
+		port = self._values[where]['port']
+		role = self._values[where]['role']
 		if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return f'scp -r {src} {dst}'
 		dst = dst.replace('$', '\$')
@@ -174,13 +182,13 @@ class Config(object):
 
 	def docker(self, where, rwd, command):
 		# rwd: relative working directory
-		repo = self.values[where]['repo']
+		repo = self._values[where]['repo']
 		return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:current {command}'
 
 	def rsync(self, where, src, dest):
-		host = self.values[where]['host']
-		user = self.values[where]['user']
-		port = self.values[where]['port']
+		host = self._values[where]['host']
+		user = self._values[where]['user']
+		port = self._values[where]['port']
 		if host in ('localhost', '127.0.0.1', '::1') and port == 22:
 			return f'rsync -avh --delete {src} {dest}'
 		dest = dest.replace('$', '\$')
