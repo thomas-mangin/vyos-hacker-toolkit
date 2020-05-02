@@ -19,7 +19,7 @@ class Command(edit.Command):
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-	def dir(self, directory):
+	def into(self, directory):
 		if self.verbose or self.dry:
 			sys.stdout.write(f'cd to {directory}: ')
 		if not self.dry:
@@ -32,16 +32,17 @@ class Command(edit.Command):
 
 		if not os.path.exists(working):
 			self.make(cloning)
-			self.dir(cloning)
+			self.into(cloning)
 			self.run(f'git clone git@github.com:{user}/{repo}')
-			self.dir(working)
+			self.into(working)
 			self.run(f'git remote add upstream git://github.com/vyos/{repo}')
 
 		branch = 'current'
 		if repo in ('vyos-smoketest',):
 			branch = 'master'
 		self.make(working)
-		self.dir(working)
+		self.into(working)
+		self.run(f'git checkout {branch}')
 		self.run(f'git pull upstream {branch}')
 		self.run(f'git push origin {branch}')
 
@@ -52,9 +53,10 @@ class Command(edit.Command):
 
 		if not os.path.exists(working):
 			self.make(folder)
+			self.into(folder)
 			self.run(f'cp -a {cloning} {repo}')
 
-		self.dir(working)
+		self.into(working)
 		self.run(f'git checkout -b {branch}')
 
 
