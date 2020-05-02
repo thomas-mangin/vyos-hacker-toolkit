@@ -18,7 +18,7 @@ from vyosextra.entry.download import fetch
 
 
 class Command(cmd.Command):
-	def upgrade(self, where, location, local, remote, show):
+	def upgrade(self, where, ip, location, local, remote, show):
 		# local: your computer port
 		# remote: the router port
 		image = location.split('/')[-1]
@@ -27,7 +27,7 @@ class Command(cmd.Command):
 			url = f'http://127.0.0.1:{remote}/{image}'
 			extra = f'-R {remote}:127.0.0.1:{local}'
 		else:
-			ip = args.ip if args.ip else socket.gethostbyname(socket.gethostname())
+			ip = ip if ip else socket.gethostbyname(socket.gethostname())
 			url = f'http://{ip}:{local}/{image}'
 			extra = ''
 
@@ -79,6 +79,7 @@ def upgrade():
 	parser.add_argument('router', help='machine on which the action will be performed')
 
 	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
+	parser.add_argument('-b', '--bind', type=int, help="ip to bind the webserver to")
 	parser.add_argument('-r', '--remote', type=int, help="port to bind the router")
 	parser.add_argument('-l', '--local', type=int, help="port to bind the webserver", default=8088)
 
@@ -109,7 +110,7 @@ def upgrade():
 		remote = args.remote
 
 	time.sleep(0.1)
-	cmds.upgrade(args.router, location, local, remote, args.show)
+	cmds.upgrade(args.router, args.bind, location, local, remote, args.show)
 
 if __name__ == '__main__':
 	upgrade()
