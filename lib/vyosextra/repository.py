@@ -7,7 +7,10 @@ from vyosextra import log
 class InRepo:
 	def __init__(self, folder):
 		self.folder = folder
-		self.pwd = os.getcwd()
+		try:
+			self.pwd = os.getcwd()
+		except FileNotFoundError:
+			log.failed('the folder we were into was deleted')
 
 	def __enter__(self):
 		try:
