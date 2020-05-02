@@ -11,22 +11,19 @@ from vyosextra.entry import edit
 
 
 class Command(edit.Command):
-	def make(self, dir):
+	def make(self, directory):
 		if self.verbose or self.dry:
-			sys.stdout.write(f'making {dir}: ')
-		if not self.dry:
-			os.makedirs(dir)
-
-	def dir(self, dir):
-		if self.verbose or self.dry:
-			sys.stdout.write(f'cd to {dir}: ')
-		if not self.dry:
-			os.chdir(dir)
-
-	def inside (self, directory):
+			sys.stdout.write(f'making {directory}: ')
+		if self.dry:
+			return
 		if not os.path.exists(directory):
-			self.make(directory)
-		self.dir(directory)
+			os.makedirs(directory)
+
+	def dir(self, directory):
+		if self.verbose or self.dry:
+			sys.stdout.write(f'cd to {directory}: ')
+		if not self.dry:
+			os.chdir(directory)
 
 	def setup_source(self, repo):
 		cloning = self.config.get('global', 'cloning_dir')
@@ -34,7 +31,8 @@ class Command(edit.Command):
 		user = self.config.get('global', 'github')
 
 		if not os.path.exists(working):
-			self.inside(cloning)
+			self.make(cloning)
+			self.dir(cloning)
 			self.run(f'git clone git@github.com:{user}/{repo}')
 			self.dir(working)
 			self.run(f'git remote add upstream git://github.com/vyos/{repo}')
@@ -42,7 +40,8 @@ class Command(edit.Command):
 		branch = 'current'
 		if repo in ('vyos-smoketest',):
 			branch = 'master'
-		self.inside(working)
+		self.make(working)
+		self.dir(working)
 		self.run(f'git pull upstream {branch}')
 		self.run(f'git push origin {branch}')
 
