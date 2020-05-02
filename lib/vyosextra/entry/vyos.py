@@ -8,7 +8,7 @@ import argparse
 
 from vyosextra.entry.download import download
 from vyosextra.entry.update import update
-from vyosextra.entry.dpkg import dpkg
+from vyosextra.entry.build import build
 from vyosextra.entry.make import make
 from vyosextra.entry.test import test
 from vyosextra.entry.setup import setup
@@ -49,9 +49,9 @@ def vyos():
 	dispatch = {
 		'update':   (update, 'update a VyOS router with vyos-1x'),
 		'upgrade':  (upgrade, 'download (if required), cache, and serve locally the lastest rolling'),
-		'package':  (dpkg, 'build and install a VyOS package (vyos-1x, ...)'),
+		'build':    (build, 'build and install a VyOS package (vyos-1x, ...)'),
 		'make':     (make, 'call vyos-build make within docker'),
-		'iso':      (make, 'build (and possibly test) VyOS iso image'),
+		'iso':      (make, 'build (and possibly test) a VyOS iso image'),
 		'download': (download, 'download the lastest VyOS image'),
 		'setup':    (setup, 'setup a VyOS machine for development'),
 		'ssh':      (ssh, 'ssh to a configured server'),

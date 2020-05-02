@@ -33,7 +33,7 @@ class Command(cmd.Command):
 
 
 
-def dpkg():
+def build():
 	args = arguments.setup(
 		'build and install a vyos debian package', 
 		['server', 'router', 'presentation']
@@ -75,4 +75,4 @@ def dpkg():
 
 
 if __name__ == '__main__':
-	dpkg()
+	build()
