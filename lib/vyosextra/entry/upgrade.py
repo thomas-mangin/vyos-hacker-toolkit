@@ -38,6 +38,9 @@ class Command(cmd.Command):
 
 		self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
 		self.ssh(where, 'printf 1 | /opt/vyatta/bin/vyatta-boot-image.pl --select')
+
+	def reboot(self, where):
+		# should find a way to check if the image changed
 		self.ssh(where, 'sudo reboot')
 
 
@@ -82,6 +85,8 @@ def upgrade():
 	parser.add_argument('-b', '--bind', type=int, help="ip to bind the webserver to")
 	parser.add_argument('-r', '--remote', type=int, help="port to bind the router")
 	parser.add_argument('-l', '--local', type=int, help="port to bind the webserver", default=8088)
+	# no short version for something so critical :p
+	parser.add_argument('--reboot', help='reboot the router', action='store_true')
 
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
@@ -111,6 +116,8 @@ def upgrade():
 
 	time.sleep(0.1)
 	cmds.upgrade(args.router, args.bind, location, local, remote, args.show)
+	if args.reboot:
+		cmds.reboot(args.router)
 
 if __name__ == '__main__':
 	upgrade()
