@@ -2,11 +2,10 @@
 
 import os
 import sys
-import argparse
 from datetime import datetime
 
 from vyosextra import log
-# from vyosextra import cmd
+from vyosextra import arguments
 from vyosextra.entry import edit
 
 
@@ -61,18 +60,10 @@ class Command(edit.Command):
 
 
 def branch():
-	parser = argparse.ArgumentParser(description='edit code')
-	parser.add_argument("branch", help='the phabricator/branch to work on')
-	parser.add_argument("repository", help='the repository to work on')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-	parser.add_argument('-e', '--edit', help='start editor once branched', action='store_true')
-
-	args = parser.parse_args()
-	edit.query_valid_vyos(args.branch, args.repository)
-
+	args = arguments.setup(
+		'setup a branch of a vyos repository',
+		['repository', 'presentation', 'edit']
+	)
 	cmds = Command(args.show, args.verbose)
 	cmds.setup_source(args.repository)
 	cmds.setup_branch(args.branch, args.repository)

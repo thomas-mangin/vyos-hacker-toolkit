@@ -3,25 +3,24 @@
 import os
 import sys
 import subprocess
-import argparse
 
 from vyosextra import log
+from vyosextra import cmd
+from vyosextra import arguments
 
-from vyosextra.cmd import Command
 
 LOCATION = 'packages'
 
 
+class Command(cmd.Command):
+	pass
+
+
 def ssh():
-	parser = argparse.ArgumentParser(description='ssh to a machine')
-	parser.add_argument("machine", help='machine on which the action will be performed')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'ssh to a machine',
+		['machine', 'presentation']
+	)
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.machine):

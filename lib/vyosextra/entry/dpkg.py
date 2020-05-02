@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import argparse
 
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import config
+from vyosextra import arguments
 from vyosextra import repository
 from vyosextra.repository import InRepo
 
@@ -34,21 +34,10 @@ class Command(cmd.Command):
 
 
 def dpkg():
-	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
-	parser.add_argument("server", help='server on which the action will be performed')
-	parser.add_argument('router', help='router on which the packages will be installed')
-
-	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
-	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
-	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
-	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'build and install a vyos debian package', 
+		['server', 'router', 'presentation']
+	)
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.server):

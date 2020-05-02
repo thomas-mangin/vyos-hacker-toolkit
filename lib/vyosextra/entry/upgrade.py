@@ -5,15 +5,15 @@ import sys
 import time
 import socket
 import shutil
-import argparse
 from datetime import datetime
 
 from threading import Thread
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 from vyosextra import cmd
-from vyosextra.config import Config
+from vyosextra import arguments
 
+from vyosextra.config import Config
 from vyosextra.entry.download import fetch
 
 
@@ -78,22 +78,10 @@ def web(location, name, port):
 	daemon.start()
 
 def upgrade():
-	parser = argparse.ArgumentParser(description='upgrade router to latest VyOS image')
-	parser.add_argument('router', help='machine on which the action will be performed')
-
-	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
-	parser.add_argument('-b', '--bind', type=int, help="ip to bind the webserver to")
-	parser.add_argument('-r', '--remote', type=int, help="port to bind the router")
-	parser.add_argument('-l', '--local', type=int, help="port to bind the webserver", default=8088)
-	# no short version for something so critical :p
-	parser.add_argument('--reboot', help='reboot the router', action='store_true')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'upgrade router to latest VyOS image',
+		['router', 'upgrade', 'presentation']
+	)
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.router):

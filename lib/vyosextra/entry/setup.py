@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import argparse
 from datetime import datetime
 
 from vyosextra import log
 from vyosextra import cmd
+from vyosextra import arguments
 
 
 class Command(cmd.Command):
@@ -65,15 +65,10 @@ class Command(cmd.Command):
 
 
 def setup():
-	parser = argparse.ArgumentParser(description='set a machine for this tool')
-	parser.add_argument("machine", help='machine on which the action will be performed')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'set a machine for this tool',
+		['machine', 'presentation']
+	)
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.machine):

@@ -60,13 +60,13 @@ def vyos():
 		'test':     (test, 'test a VyOS router'),
 	}
 
-	epilog = '\n'.join([f'   {k:<22} {v[1]}' for (k, v) in dispatch.items()])
+	epilog = '\n'.join([f'   {k:<20} {v[1]}' for (k, v) in dispatch.items()])
 
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
 		add_help=False,
 		formatter_class=argparse.RawDescriptionHelpFormatter,
-		epilog = f'command options:\n   {epilog}')
+		epilog = f'command options:\n{epilog}')
 	parser.add_argument('-h', '--help', 
 		help='show this help message and exit', 
 		action='store_true')

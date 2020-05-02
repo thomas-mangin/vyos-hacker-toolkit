@@ -3,10 +3,11 @@
 # based on https://github.com/sever-sever/vyos-checks/blob/master/main.yml
 
 import sys
-import argparse
 
 from vyosextra import log
 from vyosextra import cmd
+from vyosextra import arguments
+
 
 commands = [
 	'show bridge',
@@ -303,15 +304,10 @@ def failed(command, out, err, reason=''):
 	print(err)
 
 def test():
-	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
-	parser.add_argument("machine", help='machine on which the action will be performed')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'build and install a vyos debian package',
+		['machine', 'presentation']
+	)
 	cmds = cmd.Command(dry=args.show, verbose=args.verbose)
 
 	for command in commands:

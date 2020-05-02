@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-import argparse
 
 from vyosextra import log
 from vyosextra import cmd
+from vyosextra import arguments
+
 from vyosextra.repository import InRepo
 
 
@@ -21,20 +22,10 @@ class Command(cmd.Command):
 
 
 def update():
-	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
-	parser.add_argument('router', help='machine on which the action will be performed')
-
-	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
-	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
-	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
-	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'build and install a vyos debian package',
+		['router', 'package', 'presentation']
+	)
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.router):
@@ -46,16 +37,7 @@ def update():
 		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	todo = {
-		('vyos-1x', args.vyos),
-		('vyos-smoketest', args.smoke),
-		('vyatta-cfg-system', args.cfg),
-		('vyatta-op', args.op)
-	}
-
-	for package, option in todo:
-		if option:
-			cmds.copy(args.router, LOCATION, package, option)
+	cmds.copy(args.router, LOCATION, args.package, option)
 
 	log.completed(args.debug, 'router updated')
 	

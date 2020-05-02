@@ -43,7 +43,6 @@ class Config(object):
 	__instance = None
 	_values = {}
 	default = {}
-	root = self.absolute_path(dirname(__file__), '..', '..')
 
 	# This class is a singleton
 	def __new__(cls):
@@ -52,6 +51,7 @@ class Config(object):
 		return cls.__instance
 
 	def __init__(self):
+		self.root = self.absolute_path(dirname(__file__), '..', '..')
 		self.conversion = {
 			'host':        lambda host: host.lower(),
 			'port':        lambda port: int(port),
@@ -127,9 +127,9 @@ class Config(object):
 					self.set(name, key, self._default(name, key))
 
 		for machine in self._values:
-			if not self._values['default']:
+			if not self._values.get('default',''):
 				continue
-			role = self._values['role']
+			role = self._values.get('role','')
 			if self.default.get(role, ''):
 				log.failed('only one machine can be set as default "{role}"')
 			self.default[role] = machine

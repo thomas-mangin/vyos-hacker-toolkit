@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-import argparse
 from datetime import datetime
 
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import config
+from vyosextra import arguments
 
 
 LOCATION = 'packages'
@@ -53,27 +53,16 @@ class Command(cmd.Command):
 
 
 def make(target=''):
-	parser = argparse.ArgumentParser(description='build and install a vyos debian package')
-	if not target:
-		parser.add_argument("target", help='make target')
-	parser.add_argument("server", help='machine on which the action will be performed')
-
-	parser.add_argument('-1', '--vyos', type=str, help='vyos-1x folder to build')
-	parser.add_argument('-k', '--smoke', type=str, help="vyos-smoke folder to build")
-	parser.add_argument('-c', '--cfg', type=str, help="vyatta-cfg-system folder to build")
-	parser.add_argument('-o', '--op', type=str, help="vyatta-op folder to build")
-
-	parser.add_argument('-e', '--extra', type=str, help='extra debian package(s) to install')
-	parser.add_argument('-n', '--name', type=str, help='name/tag to add to the build version')
-	parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
-	parser.add_argument('-f', '--force', help="make without custom package", action='store_true')
-	parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
-
-	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
-	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
-
-	args = parser.parse_args()
+	if target:
+		args = arguments.setup(
+			'build and install a vyos debian package',
+			['target', 'server', 'package', 'make', 'presentation']
+		)
+	else:
+		args = arguments.setup(
+			'build and install a vyos debian package',
+			['server', 'package', 'make', 'presentation']
+		)
 
 	if not target:
 		target = args.target
@@ -89,18 +78,8 @@ def make(target=''):
 		sys.stderr.write(f'target "{args.server}" is not a build machine\n')
 		sys.exit(1)
 
-	todo = {
-		('vyos-1x', args.vyos),
-		('vyos-smoketest', args.smoke),
-		('vyatta-cfg-system', args.cfg),
-		('vyatta-op', args.op)
-	}
-	done = False
-
 	cmds.update_build(args.server)
-	for package, option in todo:
-		if option:
-			done = cmds.build(args.server, LOCATION, package, option)
+	done = cmds.build(args.server, LOCATION, args.package, option)
 
 	if done or args.force:
 		cmds.configure(args.server, LOCATION, args.extra, args.name)

@@ -4,10 +4,10 @@ import os
 import re
 import sys
 import time
-import argparse
 import datetime
 import urllib.request
 
+from vyosextra import arguments
 from vyosextra.config import Config
 
 
@@ -99,10 +99,10 @@ def fetch(target='', show=False):
 
 
 def download():
-	parser = argparse.ArgumentParser(description='download latest VyOS image')
-	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
-	args = parser.parse_args()
-
+	args = arguments.setup(
+		'download latest VyOS image',
+		['isofile', 'presentation']
+	)
 	code = fetch(args.file)
 	return code
 
