@@ -33,9 +33,10 @@ class Command(cmd.Command):
 
 
 
-def build():
+def main():
+	'build and install a vyos debian package'
 	args = arguments.setup(
-		'build and install a vyos debian package', 
+		__doc__, 
 		['server', 'router', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -75,4 +76,4 @@ def build():
 
 
 if __name__ == '__main__':
-	build()
+	main()

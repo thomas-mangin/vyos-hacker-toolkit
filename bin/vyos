@@ -10,8 +10,8 @@ if not os.path.exists(IMPORT):
 	sys.exit(f'could not import "{IMPORT}"')
 
 sys.path.append(IMPORT)
-from vyosextra import entry
+from vyosextra.main import main
 
 if __name__ == '__main__':
-	entry.vyos()
+	main()
 

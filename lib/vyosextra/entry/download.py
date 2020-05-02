@@ -98,9 +98,10 @@ def fetch(target='', show=False):
 		sys.exit(3)
 
 
-def download():
+def main():
+	'download latest VyOS rolling image'
 	args = arguments.setup(
-		'download latest VyOS image',
+		__doc__,
 		['isofile', 'presentation']
 	)
 	code = fetch(args.file)
@@ -108,4 +109,4 @@ def download():
 
 
 if __name__ == '__main__':
-	download()
+	main()

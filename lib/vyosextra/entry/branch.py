@@ -59,9 +59,10 @@ class Command(edit.Command):
 		self.run(f'git checkout -b {branch}')
 
 
-def branch():
+def main():
+	'setup a branch of a vyos repository'
 	args = arguments.setup(
-		'setup a branch of a vyos repository',
+		__doc__,
 		['repository', 'presentation', 'edit']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -72,4 +73,4 @@ def branch():
 		cmds.edit(cmds.branched_repo(args.branch, args.repository))
 
 if __name__ == '__main__':
-	branch()
+	main()

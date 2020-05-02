@@ -52,15 +52,16 @@ class Command(cmd.Command):
 
 
 
-def make(target=''):
+def main(target=''):
+	'call vyos-build make within docker'
 	if target:
 		args = arguments.setup(
-			'build and install a vyos debian package',
+			__doc__,
 			['target', 'server', 'package', 'make', 'presentation']
 		)
 	else:
 		args = arguments.setup(
-			'build and install a vyos debian package',
+			__doc__,
 			['server', 'package', 'make', 'presentation']
 		)
 
@@ -93,4 +94,4 @@ def make(target=''):
 
 
 if __name__ == '__main__':
-	make('iso')
+	main('iso')

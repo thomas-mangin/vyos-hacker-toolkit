@@ -303,9 +303,10 @@ def failed(command, out, err, reason=''):
 	print(out)
 	print(err)
 
-def test():
+def main():
+	'test a VyOS router'
 	args = arguments.setup(
-		'build and install a vyos debian package',
+		__doc__,
 		['machine', 'presentation']
 	)
 	cmds = cmd.Command(dry=args.show, verbose=args.verbose)
@@ -336,4 +337,4 @@ def test():
 
 
 if __name__ == '__main__':
-	test()
+	main()

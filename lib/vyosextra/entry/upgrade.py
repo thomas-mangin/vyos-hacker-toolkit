@@ -77,9 +77,11 @@ def web(location, name, port):
 	daemon.setDaemon(True)
 	daemon.start()
 
-def upgrade():
+
+def main():
+	'upgrade router to latest VyOS image'
 	args = arguments.setup(
-		'upgrade router to latest VyOS image',
+		__doc__,
 		['router', 'upgrade', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -107,5 +109,6 @@ def upgrade():
 	if args.reboot:
 		cmds.reboot(args.router)
 
+
 if __name__ == '__main__':
-	upgrade()
+	main()

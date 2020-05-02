@@ -21,9 +21,10 @@ class Command(cmd.Command):
 				self.scp(where, src, dst)
 
 
-def update():
+def main():
+	'update a VyOS router filesystem with newer vyos-1x code'
 	args = arguments.setup(
-		'build and install a vyos debian package',
+		__doc__,
 		['router', 'package', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -43,4 +44,4 @@ def update():
 	
 
 if __name__ == '__main__':
-	update()
+	main()

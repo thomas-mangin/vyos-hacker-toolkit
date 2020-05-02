@@ -6,17 +6,7 @@ import sys
 import textwrap
 import argparse
 
-from vyosextra.entry.download import download
-from vyosextra.entry.update import update
-from vyosextra.entry.build import build
-from vyosextra.entry.make import make
-from vyosextra.entry.test import test
-from vyosextra.entry.setup import setup
-from vyosextra.entry.ssh import ssh
-from vyosextra.entry.upgrade import upgrade
-from vyosextra.entry.branch import branch
-from vyosextra.entry.edit import edit
-
+from vyosextra.entry import dispatch
 
 def make_sys(extract=0, help=True):
 	prog = sys.argv[0]
@@ -37,7 +27,7 @@ def make_sys(extract=0, help=True):
 	return extracted
 
 
-def vyos():
+def main():
 	if os.environ.get('VYOSEXTRA_DEBUG',None) is not None:
 		def intercept(dtype, value, trace):
 			import traceback
@@ -46,21 +36,9 @@ def vyos():
 			pdb.pm()
 		sys.excepthook = intercept
 
-	dispatch = {
-		'update':   (update, 'update a VyOS router with vyos-1x'),
-		'upgrade':  (upgrade, 'download (if required), cache, and serve locally the lastest rolling'),
-		'build':    (build, 'build and install a VyOS package (vyos-1x, ...)'),
-		'make':     (make, 'call vyos-build make within docker'),
-		'iso':      (make, 'build (and possibly test) a VyOS iso image'),
-		'download': (download, 'download the lastest VyOS image'),
-		'setup':    (setup, 'setup a VyOS machine for development'),
-		'ssh':      (ssh, 'ssh to a configured server'),
-		'branch':   (branch, 'setup a branch for VyOS development'),
-		'edit':     (edit, 'start your editor for a branch'),
-		'test':     (test, 'test a VyOS router'),
-	}
-
-	epilog = '\n'.join([f'   {k:<20} {v[1]}' for (k, v) in dispatch.items()])
+	choices = list(dispatch.keys())
+	choices.sort()
+	epilog = '\n'.join([f'   {c:<20} {dispatch[c][1]}' for c in choices])
 
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
@@ -73,14 +51,13 @@ def vyos():
 	parser.add_argument('command', 
 		help='command to run',
 		nargs='?',
-        choices=dispatch.keys())
+        choices=choices)
 
 	args, _ = parser.parse_known_args()
 
 	if not args.command and args.help:
 		parser.print_help()
 		return
-
 
 	helping = {
 		'download': False,

@@ -16,9 +16,10 @@ class Command(cmd.Command):
 	pass
 
 
-def ssh():
+def main():
+	'ssh to a configured machine'
 	args = arguments.setup(
-		'ssh to a machine',
+		__doc__,
 		['machine', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -42,4 +43,4 @@ def ssh():
 
 
 if __name__ == '__main__':
-	ssh()
+	main()

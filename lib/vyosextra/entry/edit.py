@@ -18,13 +18,14 @@ class Command(cmd.Command):
 
 
 
-def edit():
+def main():
+	'edit vyos code'
 	args = arguments.setup(
-		'edit vyos code',
+		__doc__,
 		['repository', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
 	cmds.edit(cmds.branched_repo(args.branch, args.repository))
 
 if __name__ == '__main__':
-	edit()
+	main()

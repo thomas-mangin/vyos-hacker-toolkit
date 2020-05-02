@@ -64,9 +64,10 @@ class Command(cmd.Command):
 		# self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
 
-def setup():
+def main():
+	'set a machine for this tool'
 	args = arguments.setup(
-		'set a machine for this tool',
+		__doc__,
 		['machine', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
@@ -87,4 +88,4 @@ def setup():
 		log.completed(args.debug, 'the machine "{args.machine}" is not correctly setup')
 
 if __name__ == '__main__':
-	setup()
+	main()
