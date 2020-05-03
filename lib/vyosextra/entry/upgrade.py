@@ -84,7 +84,7 @@ def main():
 		__doc__,
 		['router', 'upgrade', 'presentation']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 
 	if not config.exists(arg.router):
 		sys.exit(f'machine "{arg.router}" is not configured\n')
@@ -103,7 +103,7 @@ def main():
 		remote = arg.remote
 
 	time.sleep(0.1)
-	control.upgrade(arg.router, arg.bind, location, local, remote, arg.show)
+	control.upgrade(arg.router, arg.bind, location, local, remote, arg.dry)
 	if arg.reboot:
 		control.reboot(arg.router)
 

@@ -21,17 +21,17 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 
 	if not config.exists(arg.machine):
 		sys.exit(f'machine "{arg.machine}" is not configured\n')
 
 	connect = config.ssh(arg.machine, '')
 
-	if arg.show or arg.verbose:
+	if arg.dry or arg.quiet:
 		print(connect)
 	
-	if arg.show:
+	if arg.dry:
 		return
 
 	log.timed(f'connecting to {arg.machine}')

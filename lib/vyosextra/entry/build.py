@@ -62,7 +62,7 @@ def main():
 		__doc__, 
 		['server', 'router', 'package', 'presentation']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 
 	if not config.exists(arg.server):
 		sys.exit(f'machine "{arg.server}" is not configured\n')

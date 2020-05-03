@@ -311,7 +311,7 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = command.Command(dry=arg.show, verbose=arg.verbose)
+	cmds = command.Command(arg.dry, arg.quiet)
 
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'

@@ -26,7 +26,7 @@ def main():
 		__doc__,
 		['router', 'package', 'presentation']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 
 	if not config.exists(arg.router):
 		sys.exit(f'machine "{arg.router}" is not configured\n')

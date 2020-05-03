@@ -92,9 +92,9 @@ class Control(Run):
 				('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 			]
 
-	def __init__(self, config, dry=False, verbose=False):
+	def __init__(self, dry, quiet):
 		Run.dry = dry
-		Run.verbose = verbose
+		Run.verbose = not quiet
 
 	def ssh(self, where, cmd, ignore='', extra=''):
 		return self.run(config.ssh(where, cmd, extra), ignore)

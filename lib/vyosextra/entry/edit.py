@@ -26,7 +26,7 @@ def main():
 		__doc__,
 		['repository', 'presentation']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 	control.edit(control.branched_repo(arg.branch, arg.repository))
 
 if __name__ == '__main__':

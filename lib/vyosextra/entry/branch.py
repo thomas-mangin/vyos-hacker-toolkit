@@ -68,7 +68,7 @@ def main():
 		__doc__,
 		['repository', 'presentation', 'edit']
 	)
-	control = Control(arg.show, arg.verbose)
+	control = Control(arg.dry, arg.quiet)
 	control.setup_source(arg.repository)
 	control.setup_branch(arg.branch, arg.repository)
 	log.completed('build complete')
