@@ -13,7 +13,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from vyosextra import cmd
 from vyosextra import arguments
 
-from vyosextra.config import Config
+from vyosextra.config import config
 from vyosextra.entry.download import fetch
 
 
@@ -86,11 +86,11 @@ def main():
 	)
 	cmds = Command(args.show, args.verbose)
 
-	if not cmds.config.exists(args.router):
+	if not config.exists(args.router):
 		sys.stderr.write(f'machine "{args.router}" is not configured\n')
 		sys.exit(1)
 
-	role = cmds.config.get(args.router, 'role')
+	role = config.get(args.router, 'role')
 	if role != 'router':
 		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)

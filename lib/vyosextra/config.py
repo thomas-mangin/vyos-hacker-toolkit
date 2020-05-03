@@ -11,7 +11,7 @@ from os.path import exists
 from vyosextra.insource import read
 
 
-class Config(object):
+class _Config(object):
 	__default = {
 		'global': {
 			'store': '/tmp',
@@ -126,13 +126,14 @@ class Config(object):
 				if key not in section:
 					self.set(name, key, self._default(name, key))
 
-		for machine in self._values:
-			if not self._values.get('default',''):
+		for name in self._values:
+			machine = self._values[name]
+			if not machine.get('default',''):
 				continue
-			role = self._values.get('role','')
+			role = machine.get('role', '')
 			if self.default.get(role, ''):
 				log.failed('only one machine can be set as default "{role}"')
-			self.default[role] = machine
+			self.default[role] = name
 
 	def exists(self, machine):
 		return machine in self._values
@@ -193,3 +194,6 @@ class Config(object):
 			return f'rsync -avh --delete {src} {dest}'
 		dest = dest.replace('$', '\$')
 		return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
+
+# The global configuration
+config = _Config()

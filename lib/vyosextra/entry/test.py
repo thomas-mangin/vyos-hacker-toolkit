@@ -7,6 +7,7 @@ import sys
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import arguments
+from vyosextra.config import config
 
 
 commands = [
@@ -314,7 +315,7 @@ def main():
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'
 		running(command)
-		out, err = cmds.communicate(cmds.config.ssh(args.machine, show))
+		out, err = cmds.communicate(config.ssh(args.machine, show))
 
 		# some command reply on stderr ! sigh !
 

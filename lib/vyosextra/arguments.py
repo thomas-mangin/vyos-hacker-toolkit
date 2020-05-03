@@ -2,8 +2,9 @@ import re
 import argparse
 
 from vyosextra.register import Registerer
-register = Registerer()
+from vyosextra.config import config
 
+register = Registerer()
 
 def setup(description, options, strict=True):
 	parser = argparse.ArgumentParser(description=description)
@@ -40,12 +41,18 @@ def _machine(parser):
 
 @register('router')
 def _router(parser):
-	parser.add_argument('router', help='router on which the packages will be installed')
+	default = config.default.get('router', None)
+	nargs = '?' if default else None
+	parser.add_argument('router', nargs=nargs, default=default,
+	help='router on which the packages will be installed')
 
 
 @register('server')
 def _server(parser):
-	parser.add_argument("server", help='server on which the action will be performed')
+	default = config.default.get('build', None)
+	nargs = '?' if default else None
+	parser.add_argument("server", nargs=nargs, default=default,
+	help='server on which the action will be performed')
 
 
 @register('package')
@@ -53,7 +60,7 @@ def _package(parser):
 	parser.add_argument(
 		'-p', '--packages', type=str, nargs='*',
 		choices=['vyos-1x', 'vyatta-op', 'vyatta-cfg', 'smoketest'],
-		default='vyos-1x',
+		default=['vyos-1x'],
 		help='what type of package is it')
 	parser.add_argument(
 		'-l', '--location', type=str,

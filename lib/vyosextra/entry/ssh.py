@@ -7,6 +7,7 @@ import subprocess
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import arguments
+from vyosextra.config import config
 
 
 LOCATION = 'packages'
@@ -24,11 +25,11 @@ def main():
 	)
 	cmds = Command(args.show, args.verbose)
 
-	if not cmds.config.exists(args.machine):
+	if not config.exists(args.machine):
 		sys.stderr.write(f'machine "{args.machine}" is not configured\n')
 		sys.exit(1)
 
-	connect = cmds.config.ssh(args.machine, '')
+	connect = config.ssh(args.machine, '')
 
 	if args.show or args.verbose:
 		print(connect)

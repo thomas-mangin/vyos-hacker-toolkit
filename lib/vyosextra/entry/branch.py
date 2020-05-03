@@ -8,6 +8,7 @@ from vyosextra import log
 from vyosextra import arguments
 
 import vyosextra.entry.edit as command
+from vyosextra.config import config
 
 
 class Command(command.Command):
@@ -26,9 +27,9 @@ class Command(command.Command):
 			os.chdir(directory)
 
 	def setup_source(self, repo):
-		cloning = self.config.get('global', 'cloning_dir')
+		cloning = config.get('global', 'cloning_dir')
 		working = os.path.join(cloning, repo)
-		user = self.config.get('global', 'github')
+		user = config.get('global', 'github')
 
 		if not os.path.exists(working):
 			self.make(cloning)
@@ -47,8 +48,8 @@ class Command(command.Command):
 		self.run(f'git push origin {branch}')
 
 	def setup_branch(self, branch, repo):
-		cloning = os.path.join(self.config.get('global', 'cloning_dir'), repo)
-		folder = os.path.join(self.config.get('global', 'working_dir'), branch)
+		cloning = os.path.join(config.get('global', 'cloning_dir'), repo)
+		folder = os.path.join(config.get('global', 'working_dir'), branch)
 		working = os.path.join(folder, repo)
 
 		if not os.path.exists(working):

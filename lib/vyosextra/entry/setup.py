@@ -6,6 +6,7 @@ from datetime import datetime
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import arguments
+from vyosextra.config import config
 
 
 class Command(cmd.Command):
@@ -19,8 +20,8 @@ class Command(cmd.Command):
 		self.ssh(where, f'sudo chmod g+rwx /etc/apt/sources.list.d')
 
 		self.chain(
-			self.config.printf(self.config.read('source.list')),
-			self.config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
+			config.printf(config.read('source.list')),
+			config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
 		)
 
 		packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
@@ -72,11 +73,11 @@ def main():
 	)
 	cmds = Command(args.show, args.verbose)
 
-	if not cmds.config.exists(args.machine):
+	if not config.exists(args.machine):
 		sys.stderr.write(f'machine "{args.machine}" is not configured\n')
 		sys.exit(1)
 
-	role = cmds.config.get(args.machine, 'role')
+	role = config.get(args.machine, 'role')
 	if not role:
 		print('the machine "{args.machine}" is not setup')
 

@@ -5,7 +5,7 @@ from datetime import datetime
 from subprocess import Popen
 from subprocess import PIPE, STDOUT, DEVNULL
 
-from vyosextra.config import Config
+from vyosextra.config import config
 from vyosextra.repository import InRepo
 from vyosextra import log
 
@@ -93,25 +93,24 @@ class Command(Run):
 				('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 			]
 
-	def __init__(self, dry=False, verbose=False):
+	def __init__(self, config, dry=False, verbose=False):
 		Run.dry = dry
 		Run.verbose = verbose
-		self.config = Config()
 
 	def ssh(self, where, cmd, ignore='', extra=''):
-		return self.run(self.config.ssh(where, cmd, extra), ignore)
+		return self.run(config.ssh(where, cmd, extra), ignore)
 
 	def scp(self, where, src, dst):
-		return self.run(self.config.scp(where, src, dst))
+		return self.run(config.scp(where, src, dst))
 
 	def update_build(self, where):
-		build_repo = self.config.get(where,'repo')
+		build_repo = config.get(where,'repo')
 		self.ssh(where, f'cd {build_repo} && git pull',
 			'Already up to date.'
 		)
 
 	def build(self, where, location, vyos_repo, folder):
-		build_repo = self.config.get(where,'repo')
+		build_repo = config.get(where,'repo')
 		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
 
 		with InRepo(os.path.join(folder,vyos_repo)) as debian:
@@ -121,9 +120,9 @@ class Command(Run):
 			elif not self.dry:
 				log.report(f'building package {package}')
 
-			self.run(self.config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
+			self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
 			self.ssh(where, f'rm {build_repo}/{location}/{package} || true')
-			self.ssh(where, self.config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+			self.ssh(where, config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
 		return True
 

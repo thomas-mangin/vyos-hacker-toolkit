@@ -6,15 +6,16 @@ import sys
 from vyosextra import log
 from vyosextra import cmd
 from vyosextra import arguments
+from vyosextra.config import config
 
 
 class Command(cmd.Command):
 	def edit(self, folder):
-		editor = self.config.get('global', 'editor')
+		editor = config.get('global', 'editor')
 		self.run(f'{editor} {folder}')
 
 	def branched_repo(self, branch, repo):
-		return os.path.join(self.config.get('global', 'working_dir'), branch, repo)
+		return os.path.join(config.get('global', 'working_dir'), branch, repo)
 
 
 

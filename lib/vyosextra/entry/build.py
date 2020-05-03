@@ -9,6 +9,7 @@ from vyosextra import config
 from vyosextra import arguments
 from vyosextra import repository
 from vyosextra.repository import InRepo
+from vyosextra.config import config
 
 
 LOCATION = 'compiled'
@@ -16,7 +17,7 @@ LOCATION = 'compiled'
 
 class Command(cmd.Command):
 	def install(self, server, router, location, vyos_repo, folder):
-		build_repo = self.config.get(server,'repo')
+		build_repo = config.get(server,'repo')
 
 		with InRepo(os.path.join(folder,vyos_repo)) as debian:
 			package = debian.package(vyos_repo)
@@ -26,8 +27,8 @@ class Command(cmd.Command):
 				log.report(f'installing {package}')
 
 		self.chain(
-			self.config.ssh(server, f'cat {build_repo}/{location}/{package}'),
-			self.config.ssh(router, f'cat - > {package}')
+			config.ssh(server, f'cat {build_repo}/{location}/{package}'),
+			config.ssh(router, f'cat - > {package}')
 		)
 		self.ssh(router, f'sudo dpkg -i --force-all {package}')
 		self.ssh(router, f'rm {package}')
@@ -42,20 +43,20 @@ def main():
 	)
 	cmds = Command(args.show, args.verbose)
 
-	if not cmds.config.exists(args.server):
+	if not config.exists(args.server):
 		sys.stderr.write(f'machine "{args.server}" is not configured\n')
 		sys.exit(1)
 
-	if not cmds.config.exists(args.router):
+	if not config.exists(args.router):
 		sys.stderr.write(f'machine "{args.router}" is not configured\n')
 		sys.exit(1)
 
-	role = cmds.config.get(args.server, 'role')
+	role = config.get(args.server, 'role')
 	if role != 'build':
 		sys.stderr.write(f'target "{args.server}" is not a build machine\n')
 		sys.exit(1)
 
-	role = cmds.config.get(args.router, 'role')
+	role = config.get(args.router, 'role')
 	if role != 'router':
 		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)

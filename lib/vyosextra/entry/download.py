@@ -8,7 +8,7 @@ import datetime
 import urllib.request
 
 from vyosextra import arguments
-from vyosextra.config import Config
+from vyosextra.config import config
 
 
 regex_rolling = '(vyos-1.3-rolling-[0-9]+-amd64.iso)'
@@ -39,13 +39,13 @@ def latest(filename):
 def makeup(target):
 	if target.startswith('http'):
 		image = target.split('/')[-1]
-		location = os.path.join(Config().get('global', 'store'), image)
+		location = os.path.join(config.get('global', 'store'), image)
 	elif target.startswith('/'):
 		image = target.split('/')[-1]
 		location = target
 	else:
 		image = latest(target)
-		location = os.path.join(Config().get('global', 'store'), image)
+		location = os.path.join(config.get('global', 'store'), image)
 
 	url = f'https://downloads.vyos.io/rolling/current/amd64/{image}'
 	return image, location, url
