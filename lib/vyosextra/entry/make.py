@@ -4,15 +4,16 @@ import sys
 from datetime import datetime
 
 from vyosextra import log
-from vyosextra import command
 from vyosextra import arguments
 from vyosextra.config import config
+
+from vyosextra.entry import build as control
 
 
 LOCATION = 'packages'
 
 
-class Control(command.Command):
+class Control(control.Control):
 	def make(self, where, target):
 		self.ssh(where, config.docker(where, '', f'sudo make {target}'))
 

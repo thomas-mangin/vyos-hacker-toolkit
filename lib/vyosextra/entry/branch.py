@@ -7,11 +7,12 @@ from datetime import datetime
 from vyosextra import log
 from vyosextra import arguments
 
-import vyosextra.entry.edit as command
 from vyosextra.config import config
+from vyosextra.entry import edit as control
 
 
-class Control(command.Command):
+
+class Control(control.Control):
 	def make(self, directory):
 		if self.verbose or self.dry:
 			sys.stdout.write(f'making {directory}: ')

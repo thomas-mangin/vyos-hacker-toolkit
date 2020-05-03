@@ -54,7 +54,7 @@ def main():
 		nargs='?',
         choices=choices)
 
-	args, _ = parser.parse_known_args()
+	arg, _ = parser.parse_known_args()
 
 	if not arg.command and arg.help:
 		parser.print_help()
