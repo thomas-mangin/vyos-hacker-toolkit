@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 
-from os.path import join
-from os.path import abspath
-from os.path import dirname
-from os.path import basename
-from glob import glob
-from importlib import import_module
+import sys
+import pkgutil
+import importlib
 
-dispatch = {}
+from vyosextra.register import Registerer
 
-for fname in glob(join(abspath(dirname(__file__)),'[a-z]*.py')):
-	name = basename(fname).split('.')[0]
-	module = import_module(f'vyosextra.entry.{name}')
-	function = getattr(module, 'main')
-	documentation = function.__doc__
-	locals()[name] = module
-	dispatch[name] = (function, documentation)
+
+def import_all(package_name):
+    package = sys.modules[package_name]
+    return {
+        name: importlib.import_module(package_name + '.' + name)
+        for loader, name, is_pkg in pkgutil.walk_packages(package.__path__)
+    }
+
+__modules = import_all(__name__)
+__all__ = __modules.keys()
+
+
+# register the entry points in the module
+
+register = Registerer()
+for name, module in __modules.items():
+	register(name,module.main)

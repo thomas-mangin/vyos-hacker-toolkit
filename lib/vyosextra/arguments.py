@@ -1,12 +1,14 @@
 import re
 import argparse
 
-__register = {}
+from vyosextra.register import Registerer
+register = Registerer()
+
 
 def setup(description, options, strict=True):
 	parser = argparse.ArgumentParser(description=description)
 	for option in options:
-		__register[option](parser)
+		register.call(option,parser)
 
 	# oops, another pdb built-in name :p
 	args = [parser.parse_args()] if strict else parser.parse_known_args()
@@ -24,13 +26,6 @@ def _query_valid_vyos(branch, repository):
 		repository = '.'
 	elif not repository.startswith('vyos-') and not repository.startswith('vyatta-'):
 		input('your repository name does not look like a vyos project (like vyos-1x)')
-
-
-def register(name):
-	def _register(function):
-		__register[name] = function
-		return function
-	return _register
 
 
 @register('target')
@@ -56,7 +51,7 @@ def _server(parser):
 @register('package')
 def _package(parser):
 	parser.add_argument(
-		'-p', '--packages', type=str, nargs='*'
+		'-p', '--packages', type=str, nargs='*',
 		choices=['vyos-1x', 'vyatta-op', 'vyatta-cfg', 'smoketest'],
 		default='vyos-1x',
 		help='what type of package is it')

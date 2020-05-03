@@ -15,10 +15,11 @@ os.environ['PYTHONDONTWRITEBYTECODE'] = ""
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
 IMPORT = os.path.abspath(os.path.join(FOLDER, 'lib'))
+
 if not os.path.exists(IMPORT):
 	sys.exit(f'could not import "{IMPORT}"')
+sys.path = [IMPORT]
 
-sys.path.append(IMPORT)
 from vyosextra.insource import generate
 from vyosextra.insource import location
 
@@ -48,7 +49,7 @@ def release(target, debug):
 		source='lib',
 		target=target,
 		interpreter=python,
-		main='vyosextra.entry:vyos',
+		main='vyosextra.main:main',
 		compressed=False if debug else True,
 	)
 

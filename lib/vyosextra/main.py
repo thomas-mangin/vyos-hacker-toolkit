@@ -6,7 +6,8 @@ import sys
 import textwrap
 import argparse
 
-from vyosextra.entry import dispatch
+from vyosextra.entry import register
+
 
 def make_sys(extract=0, help=True):
 	prog = sys.argv[0]
@@ -36,9 +37,9 @@ def main():
 			pdb.pm()
 		sys.excepthook = intercept
 
-	choices = list(dispatch.keys())
+	choices = register.registered()
 	choices.sort()
-	epilog = '\n'.join([f'   {c:<20} {dispatch[c][1]}' for c in choices])
+	epilog = '\n'.join([f'   {c:<20} {register.doc(c)}' for c in choices])
 
 	parser = argparse.ArgumentParser(
 		description='vyos extra, the developer tool',
@@ -63,12 +64,12 @@ def main():
 		'download': False,
 	}
 
-	if args.command not in dispatch:
+	if args.command not in choices:
 		parser.print_help()
 		return
 
 	make_sys(help=helping.get(args.command, True))
-	dispatch[args.command][0]()
+	register.call(args.command)
 
 
 if __name__ == '__main__':

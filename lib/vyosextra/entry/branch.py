@@ -6,10 +6,11 @@ from datetime import datetime
 
 from vyosextra import log
 from vyosextra import arguments
-from vyosextra.entry import edit
+
+import vyosextra.entry.edit as command
 
 
-class Command(edit.Command):
+class Command(command.Command):
 	def make(self, directory):
 		if self.verbose or self.dry:
 			sys.stdout.write(f'making {directory}: ')
