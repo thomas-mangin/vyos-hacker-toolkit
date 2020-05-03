@@ -38,10 +38,10 @@ class Control(control.Control):
 			self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
 			self.ssh(where, f'sudo chmod -R g+rxw {dst}')
 
-		self.ssh(where, f'touch /tmp/vyos.ifconfig.debug')
-		self.ssh(where, f'touch /tmp/vyos.developer.debug')
-		self.ssh(where, f'touch /tmp/vyos.cmd.debug')
-		self.ssh(where, f'touch /tmp/vyos.log.debug')
+		self.ssh(where, f'touch /config/vyos.ifconfig.debug')
+		self.ssh(where, f'touch /config/vyos.developer.debug')
+		self.ssh(where, f'touch /config/vyos.cmd.debug')
+		self.ssh(where, f'touch /config/vyos.log.debug')
 
 	def setup_build(self, where):
 		# on my local VM which goes to sleep when I close my laptop
@@ -87,7 +87,7 @@ def main():
 	elif role == 'build':
 		control.setup_build(arg.machine)
 	else:
-		log.completed(arg.debug, 'the machine "{arg.machine}" is not correctly setup')
+		log.completed('the machine "{arg.machine}" is not correctly setup')
 
 if __name__ == '__main__':
 	main()
