@@ -58,8 +58,12 @@ def _package(parser):
 	parser.add_argument(
 		'-p', '--package', type=str,
 		choices=['vyos-1x', 'vyatta-op', 'vyatta-cfg', 'smoketest'],
-		help='what type of package is it',
-	)
+		default='vyos-1x',
+		help='what type of package is it')
+	parser.add_argument(
+		'-l', '--location', type=str,
+		default='..',
+		help='where the repository is')
 
 
 @register('make')

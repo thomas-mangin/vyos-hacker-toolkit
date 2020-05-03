@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 
 from vyosextra import log
@@ -17,7 +18,7 @@ class Command(cmd.Command):
 	def install(self, server, router, location, vyos_repo, folder):
 		build_repo = self.config.get(server,'repo')
 
-		with InRepo(folder) as debian:
+		with InRepo(os.path.join(folder,vyos_repo)) as debian:
 			package = debian.package(vyos_repo)
 			if not package:
 				log.failed(f'could not find {vyos_repo} package name')
@@ -37,7 +38,7 @@ def main():
 	'build and install a vyos debian package'
 	args = arguments.setup(
 		__doc__, 
-		['server', 'router', 'presentation']
+		['server', 'router', 'package', 'presentation']
 	)
 	cmds = Command(args.show, args.verbose)
 
@@ -59,18 +60,9 @@ def main():
 		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	todo = {
-		('vyos-1x', args.vyos),
-		('vyos-smoketest', args.smoke),
-		('vyatta-cfg-system', args.cfg),
-		('vyatta-op', args.op)
-	}
-
 	cmds.update_build(args.server)
-	for package, option in todo:
-		if option:
-			cmds.build(args.server, LOCATION, package, option)
-			cmds.install(args.server, args.router, LOCATION, package, option)
+	cmds.build(args.server, LOCATION, args.package, args.location)
+	cmds.install(args.server, args.router, LOCATION, args.package, args.location)
 
 	log.completed(args.debug, 'package(s) installed')
 

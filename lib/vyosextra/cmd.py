@@ -114,7 +114,7 @@ class Command(Run):
 		build_repo = self.config.get(where,'repo')
 		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
 
-		with InRepo(folder) as debian:
+		with InRepo(os.path.join(folder,vyos_repo)) as debian:
 			package = debian.package(vyos_repo)
 			if not package:
 				log.failed(f'could not find {vyos_repo} package version')

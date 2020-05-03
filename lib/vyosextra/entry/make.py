@@ -71,13 +71,11 @@ def main(target=''):
 	cmds = Command(args.show, args.verbose)
 
 	if not cmds.config.exists(args.server):
-		sys.stderr.write(f'machine "{args.server}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{args.server}" is not configured')
 
 	role = cmds.config.get(args.server, 'role')
 	if role != 'build':
-		sys.stderr.write(f'target "{args.server}" is not a build machine\n')
-		sys.exit(1)
+		sys.exit(f'target "{args.server}" is not a build machine')
 
 	cmds.update_build(args.server)
 	done = cmds.build(args.server, LOCATION, args.package, option)
