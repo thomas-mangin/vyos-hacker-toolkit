@@ -12,11 +12,11 @@ def setup(description, options, strict=True):
 		register.call(option,parser)
 
 	# oops, another pdb built-in name :p
-	args = [parser.parse_args()] if strict else parser.parse_known_args()
+	arg = [parser.parse_args()] if strict else parser.parse_known_args()
 
 	if 'repository' in options:
-		_query_valid_vyos(args[0].branch, args[0].repository)
-	return args[0]
+		_query_valid_vyos(arg[0].branch, arg[0].repository)
+	return arg[0]
 
 
 def _query_valid_vyos(branch, repository):

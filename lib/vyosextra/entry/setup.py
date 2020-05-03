@@ -67,26 +67,26 @@ class Command(command.Command):
 
 def main():
 	'set a machine for this tool'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.machine):
-		sys.stderr.write(f'machine "{args.machine}" is not configured\n')
+	if not config.exists(arg.machine):
+		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
 		sys.exit(1)
 
-	role = config.get(args.machine, 'role')
+	role = config.get(arg.machine, 'role')
 	if not role:
-		print('the machine "{args.machine}" is not setup')
+		print('the machine "{arg.machine}" is not setup')
 
 	if role == 'router':
-		cmds.setup_router(args.machine)
+		cmds.setup_router(arg.machine)
 	elif role == 'build':
-		cmds.setup_build(args.machine)
+		cmds.setup_build(arg.machine)
 	else:
-		log.completed(args.debug, 'the machine "{args.machine}" is not correctly setup')
+		log.completed(arg.debug, 'the machine "{arg.machine}" is not correctly setup')
 
 if __name__ == '__main__':
 	main()

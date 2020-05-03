@@ -21,12 +21,12 @@ class Command(command.Command):
 
 def main():
 	'edit vyos code'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['repository', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
-	cmds.edit(cmds.branched_repo(args.branch, args.repository))
+	cmds = Command(arg.show, arg.verbose)
+	cmds.edit(cmds.branched_repo(arg.branch, arg.repository))
 
 if __name__ == '__main__':
 	main()

@@ -306,16 +306,16 @@ def failed(command, out, err, reason=''):
 
 def main():
 	'test a VyOS router'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = command.Command(dry=args.show, verbose=args.verbose)
+	cmds = command.Command(dry=arg.show, verbose=arg.verbose)
 
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'
 		running(command)
-		out, err = cmds.communicate(config.ssh(args.machine, show))
+		out, err = cmds.communicate(config.ssh(arg.machine, show))
 
 		# some command reply on stderr ! sigh !
 

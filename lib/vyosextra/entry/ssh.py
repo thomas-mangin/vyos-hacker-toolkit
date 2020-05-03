@@ -19,28 +19,28 @@ class Command(command.Command):
 
 def main():
 	'ssh to a configured machine'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.machine):
-		sys.stderr.write(f'machine "{args.machine}" is not configured\n')
+	if not config.exists(arg.machine):
+		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
 		sys.exit(1)
 
-	connect = config.ssh(args.machine, '')
+	connect = config.ssh(arg.machine, '')
 
-	if args.show or args.verbose:
+	if arg.show or arg.verbose:
 		print(connect)
 	
-	if args.show:
+	if arg.show:
 		return
 
-	print(f'connecting to {args.machine}')
+	print(f'connecting to {arg.machine}')
 	fullssh = subprocess.check_output(['which','ssh']).decode().strip()
 	os.execvp(fullssh,connect.split())
-	log.completed(args.debug, 'session terminated')
+	log.completed(arg.debug, 'session terminated')
 
 
 if __name__ == '__main__':

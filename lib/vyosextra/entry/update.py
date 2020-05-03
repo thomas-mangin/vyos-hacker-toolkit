@@ -24,24 +24,24 @@ class Command(command.Command):
 
 def main():
 	'update a VyOS router filesystem with newer vyos-1x code'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['router', 'package', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.router):
-		sys.stderr.write(f'machine "{args.router}" is not configured\n')
+	if not config.exists(arg.router):
+		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
 		sys.exit(1)
 
-	role = config.get(args.router, 'role')
+	role = config.get(arg.router, 'role')
 	if role != 'router':
-		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
+		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	cmds.copy(args.router, LOCATION, args.package, option)
+	cmds.copy(arg.router, LOCATION, arg.package, option)
 
-	log.completed(args.debug, 'router updated')
+	log.completed(arg.debug, 'router updated')
 	
 
 if __name__ == '__main__':

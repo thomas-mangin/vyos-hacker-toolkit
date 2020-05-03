@@ -80,34 +80,34 @@ def web(location, name, port):
 
 def main():
 	'upgrade router to latest VyOS image'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['router', 'upgrade', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.router):
-		sys.stderr.write(f'machine "{args.router}" is not configured\n')
+	if not config.exists(arg.router):
+		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
 		sys.exit(1)
 
-	role = config.get(args.router, 'role')
+	role = config.get(arg.router, 'role')
 	if role != 'router':
-		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
+		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	location = fetch(args.file)
+	location = fetch(arg.file)
 
-	if args.remote and not args.local:
-		local = args.remote
-		remote = args.remote
+	if arg.remote and not arg.local:
+		local = arg.remote
+		remote = arg.remote
 	else:
-		local = args.local
-		remote = args.remote
+		local = arg.local
+		remote = arg.remote
 
 	time.sleep(0.1)
-	cmds.upgrade(args.router, args.bind, location, local, remote, args.show)
-	if args.reboot:
-		cmds.reboot(args.router)
+	cmds.upgrade(arg.router, arg.bind, location, local, remote, arg.show)
+	if arg.reboot:
+		cmds.reboot(arg.router)
 
 
 if __name__ == '__main__':

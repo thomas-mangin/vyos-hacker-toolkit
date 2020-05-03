@@ -60,6 +60,6 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='build vyos tool')
 	parser.add_argument('target', help='name of the binary to create', default='./vyos')
 	parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
-	args = parser.parse_args()
+	arg = parser.parse_args()
 
-	release(args.target, args.debug)
+	release(arg.target, arg.debug)

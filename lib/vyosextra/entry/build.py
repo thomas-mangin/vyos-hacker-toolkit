@@ -37,36 +37,36 @@ class Command(command.Command):
 
 def main():
 	'build and install a vyos debian package'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__, 
 		['server', 'router', 'package', 'presentation']
 	)
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.server):
-		sys.stderr.write(f'machine "{args.server}" is not configured\n')
+	if not config.exists(arg.server):
+		sys.stderr.write(f'machine "{arg.server}" is not configured\n')
 		sys.exit(1)
 
-	if not config.exists(args.router):
-		sys.stderr.write(f'machine "{args.router}" is not configured\n')
+	if not config.exists(arg.router):
+		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
 		sys.exit(1)
 
-	role = config.get(args.server, 'role')
+	role = config.get(arg.server, 'role')
 	if role != 'build':
-		sys.stderr.write(f'target "{args.server}" is not a build machine\n')
+		sys.stderr.write(f'target "{arg.server}" is not a build machine\n')
 		sys.exit(1)
 
-	role = config.get(args.router, 'role')
+	role = config.get(arg.router, 'role')
 	if role != 'router':
-		sys.stderr.write(f'target "{args.router}" is not a VyOS router\n')
+		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	cmds.update_build(args.server)
-	for package in args.packages:
-		cmds.build(args.server, LOCATION, package, args.location)
-		cmds.install(args.server, args.router, LOCATION, package, args.location)
+	cmds.update_build(arg.server)
+	for package in arg.packages:
+		cmds.build(arg.server, LOCATION, package, arg.location)
+		cmds.install(arg.server, arg.router, LOCATION, package, arg.location)
 
-	log.completed(args.debug, 'package(s) installed')
+	log.completed(arg.debug, 'package(s) installed')
 
 
 if __name__ == '__main__':

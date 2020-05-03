@@ -57,38 +57,38 @@ def main(target=''):
 	if not target:
 		options = ['target'] + options
 
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		options
 	)
 
 	if not target:
-		target = args.target
+		target = arg.target
 
-	cmds = Command(args.show, args.verbose)
+	cmds = Command(arg.show, arg.verbose)
 
-	if not config.exists(args.server):
-		sys.exit(f'machine "{args.server}" is not configured')
+	if not config.exists(arg.server):
+		sys.exit(f'machine "{arg.server}" is not configured')
 
-	role = config.get(args.server, 'role')
+	role = config.get(arg.server, 'role')
 	if role != 'build':
-		sys.exit(f'target "{args.server}" is not a build machine')
+		sys.exit(f'target "{arg.server}" is not a build machine')
 
-	cmds.update_build(args.server)
+	cmds.update_build(arg.server)
 
 	done = False
-	for package in args.packages:
-		done = cmds.build(args.server, LOCATION, package, args.location)
+	for package in arg.packages:
+		done = cmds.build(arg.server, LOCATION, package, arg.location)
 
-	if done or args.force:
-		cmds.configure(args.server, LOCATION, args.extra, args.name)
-		cmds.backdoor(args.server, args.backdoor)
-		cmds.make(args.server, target)
+	if done or arg.force:
+		cmds.configure(arg.server, LOCATION, arg.extra, arg.name)
+		cmds.backdoor(arg.server, arg.backdoor)
+		cmds.make(arg.server, target)
 
-	if target == 'iso' and args.test:
-		cmds.make(args.server, 'test')
+	if target == 'iso' and arg.test:
+		cmds.make(arg.server, 'test')
 
-	log.completed(args.debug,'iso built and tested')
+	log.completed(arg.debug,'iso built and tested')
 
 
 if __name__ == '__main__':

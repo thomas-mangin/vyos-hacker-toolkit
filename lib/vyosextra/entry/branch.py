@@ -63,16 +63,16 @@ class Command(command.Command):
 
 def main():
 	'setup a branch of a vyos repository'
-	args = arguments.setup(
+	arg = arguments.setup(
 		__doc__,
 		['repository', 'presentation', 'edit']
 	)
-	cmds = Command(args.show, args.verbose)
-	cmds.setup_source(args.repository)
-	cmds.setup_branch(args.branch, args.repository)
+	cmds = Command(arg.show, arg.verbose)
+	cmds.setup_source(arg.repository)
+	cmds.setup_branch(arg.branch, arg.repository)
 
-	if args.edit:
-		cmds.edit(cmds.branched_repo(args.branch, args.repository))
+	if arg.edit:
+		cmds.edit(cmds.branched_repo(arg.branch, arg.repository))
 
 if __name__ == '__main__':
 	main()

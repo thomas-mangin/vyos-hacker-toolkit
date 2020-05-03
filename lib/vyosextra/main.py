@@ -56,7 +56,7 @@ def main():
 
 	args, _ = parser.parse_known_args()
 
-	if not args.command and args.help:
+	if not arg.command and arg.help:
 		parser.print_help()
 		return
 
@@ -64,12 +64,12 @@ def main():
 		'download': False,
 	}
 
-	if args.command not in choices:
+	if arg.command not in choices:
 		parser.print_help()
 		return
 
-	make_sys(help=helping.get(args.command, True))
-	register.call(args.command)
+	make_sys(help=helping.get(arg.command, True))
+	register.call(arg.command)
 
 
 if __name__ == '__main__':
