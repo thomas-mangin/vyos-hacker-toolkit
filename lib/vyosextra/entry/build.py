@@ -65,22 +65,18 @@ def main():
 	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.server):
-		sys.stderr.write(f'machine "{arg.server}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{arg.server}" is not configured\n')
 
 	if not config.exists(arg.router):
-		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{arg.router}" is not configured\n')
 
 	role = config.get(arg.server, 'role')
 	if role != 'build':
-		sys.stderr.write(f'target "{arg.server}" is not a build machine\n')
-		sys.exit(1)
+		sys.exit(f'target "{arg.server}" is not a build machine\n')
 
 	role = config.get(arg.router, 'role')
 	if role != 'router':
-		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
-		sys.exit(1)
+		sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
 	location = 'compiled'
 

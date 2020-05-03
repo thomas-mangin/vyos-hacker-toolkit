@@ -24,8 +24,7 @@ def main():
 	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.machine):
-		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{arg.machine}" is not configured\n')
 
 	connect = config.ssh(arg.machine, '')
 
@@ -35,7 +34,7 @@ def main():
 	if arg.show:
 		return
 
-	log.completed(f'connecting to {arg.machine}')
+	log.timed(f'connecting to {arg.machine}')
 	fullssh = subprocess.check_output(['which','ssh']).decode().strip()
 	os.execvp(fullssh,connect.split())
 	log.completed('session terminated')

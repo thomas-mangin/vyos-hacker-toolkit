@@ -29,13 +29,11 @@ def main():
 	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.router):
-		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{arg.router}" is not configured\n')
 
 	role = config.get(arg.router, 'role')
 	if role != 'router':
-		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
-		sys.exit(1)
+		sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
 	control.copy(arg.router, arg.package, option)
 	log.completed('router updated')

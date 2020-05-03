@@ -75,8 +75,7 @@ def main():
 	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.machine):
-		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
-		sys.exit(1)
+		sys.exit(f'machine "{arg.machine}" is not configured\n')
 
 	role = config.get(arg.machine, 'role')
 	if not role:
