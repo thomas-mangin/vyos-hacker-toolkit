@@ -80,7 +80,9 @@ def _make(parser):
 @register('repository')
 def _repository(parser):
 	parser.add_argument('branch', help='the phabricator/branch to work on')
-	parser.add_argument('repository', help='the repository to work on')
+	parser.add_argument(
+		'repository', nargs='?', default='vyos-1x',
+		help='the repository to work on')
 
 
 @register('presentation')
