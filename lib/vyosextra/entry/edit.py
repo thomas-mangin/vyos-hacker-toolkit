@@ -9,7 +9,7 @@ from vyosextra import arguments
 from vyosextra.config import config
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def edit(self, folder):
 		editor = config.get('global', 'editor')
 		self.run(f'{editor} {folder}')
@@ -25,8 +25,8 @@ def main():
 		__doc__,
 		['repository', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
-	cmds.edit(cmds.branched_repo(arg.branch, arg.repository))
+	control = Control(arg.show, arg.verbose)
+	control.edit(control.branched_repo(arg.branch, arg.repository))
 
 if __name__ == '__main__':
 	main()

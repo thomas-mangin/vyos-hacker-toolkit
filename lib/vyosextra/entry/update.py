@@ -13,7 +13,7 @@ from vyosextra.config import config
 LOCATION = 'compiled'
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def copy(self, where, location, repo, folder):
 		with InRepo(folder) as debian:
 			for src, dst in self.move:
@@ -28,7 +28,7 @@ def main():
 		__doc__,
 		['router', 'package', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.router):
 		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
@@ -39,7 +39,7 @@ def main():
 		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	cmds.copy(arg.router, LOCATION, arg.package, option)
+	control.copy(arg.router, LOCATION, arg.package, option)
 
 	log.completed(arg.debug, 'router updated')
 	

@@ -15,7 +15,7 @@ from vyosextra.config import config
 LOCATION = 'compiled'
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def install(self, server, router, location, vyos_repo, folder):
 		build_repo = config.get(server,'repo')
 
@@ -41,7 +41,7 @@ def main():
 		__doc__, 
 		['server', 'router', 'package', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.server):
 		sys.stderr.write(f'machine "{arg.server}" is not configured\n')
@@ -61,10 +61,10 @@ def main():
 		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	cmds.update_build(arg.server)
+	control.update_build(arg.server)
 	for package in arg.packages:
-		cmds.build(arg.server, LOCATION, package, arg.location)
-		cmds.install(arg.server, arg.router, LOCATION, package, arg.location)
+		control.build(arg.server, LOCATION, package, arg.location)
+		control.install(arg.server, arg.router, LOCATION, package, arg.location)
 
 	log.completed(arg.debug, 'package(s) installed')
 

@@ -9,7 +9,7 @@ from vyosextra import arguments
 from vyosextra.config import config
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def setup_router(self, where):
 		# on my local VM which goes to sleep when I close my laptop
 		# time can easily get out of sync, which prevent apt to work
@@ -71,7 +71,7 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.machine):
 		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
@@ -82,9 +82,9 @@ def main():
 		print('the machine "{arg.machine}" is not setup')
 
 	if role == 'router':
-		cmds.setup_router(arg.machine)
+		control.setup_router(arg.machine)
 	elif role == 'build':
-		cmds.setup_build(arg.machine)
+		control.setup_build(arg.machine)
 	else:
 		log.completed(arg.debug, 'the machine "{arg.machine}" is not correctly setup')
 

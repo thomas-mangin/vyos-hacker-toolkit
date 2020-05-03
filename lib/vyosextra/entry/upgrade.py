@@ -17,7 +17,7 @@ from vyosextra.config import config
 from vyosextra.entry.download import fetch
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def upgrade(self, where, ip, location, local, remote, show):
 		# local: your computer port
 		# remote: the router port
@@ -84,7 +84,7 @@ def main():
 		__doc__,
 		['router', 'upgrade', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.router):
 		sys.stderr.write(f'machine "{arg.router}" is not configured\n')
@@ -105,9 +105,9 @@ def main():
 		remote = arg.remote
 
 	time.sleep(0.1)
-	cmds.upgrade(arg.router, arg.bind, location, local, remote, arg.show)
+	control.upgrade(arg.router, arg.bind, location, local, remote, arg.show)
 	if arg.reboot:
-		cmds.reboot(arg.router)
+		control.reboot(arg.router)
 
 
 if __name__ == '__main__':

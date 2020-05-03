@@ -11,7 +11,7 @@ import vyosextra.entry.edit as command
 from vyosextra.config import config
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def make(self, directory):
 		if self.verbose or self.dry:
 			sys.stdout.write(f'making {directory}: ')
@@ -67,12 +67,12 @@ def main():
 		__doc__,
 		['repository', 'presentation', 'edit']
 	)
-	cmds = Command(arg.show, arg.verbose)
-	cmds.setup_source(arg.repository)
-	cmds.setup_branch(arg.branch, arg.repository)
+	control = Control(arg.show, arg.verbose)
+	control.setup_source(arg.repository)
+	control.setup_branch(arg.branch, arg.repository)
 
 	if arg.edit:
-		cmds.edit(cmds.branched_repo(arg.branch, arg.repository))
+		control.edit(control.branched_repo(arg.branch, arg.repository))
 
 if __name__ == '__main__':
 	main()

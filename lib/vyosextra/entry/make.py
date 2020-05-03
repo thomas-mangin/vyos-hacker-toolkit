@@ -12,7 +12,7 @@ from vyosextra.config import config
 LOCATION = 'packages'
 
 
-class Command(command.Command):
+class Control(command.Command):
 	def make(self, where, target):
 		self.ssh(where, config.docker(where, '', f'sudo make {target}'))
 
@@ -65,7 +65,7 @@ def main(target=''):
 	if not target:
 		target = arg.target
 
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.server):
 		sys.exit(f'machine "{arg.server}" is not configured')
@@ -74,19 +74,19 @@ def main(target=''):
 	if role != 'build':
 		sys.exit(f'target "{arg.server}" is not a build machine')
 
-	cmds.update_build(arg.server)
+	control.update_build(arg.server)
 
 	done = False
 	for package in arg.packages:
-		done = cmds.build(arg.server, LOCATION, package, arg.location)
+		done = control.build(arg.server, LOCATION, package, arg.location)
 
 	if done or arg.force:
-		cmds.configure(arg.server, LOCATION, arg.extra, arg.name)
-		cmds.backdoor(arg.server, arg.backdoor)
-		cmds.make(arg.server, target)
+		control.configure(arg.server, LOCATION, arg.extra, arg.name)
+		control.backdoor(arg.server, arg.backdoor)
+		control.make(arg.server, target)
 
 	if target == 'iso' and arg.test:
-		cmds.make(arg.server, 'test')
+		control.make(arg.server, 'test')
 
 	log.completed(arg.debug,'iso built and tested')
 

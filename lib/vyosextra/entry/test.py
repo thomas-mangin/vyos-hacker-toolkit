@@ -315,7 +315,7 @@ def main():
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'
 		running(command)
-		out, err = cmds.communicate(config.ssh(arg.machine, show))
+		out, err = control.communicate(config.ssh(arg.machine, show))
 
 		# some command reply on stderr ! sigh !
 

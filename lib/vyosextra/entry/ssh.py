@@ -13,7 +13,7 @@ from vyosextra.config import config
 LOCATION = 'packages'
 
 
-class Command(command.Command):
+class Control(command.Command):
 	pass
 
 
@@ -23,7 +23,7 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = Command(arg.show, arg.verbose)
+	control = Control(arg.show, arg.verbose)
 
 	if not config.exists(arg.machine):
 		sys.stderr.write(f'machine "{arg.machine}" is not configured\n')
