@@ -12,9 +12,6 @@ from vyosextra.repository import InRepo
 from vyosextra.config import config
 
 
-LOCATION = 'compiled'
-
-
 class Control(control.Control):
 	def install(self, server, router, location, vyos_repo, folder):
 		build_repo = config.get(server,'repo')
@@ -84,10 +81,12 @@ def main():
 		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
+	location = 'compiled'
+
 	control.update_build(arg.server)
 	for package in arg.packages:
-		control.build(arg.server, LOCATION, package, arg.location)
-		control.install(arg.server, arg.router, LOCATION, package, arg.location)
+		control.build(arg.server, location, package, arg.location)
+		control.install(arg.server, arg.router, location, package, arg.location)
 
 	log.completed(arg.debug, 'package(s) installed')
 

@@ -10,9 +10,6 @@ from vyosextra import arguments
 from vyosextra.config import config
 
 
-LOCATION = 'packages'
-
-
 class Control(control.Control):
 	pass
 

@@ -10,11 +10,8 @@ from vyosextra.repository import InRepo
 from vyosextra.config import config
 
 
-LOCATION = 'compiled'
-
-
 class Control(control.Control):
-	def copy(self, where, location, repo, folder):
+	def copy(self, where, repo, folder):
 		with InRepo(folder) as debian:
 			for src, dst in self.move:
 				self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
@@ -39,7 +36,7 @@ def main():
 		sys.stderr.write(f'target "{arg.router}" is not a VyOS router\n')
 		sys.exit(1)
 
-	control.copy(arg.router, LOCATION, arg.package, option)
+	control.copy(arg.router, arg.package, option)
 
 	log.completed(arg.debug, 'router updated')
 	

@@ -10,9 +10,6 @@ from vyosextra.config import config
 from vyosextra.entry import build as control
 
 
-LOCATION = 'packages'
-
-
 class Control(control.Control):
 	def make(self, where, target):
 		self.ssh(where, config.docker(where, '', f'sudo make {target}'))
@@ -75,14 +72,16 @@ def main(target=''):
 	if role != 'build':
 		sys.exit(f'target "{arg.server}" is not a build machine')
 
+	location = 'packages'
+
 	control.update_build(arg.server)
 
 	done = False
 	for package in arg.packages:
-		done = control.build(arg.server, LOCATION, package, arg.location)
+		done = control.build(arg.server, location, package, arg.location)
 
 	if done or arg.force:
-		control.configure(arg.server, LOCATION, arg.extra, arg.name)
+		control.configure(arg.server, location, arg.extra, arg.name)
 		control.backdoor(arg.server, arg.backdoor)
 		control.make(arg.server, target)
 
