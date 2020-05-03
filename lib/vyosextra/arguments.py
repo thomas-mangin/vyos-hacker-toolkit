@@ -31,12 +31,12 @@ def _query_valid_vyos(branch, repository):
 
 @register('target')
 def _target(parser):
-	parser.add_argument("target", help='make target')
+	parser.add_argument('target', help='make target')
 
 
 @register('machine')
 def _machine(parser):
-	parser.add_argument("machine", help='machine on which the action will be performed')
+	parser.add_argument('machine', help='machine on which the action will be performed')
 
 
 @register('router')
@@ -51,7 +51,7 @@ def _router(parser):
 def _server(parser):
 	default = config.default.get('build', None)
 	nargs = '?' if default else None
-	parser.add_argument("server", nargs=nargs, default=default,
+	parser.add_argument('server', nargs=nargs, default=default,
 	help='server on which the action will be performed')
 
 
@@ -73,20 +73,21 @@ def _make(parser):
 	parser.add_argument('-e', '--extra', type=str, help='extra debian package(s) to install')
 	parser.add_argument('-n', '--name', type=str, help='name/tag to add to the build version')
 	parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
-	parser.add_argument('-f', '--force', help="make without custom package", action='store_true')
+	parser.add_argument('-f', '--force', help='make without custom package', action='store_true')
 	parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
 
 
 @register('repository')
 def _repository(parser):
-	parser.add_argument("branch", help='the phabricator/branch to work on')
-	parser.add_argument("repository", help='the repository to work on')
+	parser.add_argument('branch', help='the phabricator/branch to work on')
+	parser.add_argument('repository', help='the repository to work on')
 
 
 @register('presentation')
 def _presentation(parser):
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
+	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 
 @register('isofile')
@@ -103,8 +104,8 @@ def _edit(parser):
 def _upgrade(parser):
 	parser.add_argument('router', help='machine on which the action will be performed')
 	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
-	parser.add_argument('-b', '--bind', type=int, help="ip to bind the webserver to")
-	parser.add_argument('-r', '--remote', type=int, help="port to bind the router")
-	parser.add_argument('-l', '--local', type=int, help="port to bind the webserver", default=8088)
+	parser.add_argument('-b', '--bind', type=int, help='ip to bind the webserver to')
+	parser.add_argument('-r', '--remote', type=int, help='port to bind the router')
+	parser.add_argument('-l', '--local', type=int, help='port to bind the webserver', default=8088)
 	# no short version for something so critical :p
 	parser.add_argument('--reboot', help='reboot the router', action='store_true')
