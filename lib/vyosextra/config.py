@@ -18,7 +18,7 @@ class _Config(object):
 			'email': 'no-one@no-domain.com',
 			'github': '',
 			'editor': 'vi',
-			'cloning_dir': '~/vyos/clone',
+			'cloning_dir': '~/.config/vyos/clone',
 			'working_dir': '~/vyos',
 		},
 		'machine': {
@@ -75,7 +75,7 @@ class _Config(object):
 		return default[key]
 
 	def _conf_file(self, name):
-		etcs = ['/etc', '/usr/local/etc']
+		etcs = ['~/.config/vyos/extra.conf' '/etc', '/usr/local/etc']
 		if exists(join(self.root, 'lib/vyosextra')):
 			etcs = [self.absolute_path(self.root, 'etc')] + etcs
 			etcs = [self.absolute_path('$HOME', 'etc')] + etcs

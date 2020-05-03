@@ -44,5 +44,5 @@ store = /tmp/
 email = nobody@nowhere
 github = noone
 editor = vi
-cloning_dir = ~/vyos/clone
+cloning_dir = ~/.config/vyos/clone
 working_dir = ~/vyos/
