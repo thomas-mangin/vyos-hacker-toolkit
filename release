@@ -49,7 +49,7 @@ def release(target, debug):
 		target=target,
 		interpreter=python,
 		main='vyosextra.entry:vyos',
-		compressed=True,
+		compressed=True if debug else False,
 	)
 
 	os.remove(location())

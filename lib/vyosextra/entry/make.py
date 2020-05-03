@@ -78,7 +78,10 @@ def main(target=''):
 		sys.exit(f'target "{args.server}" is not a build machine')
 
 	cmds.update_build(args.server)
-	done = cmds.build(args.server, LOCATION, args.package, option)
+
+	done = False
+	for package in args.packages:
+		done = cmds.build(args.server, LOCATION, package, option)
 
 	if done or args.force:
 		cmds.configure(args.server, LOCATION, args.extra, args.name)

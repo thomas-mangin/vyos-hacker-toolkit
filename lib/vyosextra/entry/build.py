@@ -61,8 +61,9 @@ def main():
 		sys.exit(1)
 
 	cmds.update_build(args.server)
-	cmds.build(args.server, LOCATION, args.package, args.location)
-	cmds.install(args.server, args.router, LOCATION, args.package, args.location)
+	for package in args.packages:
+		cmds.build(args.server, LOCATION, package, args.location)
+		cmds.install(args.server, args.router, LOCATION, package, args.location)
 
 	log.completed(args.debug, 'package(s) installed')
 
