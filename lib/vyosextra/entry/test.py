@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# encoding: utf-8
 
 # based on https://github.com/sever-sever/vyos-checks/blob/master/main.yml
 
