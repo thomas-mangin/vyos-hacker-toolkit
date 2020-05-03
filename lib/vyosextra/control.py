@@ -86,7 +86,7 @@ class Run(object):
 		return cls._unprefix(com2[0].decode().strip())
 
 
-class Command(Run):
+class Control(Run):
 	move = [
 				('python/vyos/*', '/usr/lib/python3/dist-packages/vyos/'),
 				('src/conf_mode/*', '/usr/libexec/vyos/conf_mode/'),

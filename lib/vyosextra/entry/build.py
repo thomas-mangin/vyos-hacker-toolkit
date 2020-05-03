@@ -4,7 +4,7 @@ import os
 import sys
 
 from vyosextra import log
-from vyosextra import command
+from vyosextra import control
 from vyosextra import config
 from vyosextra import arguments
 from vyosextra import repository
@@ -15,7 +15,7 @@ from vyosextra.config import config
 LOCATION = 'compiled'
 
 
-class Control(command.Command):
+class Control(control.Control):
 	def install(self, server, router, location, vyos_repo, folder):
 		build_repo = config.get(server,'repo')
 

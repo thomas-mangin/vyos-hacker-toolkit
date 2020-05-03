@@ -5,7 +5,7 @@
 import sys
 
 from vyosextra import log
-from vyosextra import command
+from vyosextra import control
 from vyosextra import arguments
 from vyosextra.config import config
 

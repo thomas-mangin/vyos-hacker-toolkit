@@ -4,12 +4,12 @@ import sys
 from datetime import datetime
 
 from vyosextra import log
-from vyosextra import command
+from vyosextra import control
 from vyosextra import arguments
 from vyosextra.config import config
 
 
-class Control(command.Command):
+class Control(control.Control):
 	def setup_router(self, where):
 		# on my local VM which goes to sleep when I close my laptop
 		# time can easily get out of sync, which prevent apt to work

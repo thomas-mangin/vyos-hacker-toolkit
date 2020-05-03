@@ -4,12 +4,12 @@ import os
 import sys
 
 from vyosextra import log
-from vyosextra import command
+from vyosextra import control
 from vyosextra import arguments
 from vyosextra.config import config
 
 
-class Control(command.Command):
+class Control(control.Control):
 	def edit(self, folder):
 		editor = config.get('global', 'editor')
 		self.run(f'{editor} {folder}')

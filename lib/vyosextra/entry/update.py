@@ -3,7 +3,7 @@
 import sys
 
 from vyosextra import log
-from vyosextra import command
+from vyosextra import control
 from vyosextra import arguments
 
 from vyosextra.repository import InRepo
@@ -13,7 +13,7 @@ from vyosextra.config import config
 LOCATION = 'compiled'
 
 
-class Control(command.Command):
+class Control(control.Control):
 	def copy(self, where, location, repo, folder):
 		with InRepo(folder) as debian:
 			for src, dst in self.move:
