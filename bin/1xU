@@ -1,7 +1,0 @@
-#!/bin/sh
-
-cd ~/vyos/1x/vyos-1x
-	git checkout current
-	git pull upstream current
-	git push
-cd -

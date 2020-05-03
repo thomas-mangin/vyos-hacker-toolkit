@@ -5,22 +5,26 @@ import sys
 import importlib
 import setuptools
 
-FOLDER = os.path.dirname(os.path.realpath(__file__))
-IMPORT = os.path.abspath(os.path.join(FOLDER, 'lib','vyosextra','entry'))
-if not os.path.exists(IMPORT):
-	sys.exit(f'could not import "{IMPORT}"')
+here = os.path.dirname(os.path.realpath(__file__))
+lib = os.path.abspath(os.path.join(here, 'lib'))
 
-sys.path.append(IMPORT)
-VERSION = importlib.import_module('version').VERSION
+if not os.path.exists(lib):
+	sys.exit(f'could not import "{lib}"')
+sys.path.append(lib)
 
-ret = os.system(f'{FOLDER}/sbin/gendata --create')
-if ret != 0:
-	sys.exit('failed to generate data.py')
+from vyosextra.entry.version import VERSION
+from vyosextra.insource import generate
+from vyosextra.insource import location
+
+data = os.path.abspath(os.path.join(here, 'data'))
+generate(data)
 
 setuptools.setup(
 	download_url='https://github.com/thomas-mangin/vyos-extra/archive/%s.tar.gz' % VERSION,
 )
 
-os.system(f'{FOLDER}/sbin/gendata --delete')
+os.remove(location())
+
+# cleanup
 os.system(f'rm -rf {FOLDER}/build')
 os.system(f'rm -rf {FOLDER}/lib/vyos_extra.egg-info')
