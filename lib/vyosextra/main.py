@@ -61,6 +61,7 @@ def main():
 		return
 
 	helping = {
+		'build': False,
 		'download': False,
 	}
 
