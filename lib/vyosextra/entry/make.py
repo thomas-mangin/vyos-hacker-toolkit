@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 from vyosextra import log
-from vyosextra import cmd
+from vyosextra import command
 from vyosextra import arguments
 from vyosextra.config import config
 
@@ -12,7 +12,7 @@ from vyosextra.config import config
 LOCATION = 'packages'
 
 
-class Command(cmd.Command):
+class Command(command.Command):
 	def make(self, where, target):
 		self.ssh(where, config.docker(where, '', f'sudo make {target}'))
 

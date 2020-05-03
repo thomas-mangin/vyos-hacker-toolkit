@@ -5,7 +5,7 @@ import sys
 import subprocess
 
 from vyosextra import log
-from vyosextra import cmd
+from vyosextra import command
 from vyosextra import arguments
 from vyosextra.config import config
 
@@ -13,7 +13,7 @@ from vyosextra.config import config
 LOCATION = 'packages'
 
 
-class Command(cmd.Command):
+class Command(command.Command):
 	pass
 
 

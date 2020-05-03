@@ -5,7 +5,7 @@
 import sys
 
 from vyosextra import log
-from vyosextra import cmd
+from vyosextra import command
 from vyosextra import arguments
 from vyosextra.config import config
 
@@ -310,7 +310,7 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = cmd.Command(dry=args.show, verbose=args.verbose)
+	cmds = command.Command(dry=args.show, verbose=args.verbose)
 
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'

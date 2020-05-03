@@ -10,14 +10,14 @@ from datetime import datetime
 from threading import Thread
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-from vyosextra import cmd
+from vyosextra import command
 from vyosextra import arguments
 
 from vyosextra.config import config
 from vyosextra.entry.download import fetch
 
 
-class Command(cmd.Command):
+class Command(command.Command):
 	def upgrade(self, where, ip, location, local, remote, show):
 		# local: your computer port
 		# remote: the router port
