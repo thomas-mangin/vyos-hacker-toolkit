@@ -38,8 +38,7 @@ def main():
 		sys.exit(1)
 
 	control.copy(arg.router, arg.package, option)
-
-	log.completed(arg.debug, 'router updated')
+	log.completed('router updated')
 	
 
 if __name__ == '__main__':

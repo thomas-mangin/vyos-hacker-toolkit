@@ -6,6 +6,7 @@ import sys
 import textwrap
 import argparse
 
+from vyosextra import log
 from vyosextra.entry import register
 
 
@@ -31,6 +32,10 @@ def make_sys(extract=0, help=True):
 def main():
 	if os.environ.get('VYOSEXTRA_DEBUG',None) is not None:
 		def intercept(dtype, value, trace):
+			try:
+				log.failed('report:')
+			except:
+				pass
 			import traceback
 			traceback.print_exception(dtype, value, trace)
 			import pdb

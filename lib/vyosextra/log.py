@@ -7,11 +7,11 @@ _records = []
 def _now():
 	return datetime.now().strftime('%H:%M:%S')
 
-def _timed(s):
+def timed(s):
 	return f'{_now()} {s}'
 
-def _end(reason, code, enabled):
-	print(_timed(reason))
+def failed(s='failure'):
+	print(timed(s))
 	special = []
 
 	for c, t, w, s in _records:
@@ -28,7 +28,7 @@ def _end(reason, code, enabled):
 			print(s)
 		print()
 
-	sys.exit(code)
+	sys.exit(1)
 
 
 def _record(s, w='<', counter=[0]):
@@ -50,9 +50,6 @@ def command(s):
 def answer(s):
 	return _record(s)
 
-def failed(s='failure'):
-	_end(s, 1, True)
-
-def completed(enabled, s='completed'):
-	_end(s, 0, enabled)
+def completed(s='completed'):
+	print(timed(s))
 	sys.exit(0)

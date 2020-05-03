@@ -89,7 +89,7 @@ def main(target=''):
 	if target == 'iso' and arg.test:
 		control.make(arg.server, 'test')
 
-	log.completed(arg.debug,'iso built and tested')
+	log.completed('iso built and tested')
 
 
 if __name__ == '__main__':

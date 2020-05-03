@@ -35,10 +35,10 @@ def main():
 	if arg.show:
 		return
 
-	print(f'connecting to {arg.machine}')
+	log.completed(f'connecting to {arg.machine}')
 	fullssh = subprocess.check_output(['which','ssh']).decode().strip()
 	os.execvp(fullssh,connect.split())
-	log.completed(arg.debug, 'session terminated')
+	log.completed('session terminated')
 
 
 if __name__ == '__main__':

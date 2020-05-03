@@ -3,7 +3,6 @@
 
 import os
 import sys
-from datetime import datetime
 
 from vyosextra import log
 from vyosextra import arguments
@@ -72,6 +71,7 @@ def main():
 	control = Control(arg.show, arg.verbose)
 	control.setup_source(arg.repository)
 	control.setup_branch(arg.branch, arg.repository)
+	log.completed('build complete')
 
 	if arg.edit:
 		control.edit(control.branched_repo(arg.branch, arg.repository))

@@ -1,7 +1,6 @@
 import os
 import sys
 
-from datetime import datetime
 from subprocess import Popen
 from subprocess import PIPE, STDOUT, DEVNULL
 

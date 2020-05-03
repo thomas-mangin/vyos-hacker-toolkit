@@ -88,8 +88,7 @@ def main():
 	for package in arg.packages:
 		control.build(arg.server, location, package, arg.location)
 		control.install(arg.server, arg.router, location, package, arg.location)
-
-	log.completed(arg.debug, 'package(s) installed')
+	log.completed('package(s) installed')
 
 
 if __name__ == '__main__':

@@ -6,7 +6,6 @@ import sys
 import time
 import socket
 import shutil
-from datetime import datetime
 
 from threading import Thread
 from http.server import HTTPServer, SimpleHTTPRequestHandler

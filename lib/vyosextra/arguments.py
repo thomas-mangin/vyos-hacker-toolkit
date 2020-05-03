@@ -87,7 +87,6 @@ def _repository(parser):
 def _presentation(parser):
 	parser.add_argument('-s', '--show', help='only show what will be done', action='store_true')
 	parser.add_argument('-v', '--verbose', help='show what is happening', action='store_true')
-	parser.add_argument('-d', '--debug', help='provide debug information', action='store_true')
 
 
 @register('isofile')
