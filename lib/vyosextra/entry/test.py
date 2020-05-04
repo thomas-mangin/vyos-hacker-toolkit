@@ -6,9 +6,9 @@
 import sys
 
 from vyosextra import log
-from vyosextra import control
 from vyosextra import arguments
 from vyosextra.config import config
+from vyosextra.control import Control
 
 
 commands = [
@@ -311,7 +311,7 @@ def main():
 		__doc__,
 		['machine', 'presentation']
 	)
-	cmds = command.Command(arg.dry, arg.quiet)
+	control = Control(arg.dry, arg.quiet)
 
 	for command in commands:
 		show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'

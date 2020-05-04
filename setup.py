@@ -26,5 +26,5 @@ setuptools.setup(
 os.remove(location())
 
 # cleanup
-os.system(f'rm -rf {FOLDER}/build')
-os.system(f'rm -rf {FOLDER}/lib/vyos_extra.egg-info')
+os.system(f'rm -rf {here}/build')
+os.system(f'rm -rf {here}/lib/vyos_extra.egg-info')

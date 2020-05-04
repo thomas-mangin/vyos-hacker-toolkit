@@ -97,8 +97,8 @@ def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
 	return out, err, code
 
 
-def communicate(self, cmd, ignore='', exitonfail=True):
-	out, err, code = run(cmd, ignore, hide)
+def communicate(self, cmd, dry, verbose, ignore='', hide='', exitonfail=True):
+	out, err, code = run(cmd, dry, verbose, ignore=ignore, hide=hide, exitonfail=exitonfail)
 
 	_check(code, exitonfail=exitonfail)
 	return _report(out, err), code

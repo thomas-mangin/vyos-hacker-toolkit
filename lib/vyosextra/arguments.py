@@ -60,7 +60,7 @@ def _package(parser):
 	parser.add_argument(
 		'-p', '--packages', type=str, nargs='*',
 		default=['vyos-1x'],
-		help='what vyos pacakge is considered')
+		help='what vyos package is considered')
 	parser.add_argument(
 		'-l', '--location', type=str,
 		default='..',
@@ -102,7 +102,6 @@ def _edit(parser):
 
 @register('upgrade')
 def _upgrade(parser):
-	parser.add_argument('router', help='machine on which the action will be performed')
 	parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
 	parser.add_argument('-b', '--bind', type=int, help='ip to bind the webserver to')
 	parser.add_argument('-r', '--remote', type=int, help='port to bind the router')

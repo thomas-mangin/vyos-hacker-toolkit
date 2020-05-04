@@ -29,9 +29,13 @@ class _Config(object):
 			'user': 'vyos',
 			'file': '',
 			'repo': '$HOME/vyos/vyos-build',
-			'default': False,
+			'default': 'False',
 		},
 	}
+
+	@staticmethod
+	def boolean(value):
+		return value.lower() in ('true','1','yes','enable','enabled')
 
 	@staticmethod
 	def absolute_path(*path):
@@ -61,12 +65,13 @@ class _Config(object):
 			'editor':      self.absolute_path,
 			'cloning_dir': self.absolute_path,
 			'working_dir': self.absolute_path,
+			'default':     self.boolean,
 		}
 
 		self._read_config()
 		self._parse_env()
-		self._set_defaults()
-		self._set_role()
+		self._add_default()
+		self._add_role()
 
 	def _default(self, section, key=None):
 		default = self.__default.get(section, {})
@@ -116,24 +121,25 @@ class _Config(object):
 				continue
 			section, key = part[1], part[2]
 
+			env_value = os.environ.get[env_name]
 			if env_value:
-				self.set(section, key, value)
+				self.set(section, key, env_value)
 				continue
 
 			value = config.get(section, key, fallback=self._default(section,key))
-			self.set(option, value)
+			self.set(section, key, value)
 
-	def _set_role(self):
+	def _add_role(self):
 		for name in self._values:
 			machine = self._values[name]
 			if not machine.get('default', ''):
-				return
+				continue
 			role = machine.get('role', '')
 			if self.default.get(role, ''):
 				log.failed(f'only one machine can be set as default "{role}"')
 			self.default[role] = name
 
-	def _set_defaults(self):
+	def _add_default(self):
 		sections = list(self._values)
 		sections.append('global')
 
