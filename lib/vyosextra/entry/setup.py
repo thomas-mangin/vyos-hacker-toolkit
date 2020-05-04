@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import os
 import sys
 from getpass import getpass
 from datetime import datetime
@@ -47,6 +48,16 @@ class Control(control.Control):
 	def setup_build(self, where):
 		packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
 
+		repo = config.get(where,'repo')
+		repo_name = os.path.basename(repo)
+		repo_folder = os.path.dirname(repo)
+
+		_, _, code = self.ssh(where, f"test -d {repo}",exitonfail=False)
+		if code == 0:
+			print('this machine is already setup')
+			return
+
+		print('----')
 		print("Please enter the host root password (it is not saved)")
 		print("It is required to setup password-less command via sudo")
 		username = config.get(where, 'user')
@@ -56,34 +67,49 @@ class Control(control.Control):
 			password = getpass('password: ')
 			password = f"'{password}'"
 
-		self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
-		absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
-		if absent:
-			self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
-
-		absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
-		if absent:
-			self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
-
-
+		print('----')
 		print('updating the OS to make sure the packages are on the latest version')
 		print('it may take some time ...')
+		print('----')
+		self.ssh(where, 'echo {password} | sudo -S dpkg --configure -a', hide=password)
+		self.ssh(where, f'echo {password} | sudo -S apt-get --yes upgrade', hide=password)
+		self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
 
-		self.ssh(where, 'sudo dpkg --configure -a')
-		self.ssh(where, f'sudo apt-get --yes upgrade')
+		print('----')
+		print('setting up sudo ...')
+		print('----')
+		_, _, absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
+		if absent:
+			self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
+		_, _, absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
+		if absent:
+			self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
+		else:
+			print('sudo is already setup')
+
+		print('----')
+		print('installing packages required for building VyOS')
+		print('----')
 		self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
 
+		print('----')
+		print('adding the right permission to the user')
+		print('----')
 		self.ssh(where, f'sudo adduser {username} libvirt')
 		# no f-string here in purpose we want ${USER}
 		self.ssh(where, 'sudo usermod -aG docker ${USER}')
 
-		# may need reboot ?
-
+		print('----')
+		print('installing VyOS docker build image')
+		print('----')
 		self.ssh(where, 'docker pull vyos/vyos-build:current')
 
-		self.ssh(where, 'mkdir -p ~/vyos')
-		self.ssh(where, 'cd ~/vyos/ && test -d vyos-built && git clone https://github.com/vyos/vyos-build.git', exitonfail=False)
-		self.ssh(where, 'cd ~/vyos/vyos-build && git pull')
+		print('----')
+		print('installing vyos-build')
+		print('----')
+		self.ssh(where, f'mkdir -p {repo_folder}')
+		self.ssh(where, f"cd {repo_folder} && test '!' -d vyos-built && git clone https://github.com/vyos/vyos-build.git {repo_name}", exitonfail=False)
+		self.ssh(where, f'cd {repo} && git pull')
 		# self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
 

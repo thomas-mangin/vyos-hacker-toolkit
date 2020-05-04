@@ -15,7 +15,6 @@ class InRepo:
 	def __enter__(self):
 		try:
 			os.chdir(self.folder)
-			self.folder = os.path.basename(os.getcwd())
 			return self
 		except Exception as e:
 			log.failed(f'could not get into the repositoy {self.folder}\n{str(e)}')
