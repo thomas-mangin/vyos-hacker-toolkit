@@ -13,127 +13,127 @@ from vyosextra.config import config
 
 
 class Control(control.Control):
-	def setup_router(self, where):
-		# on my local VM which goes to sleep when I close my laptop
-		# time can easily get out of sync, which prevent apt to work
-		now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		self.ssh(where, f"sudo date -s '{now}'")
+    def setup_router(self, where):
+        # on my local VM which goes to sleep when I close my laptop
+        # time can easily get out of sync, which prevent apt to work
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.ssh(where, f"sudo date -s '{now}'")
 
-		self.ssh(where, f'sudo chgrp vyattacfg /etc/apt/sources.list.d')
-		self.ssh(where, f'sudo chmod g+rwx /etc/apt/sources.list.d')
+        self.ssh(where, f'sudo chgrp vyattacfg /etc/apt/sources.list.d')
+        self.ssh(where, f'sudo chmod g+rwx /etc/apt/sources.list.d')
 
-		self.chain(
-			config.printf(config.read('source.list')),
-			config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
-		)
+        self.chain(
+            config.printf(config.read('source.list')),
+            config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
+        )
 
-		packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
-		self.ssh(where, f'sudo apt-get --yes update')
-		# self.ssh(where, f'sudo apt-get --yes upgrade')))
-		self.ssh(where, f'sudo apt-get --yes install {packages}')
+        packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
+        self.ssh(where, f'sudo apt-get --yes update')
+        # self.ssh(where, f'sudo apt-get --yes upgrade')))
+        self.ssh(where, f'sudo apt-get --yes install {packages}')
 
-		self.ssh(where, f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')
-		self.ssh(where, f'ln -sf /usr/libexec/vyos/conf_mode conf')
-		self.ssh(where, f'ln -sf /usr/libexec/vyos/op_mode op')
+        self.ssh(where, f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')
+        self.ssh(where, f'ln -sf /usr/libexec/vyos/conf_mode conf')
+        self.ssh(where, f'ln -sf /usr/libexec/vyos/op_mode op')
 
-		for src, dst in self.move:
-			self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
-			self.ssh(where, f'sudo chmod -R g+rxw {dst}')
+        for src, dst in self.move:
+            self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
+            self.ssh(where, f'sudo chmod -R g+rxw {dst}')
 
-		self.ssh(where, f'touch /config/vyos.ifconfig.debug')
-		self.ssh(where, f'touch /config/vyos.developer.debug')
-		self.ssh(where, f'touch /config/vyos.cmd.debug')
-		self.ssh(where, f'touch /config/vyos.log.debug')
+        self.ssh(where, f'touch /config/vyos.ifconfig.debug')
+        self.ssh(where, f'touch /config/vyos.developer.debug')
+        self.ssh(where, f'touch /config/vyos.cmd.debug')
+        self.ssh(where, f'touch /config/vyos.log.debug')
 
-	def setup_build(self, where):
-		packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
+    def setup_build(self, where):
+        packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
 
-		repo = config.get(where,'repo')
-		repo_name = os.path.basename(repo)
-		repo_folder = os.path.dirname(repo)
+        repo = config.get(where,'repo')
+        repo_name = os.path.basename(repo)
+        repo_folder = os.path.dirname(repo)
 
-		_, _, code = self.ssh(where, f"test -d {repo}",exitonfail=False)
-		if code == 0:
-			print('this machine is already setup')
-			return
+        _, _, code = self.ssh(where, f"test -d {repo}",exitonfail=False)
+        if code == 0:
+            print('this machine is already setup')
+            return
 
-		print('----')
-		print("Please enter the host root password (it is not saved)")
-		print("It is required to setup password-less command via sudo")
-		username = config.get(where, 'user')
-		if self.dry:
-			password = 'your-password'
-		else:
-			password = getpass('password: ')
-			password = f"'{password}'"
+        print('----')
+        print("Please enter the host root password (it is not saved)")
+        print("It is required to setup password-less command via sudo")
+        username = config.get(where, 'user')
+        if self.dry:
+            password = 'your-password'
+        else:
+            password = getpass('password: ')
+            password = f"'{password}'"
 
-		print('----')
-		print('updating the OS to make sure the packages are on the latest version')
-		print('it may take some time ...')
-		print('----')
-		self.ssh(where, 'echo {password} | sudo -S dpkg --configure -a', hide=password)
-		self.ssh(where, f'echo {password} | sudo -S apt-get --yes upgrade', hide=password)
-		self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
+        print('----')
+        print('updating the OS to make sure the packages are on the latest version')
+        print('it may take some time ...')
+        print('----')
+        self.ssh(where, 'echo {password} | sudo -S dpkg --configure -a', hide=password)
+        self.ssh(where, f'echo {password} | sudo -S apt-get --yes upgrade', hide=password)
+        self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
 
-		print('----')
-		print('setting up sudo ...')
-		print('----')
-		_, _, absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
-		if absent:
-			self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
-		_, _, absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
-		if absent:
-			self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
-		else:
-			print('sudo is already setup')
+        print('----')
+        print('setting up sudo ...')
+        print('----')
+        _, _, absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
+        if absent:
+            self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
+        _, _, absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
+        if absent:
+            self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
+        else:
+            print('sudo is already setup')
 
-		print('----')
-		print('installing packages required for building VyOS')
-		print('----')
-		self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
+        print('----')
+        print('installing packages required for building VyOS')
+        print('----')
+        self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
 
-		print('----')
-		print('adding the right permission to the user')
-		print('----')
-		self.ssh(where, f'sudo adduser {username} libvirt')
-		# no f-string here in purpose we want ${USER}
-		self.ssh(where, 'sudo usermod -aG docker ${USER}')
+        print('----')
+        print('adding the right permission to the user')
+        print('----')
+        self.ssh(where, f'sudo adduser {username} libvirt')
+        # no f-string here in purpose we want ${USER}
+        self.ssh(where, 'sudo usermod -aG docker ${USER}')
 
-		print('----')
-		print('installing VyOS docker build image')
-		print('----')
-		self.ssh(where, 'docker pull vyos/vyos-build:current')
+        print('----')
+        print('installing VyOS docker build image')
+        print('----')
+        self.ssh(where, 'docker pull vyos/vyos-build:current')
 
-		print('----')
-		print('installing vyos-build')
-		print('----')
-		self.ssh(where, f'mkdir -p {repo_folder}')
-		self.ssh(where, f"cd {repo_folder} && test '!' -d vyos-built && git clone https://github.com/vyos/vyos-build.git {repo_name}", exitonfail=False)
-		self.ssh(where, f'cd {repo} && git pull')
-		# self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
+        print('----')
+        print('installing vyos-build')
+        print('----')
+        self.ssh(where, f'mkdir -p {repo_folder}')
+        self.ssh(where, f"cd {repo_folder} && test '!' -d vyos-built && git clone https://github.com/vyos/vyos-build.git {repo_name}", exitonfail=False)
+        self.ssh(where, f'cd {repo} && git pull')
+        # self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
 
 def main():
-	'set a machine for this tool'
-	arg = arguments.setup(
-		__doc__,
-		['machine', 'presentation']
-	)
-	control = Control(arg.dry, arg.quiet)
+    'set a machine for this tool'
+    arg = arguments.setup(
+        __doc__,
+        ['machine', 'presentation']
+    )
+    control = Control(arg.dry, arg.quiet)
 
-	if not config.exists(arg.machine):
-		sys.exit(f'machine "{arg.machine}" is not configured\n')
+    if not config.exists(arg.machine):
+        sys.exit(f'machine "{arg.machine}" is not configured\n')
 
-	role = config.get(arg.machine, 'role')
-	if not role:
-		print('the machine "{arg.machine}" is not setup')
+    role = config.get(arg.machine, 'role')
+    if not role:
+        print('the machine "{arg.machine}" is not setup')
 
-	if role == 'router':
-		control.setup_router(arg.machine)
-	elif role == 'build':
-		control.setup_build(arg.machine)
-	else:
-		log.completed('the machine "{arg.machine}" is not correctly setup')
+    if role == 'router':
+        control.setup_router(arg.machine)
+    elif role == 'build':
+        control.setup_build(arg.machine)
+    else:
+        log.completed('the machine "{arg.machine}" is not correctly setup')
 
 if __name__ == '__main__':
-	main()
+    main()

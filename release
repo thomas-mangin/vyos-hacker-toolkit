@@ -17,7 +17,7 @@ FOLDER = os.path.dirname(os.path.realpath(__file__))
 IMPORT = os.path.abspath(os.path.join(FOLDER, 'lib'))
 
 if not os.path.exists(IMPORT):
-	sys.exit(f'could not import "{IMPORT}"')
+    sys.exit(f'could not import "{IMPORT}"')
 sys.path = [IMPORT]
 
 from vyosextra.insource import generate
@@ -25,41 +25,41 @@ from vyosextra.insource import location
 
 
 def remove_cache():
-	for name in glob.glob('./lib/*/__pycache__'):
-		shutil.rmtree(name)
-	for name in glob.glob('./lib/*/*/__pycache__'):
-		shutil.rmtree(name)
+    for name in glob.glob('./lib/*/__pycache__'):
+        shutil.rmtree(name)
+    for name in glob.glob('./lib/*/*/__pycache__'):
+        shutil.rmtree(name)
 
-	for name in glob.glob('./lib/*/*.pyc'):
-		os.remove(name)
-	for name in glob.glob('./lib/*/*/*.pyc'):
-		os.remove(name)
+    for name in glob.glob('./lib/*/*.pyc'):
+        os.remove(name)
+    for name in glob.glob('./lib/*/*/*.pyc'):
+        os.remove(name)
 
 def release(target, debug):
-	here = os.path.dirname(os.path.realpath(__file__))
-	folder = os.path.abspath(os.path.join(here, 'data'))
+    here = os.path.dirname(os.path.realpath(__file__))
+    folder = os.path.abspath(os.path.join(here, 'data'))
 
-	generate(folder)
+    generate(folder)
 
-	remove_cache()
+    remove_cache()
 
-	python = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3' if debug else '/usr/bin/env python3'
+    python = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3' if debug else '/usr/bin/env python3'
 
-	zipapp.create_archive(
-		source='lib',
-		target=target,
-		interpreter=python,
-		main='vyosextra.main:main',
-		compressed=False if debug else True,
-	)
+    zipapp.create_archive(
+        source='lib',
+        target=target,
+        interpreter=python,
+        main='vyosextra.main:main',
+        compressed=False if debug else True,
+    )
 
-	os.remove(location())
+    os.remove(location())
 
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='build vyos tool')
-	parser.add_argument('target', help='name of the binary to create', default='./vyos')
-	parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
-	arg = parser.parse_args()
+    parser = argparse.ArgumentParser(description='build vyos tool')
+    parser.add_argument('target', help='name of the binary to create', default='./vyos')
+    parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
+    arg = parser.parse_args()
 
-	release(arg.target, arg.debug)
+    release(arg.target, arg.debug)

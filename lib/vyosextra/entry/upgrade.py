@@ -18,95 +18,95 @@ from vyosextra.entry.download import fetch
 
 
 class Control(control.Control):
-	def upgrade(self, where, ip, location, local, remote, show):
-		# local: your computer port
-		# remote: the router port
-		image = location.split('/')[-1]
+    def upgrade(self, where, ip, location, local, remote, show):
+        # local: your computer port
+        # remote: the router port
+        image = location.split('/')[-1]
 
-		if local and remote:
-			url = f'http://127.0.0.1:{remote}/{image}'
-			extra = f'-R {remote}:127.0.0.1:{local}'
-		else:
-			ip = ip if ip else socket.gethostbyname(socket.gethostname())
-			url = f'http://{ip}:{local}/{image}'
-			extra = ''
+        if local and remote:
+            url = f'http://127.0.0.1:{remote}/{image}'
+            extra = f'-R {remote}:127.0.0.1:{local}'
+        else:
+            ip = ip if ip else socket.gethostbyname(socket.gethostname())
+            url = f'http://{ip}:{local}/{image}'
+            extra = ''
 
-		print(f'serving on: {url}')
-		print(f'from image: {location}')
-		if not show:
-			web(location, image, local)
+        print(f'serving on: {url}')
+        print(f'from image: {location}')
+        if not show:
+            web(location, image, local)
 
-		self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
-		self.ssh(where, 'printf 1 | /opt/vyatta/bin/vyatta-boot-image.pl --select')
+        self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
+        self.ssh(where, 'printf 1 | /opt/vyatta/bin/vyatta-boot-image.pl --select')
 
-	def reboot(self, where):
-		# should find a way to check if the image changed
-		self.ssh(where, 'sudo reboot')
+    def reboot(self, where):
+        # should find a way to check if the image changed
+        self.ssh(where, 'sudo reboot')
 
 
 def start_server(path, file, port):
-	class Handler(SimpleHTTPRequestHandler):
-		def do_GET(self):
-			if self.path != f'/{file}':
-				return
+    class Handler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if self.path != f'/{file}':
+                return
 
-			with open(os.path.join(path, file), 'rb') as f:
-				fs = os.fstat(f.fileno())
+            with open(os.path.join(path, file), 'rb') as f:
+                fs = os.fstat(f.fileno())
 
-				self.send_response(200)
-				self.send_header("Content-type", "application/octet-stream")
-				self.send_header("Content-Disposition", f'attachment; filename="{file}"')
-				self.send_header("Content-Length", str(fs.st_size))
-				self.end_headers()
+                self.send_response(200)
+                self.send_header("Content-type", "application/octet-stream")
+                self.send_header("Content-Disposition", f'attachment; filename="{file}"')
+                self.send_header("Content-Length", str(fs.st_size))
+                self.end_headers()
 
-				shutil.copyfileobj(f, self.wfile)
+                shutil.copyfileobj(f, self.wfile)
 
-	os.chdir(path)
-	httpd = HTTPServer(('', port), Handler)
-	httpd.serve_forever()
-	sys.exit(1)
+    os.chdir(path)
+    httpd = HTTPServer(('', port), Handler)
+    httpd.serve_forever()
+    sys.exit(1)
 
 
 def web(location, name, port):
-	daemon = Thread(
-		name='serve VyOS',
-		target=start_server,
-		args=(os.path.dirname(location), name, port)
-	)
+    daemon = Thread(
+        name='serve VyOS',
+        target=start_server,
+        args=(os.path.dirname(location), name, port)
+    )
 
-	daemon.setDaemon(True)
-	daemon.start()
+    daemon.setDaemon(True)
+    daemon.start()
 
 
 def main():
-	'upgrade router to latest VyOS image'
-	arg = arguments.setup(
-		__doc__,
-		['router', 'upgrade', 'presentation']
-	)
-	control = Control(arg.dry, arg.quiet)
+    'upgrade router to latest VyOS image'
+    arg = arguments.setup(
+        __doc__,
+        ['router', 'upgrade', 'presentation']
+    )
+    control = Control(arg.dry, arg.quiet)
 
-	if not config.exists(arg.router):
-		sys.exit(f'machine "{arg.router}" is not configured\n')
+    if not config.exists(arg.router):
+        sys.exit(f'machine "{arg.router}" is not configured\n')
 
-	role = config.get(arg.router, 'role')
-	if role != 'router':
-		sys.exit(f'target "{arg.router}" is not a VyOS router\n')
+    role = config.get(arg.router, 'role')
+    if role != 'router':
+        sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-	location = fetch(arg.file)
+    location = fetch(arg.file)
 
-	if arg.remote and not arg.local:
-		local = arg.remote
-		remote = arg.remote
-	else:
-		local = arg.local
-		remote = arg.remote
+    if arg.remote and not arg.local:
+        local = arg.remote
+        remote = arg.remote
+    else:
+        local = arg.local
+        remote = arg.remote
 
-	time.sleep(0.1)
-	control.upgrade(arg.router, arg.bind, location, local, remote, arg.dry)
-	if arg.reboot:
-		control.reboot(arg.router)
+    time.sleep(0.1)
+    control.upgrade(arg.router, arg.bind, location, local, remote, arg.dry)
+    if arg.reboot:
+        control.reboot(arg.router)
 
 
 if __name__ == '__main__':
-	main()
+    main()

@@ -7,11 +7,11 @@ import sys
 FOLDER = os.path.dirname(os.path.realpath(__file__))
 IMPORT = os.path.abspath(os.path.join(FOLDER, "..", "lib"))
 if not os.path.exists(IMPORT):
-	sys.exit(f'could not import "{IMPORT}"')
+    sys.exit(f'could not import "{IMPORT}"')
 
 sys.path.append(IMPORT)
 from vyosextra.main import main
 
 if __name__ == '__main__':
-	main()
+    main()
 

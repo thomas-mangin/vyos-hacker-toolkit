@@ -22,4 +22,4 @@ __all__ = __modules.keys()
 
 register = Registerer()
 for name, module in __modules.items():
-	register(name,module.main)
+    register(name,module.main)
