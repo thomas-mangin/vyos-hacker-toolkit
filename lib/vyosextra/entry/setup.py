@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import sys
+from getpass import getpass
 from datetime import datetime
 
 from vyosextra import log
@@ -44,25 +45,45 @@ class Control(control.Control):
 		self.ssh(where, f'touch /config/vyos.log.debug')
 
 	def setup_build(self, where):
-		# on my local VM which goes to sleep when I close my laptop
-		# time can easily get out of sync, which prevent apt to work
-		now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		self.ssh(where, f"sudo date -s '{now}'")
-
 		packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
-		self.ssh(where, f'sudo apt-get --yes update')
+
+		print("Please enter the host root password (it is not saved)")
+		print("It is required to setup password-less command via sudo")
+		username = config.get(where, 'user')
+		if self.dry:
+			password = 'your-password'
+		else:
+			password = getpass('password: ')
+			password = f"'{password}'"
+
+		self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
+		absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
+		if absent:
+			self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
+
+		absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
+		if absent:
+			self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
+
+
+		print('updating the OS to make sure the packages are on the latest version')
+		print('it may take some time ...')
+
+		self.ssh(where, 'sudo dpkg --configure -a')
 		self.ssh(where, f'sudo apt-get --yes upgrade')
 		self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
 
-		self.ssh(where, 'sudo adduser vyos libvirt')
+		self.ssh(where, f'sudo adduser {username} libvirt')
+		# no f-string here in purpose we want ${USER}
 		self.ssh(where, 'sudo usermod -aG docker ${USER}')
 
 		# may need reboot ?
 
-		self.ssh(where, 'docker pull vyos/vyos-build: current')
+		self.ssh(where, 'docker pull vyos/vyos-build:current')
 
-		self.ssh(where, 'mkdir ~/vyos')
-		self.ssh(where, 'cd ~/vyos/ && git clone https://github.com/vyos/vyos-build.git')
+		self.ssh(where, 'mkdir -p ~/vyos')
+		self.ssh(where, 'cd ~/vyos/ && test -d vyos-built && git clone https://github.com/vyos/vyos-build.git', exitonfail=False)
+		self.ssh(where, 'cd ~/vyos/vyos-build && git pull')
 		# self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
 
