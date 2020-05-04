@@ -65,7 +65,8 @@ class _Config(object):
 
 		self._read_config()
 		self._parse_env()
-		self._set_default()
+		self._set_defaults()
+		self._set_role()
 
 	def _default(self, section, key=None):
 		default = self.__default.get(section, {})
@@ -122,7 +123,17 @@ class _Config(object):
 			value = config.get(section, key, fallback=self._default(section,key))
 			self.set(option, value)
 
-	def _set_default(self):
+	def _set_role(self):
+		for name in self._values:
+			machine = self._values[name]
+			if not machine.get('default', ''):
+				return
+			role = machine.get('role', '')
+			if self.default.get(role, ''):
+				log.failed(f'only one machine can be set as default "{role}"')
+			self.default[role] = name
+
+	def _set_defaults(self):
 		sections = list(self._values)
 		sections.append('global')
 
@@ -133,15 +144,6 @@ class _Config(object):
 			for key in default:
 				if key not in section:
 					self.set(name, key, self._default(name, key))
-
-		for name in self._values:
-			machine = self._values[name]
-			if not machine.get('default',''):
-				continue
-			role = machine.get('role', '')
-			if self.default.get(role, ''):
-				log.failed(f'only one machine can be set as default "{role}"')
-			self.default[role] = name
 
 	def exists(self, machine):
 		return machine in self._values
@@ -159,7 +161,7 @@ class _Config(object):
 	def printf(self, string):
 		return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
 
-	def ssh(self, where, command='', extra=''):
+	def ssh(self, where, command='', extra='', quote=True):
 		host = self._values[where]['host']
 		user = self._values[where]['user']
 		port = self._values[where]['port']
@@ -174,7 +176,7 @@ class _Config(object):
 			return command
 
 		command = command.replace('$', '\$')
-		if ' ' in command:
+		if ' ' in command and quote:
 			command = f'"{command}"'
 
 		return f'ssh {extra} -p {port} {user}@{host} {command}'
