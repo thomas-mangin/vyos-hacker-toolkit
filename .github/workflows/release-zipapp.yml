@@ -1,0 +1,26 @@
+# .github/workflows/release-zipapp.yml
+name: build-zipapp
+uses: JasonEtco/upload-to-release@v0.1.1
+
+on: release
+
+jobs:
+  release-zipapp:
+    name: Build and upload docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull source
+        uses: actions/checkout@v1
+
+      - name: Build the zipapp
+        uses: actions/docker/cli@master
+        with:
+          args: ./release vyos
+
+      - name: Upload to release
+        uses: JasonEtco/upload-to-release@master
+        with:
+          args: vyos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
