@@ -8,6 +8,7 @@ from os.path import abspath
 from os.path import dirname
 from os.path import exists
 
+from vyosextra import log
 from vyosextra.insource import read
 
 
@@ -75,15 +76,22 @@ class _Config(object):
 		return default[key]
 
 	def _conf_file(self, name):
-		etcs = ['~/.config/vyos/extra.conf' '/etc', '/usr/local/etc']
+		folder_name = name.replace('-', '/')
+		etcs = [
+			self.absolute_path(f'~/.config/{folder_name}'),
+			self.absolute_path(f'~/.config/{name}'),
+			f'/etc/{folder_name}',
+			f'/etc/{name}',
+			f'/usr/local/etc/{folder_name}'
+			f'/usr/local/etc/{name}'
+		]
 		if exists(join(self.root, 'lib/vyosextra')):
-			etcs = [self.absolute_path(self.root, 'etc')] + etcs
-			etcs = [self.absolute_path('$HOME', 'etc')] + etcs
+			etcs = [self.absolute_path(self.root, 'etc', folder_name)] + etcs
+			etcs = [self.absolute_path(self.root, 'etc', name)] + etcs
 
 		for etc in etcs:
-			fname = join(etc,name)
-			if exists(fname):
-				return fname
+			if exists(etc):
+				return etc
 		return ''
 
 	def _read_config(self):
@@ -132,7 +140,7 @@ class _Config(object):
 				continue
 			role = machine.get('role', '')
 			if self.default.get(role, ''):
-				log.failed('only one machine can be set as default "{role}"')
+				log.failed(f'only one machine can be set as default "{role}"')
 			self.default[role] = name
 
 	def exists(self, machine):
