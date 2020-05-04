@@ -11,7 +11,6 @@ from vyosextra.config import config
 from vyosextra.entry import edit as control
 
 
-
 class Control(control.Control):
     def make(self, directory):
         if self.verbose or self.dry:
@@ -76,6 +75,7 @@ def main():
 
     if arg.edit:
         control.edit(control.branched_repo(arg.branch, arg.repository))
+
 
 if __name__ == '__main__':
     main()

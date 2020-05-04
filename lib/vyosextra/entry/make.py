@@ -16,7 +16,7 @@ class Control(control.Control):
         self.ssh(where, config.docker(where, '', f'sudo make {target}'))
 
     def backdoor(self, where, password):
-        build_repo = config.get(where,'repo')
+        build_repo = config.get(where, 'repo')
 
         lines = config.read('vyos-iso-backdoor').split('\n')
         location = lines.pop(0).lstrip().lstrip('#').strip()
@@ -31,8 +31,8 @@ class Control(control.Control):
             config.ssh(where, f'cat - > {build_repo}/{location}')
         )
 
-    def configure(self, where, location,  extra, name):
-        email = config.get('global','email')
+    def configure(self, where, location, extra, name):
+        email = config.get('global', 'email')
 
         date = datetime.now().strftime('%Y%m%d%H%M')
         name = name if name else 'rolling'

@@ -5,7 +5,6 @@
 
 import sys
 
-from vyosextra import log
 from vyosextra import arguments
 from vyosextra.config import config
 from vyosextra.control import Control
@@ -130,27 +129,27 @@ commands = [
     'show interfaces vrrp',
     'show interfaces vti',
     'show interfaces vxlan',
-#    'show interfaces wireguard wg999',
+    # 'show interfaces wireguard wg999',
     'show interfaces wireless',
     'show interfaces wireless detail',
     'show interfaces wireless info',
-#    'show ip',
+    # 'show ip',
     'show ipoe-server sessions',
     'show ipoe-server statistics',
-#    'show ipv6',
+    # 'show ipv6',
     'show l2tp-server sessions',
     'show l2tp-server statistics',
     'show license',
     'show lldp neighbors',
     'show lldp neighbors detail',
     'show lldp neighbors interface eth0',
-#    'show log',
+    # 'show log',
     'show login',
     'show login groups',
     'show login level',
     'show login user',
     'show monitoring',
-#    'show mpls',
+    # 'show mpls',
     'show nat destination rules',
     'show nat destination statistics',
     'show nat destination translations',
@@ -210,12 +209,12 @@ commands = [
     'show system acceleration qat interrupts',
     'show system acceleration qat status',
     'show system commit',
-#    'show system connections',
+    # 'show system connections',
     'show system image',
     'show system image storage',
     'show system image version',
-#    'show system integrity',
-#    'show system kernel-messages',
+    # 'show system integrity',
+    # 'show system kernel-messages',
     'show system login users',
     'show system login users all',
     'show system login users locked',
@@ -233,14 +232,14 @@ commands = [
     'show system storage',
     'show system uptime',
     'show table',
-#    'show tech-support',
+    # 'show tech-support',
     'show users',
     'show users recent',
     'show version',
-#    'show version all',
+    # 'show version all',
     'show version funny',
     'show version quagga',
-#    'show vpn debug',
+    # 'show vpn debug',
     'show vpn ike rsa-keys',
     'show vpn ike sa',
     'show vpn ike sa nat-traversal',
@@ -262,9 +261,9 @@ commands = [
     'show wan-load-balance status with-dns',
     'show webproxy blacklist categories',
     'show webproxy blacklist domains',
-#    'show webproxy blacklist log',
+    # 'show webproxy blacklist log',
     'show webproxy blacklist urls',
-#    'show wireguard',
+    # 'show wireguard',
 ]
 
 errors = [
@@ -334,7 +333,7 @@ def main():
             if errror in out:
                 failed(command, out, err, errror)
                 continue
-        
+
         passed(command)
 
 

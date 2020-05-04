@@ -3,7 +3,6 @@
 
 import os
 import sys
-import textwrap
 import argparse
 
 from vyosextra import log
@@ -30,11 +29,11 @@ def make_sys(extract=0, help=True):
 
 
 def main():
-    if os.environ.get('VYOSEXTRA_DEBUG',None) is not None:
+    if os.environ.get('VYOSEXTRA_DEBUG', None) is not None:
         def intercept(dtype, value, trace):
             try:
                 log.failed('report:')
-            except:
+            except Exception:
                 pass
             import traceback
             traceback.print_exception(dtype, value, trace)
@@ -50,11 +49,13 @@ def main():
         description='vyos extra, the developer tool',
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog = f'command options:\n{epilog}')
-    parser.add_argument('-h', '--help', 
-        help='show this help message and exit', 
+        epilog=f'command options:\n{epilog}')
+    parser.add_argument(
+        '-h', '--help',
+        help='show this help message and exit',
         action='store_true')
-    parser.add_argument('command', 
+    parser.add_argument(
+        'command',
         help='command to run',
         nargs='?',
         choices=choices)

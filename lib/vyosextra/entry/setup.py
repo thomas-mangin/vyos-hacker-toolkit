@@ -45,14 +45,20 @@ class Control(control.Control):
         self.ssh(where, f'touch /config/vyos.cmd.debug')
         self.ssh(where, f'touch /config/vyos.log.debug')
 
-    def setup_build(self, where):
-        packages = 'qemu-kvm libvirt-clients libvirt-daemon-system git rsync docker.io docker-compose'
+    def _sudo(self, where, password, command, exitonfail=False):
+        _, _, r = self.ssh(where, f'echo {password} | sudo -S dpkg {command}',
+                           hide=password, exitonfail=exitonfail)
+        return r
 
-        repo = config.get(where,'repo')
+    def setup_build(self, where):
+        packages = 'qemu-kvm libvirt-clients libvirt-daemon-system'
+        packages += ' git rsync docker.io docker-compose'
+
+        repo = config.get(where, 'repo')
         repo_name = os.path.basename(repo)
         repo_folder = os.path.dirname(repo)
 
-        _, _, code = self.ssh(where, f"test -d {repo}",exitonfail=False)
+        _, _, code = self.ssh(where, f"test -d {repo}", exitonfail=False)
         if code == 0:
             print('this machine is already setup')
             return
@@ -71,26 +77,25 @@ class Control(control.Control):
         print('updating the OS to make sure the packages are on the latest version')
         print('it may take some time ...')
         print('----')
-        self.ssh(where, 'echo {password} | sudo -S dpkg --configure -a', hide=password)
-        self.ssh(where, f'echo {password} | sudo -S apt-get --yes upgrade', hide=password)
-        self.ssh(where, f"echo {password} | sudo -S apt-get update", hide=password, exitonfail=False)
+        self._sudo(where, password, 'dpkg --configure -a')
+        self._sudo(where, password, 'apt-get --yes upgrade')
+        self._sudo(where, password, 'apt-get update', exitonfail=False)
 
         print('----')
         print('setting up sudo ...')
         print('----')
-        _, _, absent = self.ssh(where, f"echo {password} | sudo -S apt-get install sudo", hide=password, exitonfail=False)
-        if absent:
-            self.ssh(where, f"echo {password} | " + "sudo -S adduser ${USER} sudo", hide=password)
-        _, _, absent = self.ssh(where, f"echo {password} | sudo -S grep NOPASSWD /etc/sudoers >/dev/null 2>/dev/null", hide=password, exitonfail=False)
-        if absent:
-            self.ssh(where, f"echo {password} | sudo -S sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers 2> /dev/null", hide=password)
+        if self._sudo(where, 'apt-get install sudo', exitonfail=False):
+            self.u_sudo(where, password, 'adduser ${USER} sudo')
+        if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
+            sed = "sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
+            self._sudo(where, password, sed)
         else:
             print('sudo is already setup')
 
         print('----')
         print('installing packages required for building VyOS')
         print('----')
-        self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')
+        self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')  # noqa: E501
 
         print('----')
         print('adding the right permission to the user')
@@ -108,7 +113,11 @@ class Control(control.Control):
         print('installing vyos-build')
         print('----')
         self.ssh(where, f'mkdir -p {repo_folder}')
-        self.ssh(where, f"cd {repo_folder} && test '!' -d vyos-built && git clone https://github.com/vyos/vyos-build.git {repo_name}", exitonfail=False)
+        self.ssh(where,
+                 f"cd {repo_folder} && "
+                 f"test '!' -d vyos-built && "
+                 f"git clone https://github.com/vyos/vyos-build.git {repo_name}",
+                 exitonfail=False)
         self.ssh(where, f'cd {repo} && git pull')
         # self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
@@ -134,6 +143,7 @@ def main():
         control.setup_build(arg.machine)
     else:
         log.completed('the machine "{arg.machine}" is not correctly setup')
+
 
 if __name__ == '__main__':
     main()

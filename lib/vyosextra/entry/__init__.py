@@ -14,12 +14,13 @@ def import_all(package_name):
         for loader, name, is_pkg in pkgutil.walk_packages(package.__path__)
     }
 
-__modules = import_all(__name__)
-__all__ = __modules.keys()
+
+__MODULES = import_all(__name__)
+__all__ = __MODULES.keys()
 
 
 # register the entry points in the module
 
 register = Registerer()
-for name, module in __modules.items():
-    register(name,module.main)
+for name, module in __MODULES.items():
+    register(name, module.main)

@@ -1,5 +1,5 @@
 class Registerer(object):
-    def __init__ (self):
+    def __init__(self):
         self._register = {}
 
     def call(self, name, *args):
@@ -23,4 +23,4 @@ class Registerer(object):
     def __call__(self, name=None, function=None):
         if function is None:
             return self._register_decorator(name)
-        self._register_function(name,function)
+        self._register_function(name, function)

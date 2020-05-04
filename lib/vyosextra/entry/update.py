@@ -13,7 +13,7 @@ from vyosextra.config import config
 
 class Control(control.Control):
     def copy(self, where, repo, folder):
-        with Repository(folder) as debian:
+        with Repository(folder):
             for src, dst in self.move:
                 self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
                 self.ssh(where, f'sudo chmod -R g+rxw {dst}')
@@ -37,7 +37,7 @@ def main():
 
     control.copy(arg.router, arg.package, arg.location)
     log.completed('router updated')
-    
+
 
 if __name__ == '__main__':
     main()

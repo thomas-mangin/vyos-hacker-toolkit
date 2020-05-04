@@ -1,6 +1,4 @@
 import os
-import sys
-import glob
 import configparser
 
 from os.path import join
@@ -35,7 +33,7 @@ class _Config(object):
 
     @staticmethod
     def boolean(value):
-        return value.lower() in ('true','1','yes','enable','enabled')
+        return value.lower() in ('true', '1', 'yes', 'enable', 'enabled')
 
     @staticmethod
     def absolute_path(*path):
@@ -58,14 +56,14 @@ class _Config(object):
     def __init__(self):
         self.root = self.absolute_path(dirname(__file__), '..', '..')
         self.conversion = {
-            'host':        lambda host: host.lower(),
-            'port':        lambda port: int(port),
-            'file':        self.absolute_path,
-            'store':       self.absolute_path,
-            'editor':      self.absolute_path,
+            'host': lambda host: host.lower(),
+            'port': lambda port: int(port),
+            'file': self.absolute_path,
+            'store': self.absolute_path,
+            'editor': self.absolute_path,
             'cloning_dir': self.absolute_path,
             'working_dir': self.absolute_path,
-            'default':     self.boolean,
+            'default': self.boolean,
         }
 
         self._read_config()
@@ -126,7 +124,7 @@ class _Config(object):
                 self.set(section, key, env_value)
                 continue
 
-            value = config.get(section, key, fallback=self._default(section,key))
+            value = config.get(section, key, fallback=self._default(section, key))
             self.set(section, key, value)
 
     def _add_role(self):
@@ -144,7 +142,7 @@ class _Config(object):
         sections.append('global')
 
         for name in set(sections):
-            section = self._values.get(name,{})
+            section = self._values.get(name, {})
             default = self._default(name)
 
             for key in default:
@@ -155,11 +153,11 @@ class _Config(object):
         return machine in self._values
 
     def get(self, section, key):
-        return self._values.setdefault(section,{}).get(key,'')
+        return self._values.setdefault(section, {}).get(key, '')
 
-    def set (self, section, key, value):
+    def set(self, section, key, value):
         value = self.conversion.get(key, lambda _: _)(value)
-        self._values.setdefault(section,{})[key] = value
+        self._values.setdefault(section, {})[key] = value
 
     def read(self, name):
         return read(join(self.root, 'data'), name)
@@ -181,7 +179,7 @@ class _Config(object):
         if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
             return command
 
-        command = command.replace('$', '\$')
+        command = command.replace('$', '\$')  # noqa: W605
         if ' ' in command and quote:
             command = f'"{command}"'
 
@@ -194,13 +192,13 @@ class _Config(object):
         role = self._values[where]['role']
         if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
             return f'scp -r {src} {dst}'
-        dst = dst.replace('$', '\$')
+        dst = dst.replace('$', '\$')  # noqa: W605
         return f'scp -r -P {port} {src} {user}@{host}:{dst}'
 
     def docker(self, where, rwd, command):
         # rwd: relative working directory
         repo = self._values[where]['repo']
-        return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:current {command}'
+        return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:current {command}'  # noqa: E501
 
     def rsync(self, where, src, dest):
         host = self._values[where]['host']
@@ -208,8 +206,9 @@ class _Config(object):
         port = self._values[where]['port']
         if host in ('localhost', '127.0.0.1', '::1') and port == 22:
             return f'rsync -avh --delete {src} {dest}'
-        dest = dest.replace('$', '\$')
+        dest = dest.replace('$', '\$')  # noqa: W605
         return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
+
 
 # The global configuration
 config = _Config()

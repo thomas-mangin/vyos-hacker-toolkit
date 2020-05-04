@@ -2,7 +2,6 @@
 
 import os
 import sys
-import importlib
 import setuptools
 
 here = os.path.dirname(os.path.realpath(__file__))
@@ -12,15 +11,16 @@ if not os.path.exists(lib):
     sys.exit(f'could not import "{lib}"')
 sys.path.append(lib)
 
-from vyosextra.entry.version import VERSION
-from vyosextra.insource import generate
-from vyosextra.insource import location
+from vyosextra.entry.version import VERSION  # noqa: E402
+from vyosextra.insource import generate  # noqa: E402
+from vyosextra.insource import location  # noqa: E402
 
 data = os.path.abspath(os.path.join(here, 'data'))
 generate(data)
+url = 'https://github.com/thomas-mangin/vyos-extra/archive/%s.tar.gz' % VERSION
 
 setuptools.setup(
-    download_url='https://github.com/thomas-mangin/vyos-extra/archive/%s.tar.gz' % VERSION,
+    download_url=url,
 )
 
 os.remove(location())

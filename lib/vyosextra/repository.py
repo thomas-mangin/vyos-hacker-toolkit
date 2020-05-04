@@ -6,7 +6,8 @@ from vyosextra import log
 class Repository:
     official = [
         'vyos-1x', 'vyos-cloud-init', 'vyos-salt-minion', 'vyos-world',
-        'vyos-xe-guest-utilities', 'vyos-replace', 'vyos-build-frr', 'vyos-strongswan', 'vyos-opennhrp',
+        'vyos-xe-guest-utilities', 'vyos-replace', 'vyos-build-frr',
+        'vyos-strongswan', 'vyos-opennhrp',
         'vyos-smoketest', 'vyos-documentation',
         'vyatta-op', 'vyatta-cfg', 'vyatta-cfg-system'
     ]
@@ -34,9 +35,8 @@ class Repository:
     def package(self, repo):
         with open(os.path.join('debian', 'changelog')) as f:
             line = f.readline().strip()
-        found = re.match('[^(]+\((.*)\).*', line)
+        found = re.match(r'[^(]+\((.*)\).*', line)
         if found is None:
             return ''
         version = found.group(1)
         return f'{repo}_{version}_all.deb'
-

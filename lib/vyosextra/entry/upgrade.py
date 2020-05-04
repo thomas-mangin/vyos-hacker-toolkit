@@ -36,8 +36,12 @@ class Control(control.Control):
         if not show:
             web(location, image, local)
 
-        self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
-        self.ssh(where, 'printf 1 | /opt/vyatta/bin/vyatta-boot-image.pl --select')
+        self.ssh(where,
+                 f"printf 'yes\n\nyes\nyes\nyes\n' | "
+                 f"sudo /opt/vyatta/sbin/install-image {url}",
+                 extra=extra)
+        self.ssh(where, 'printf 1 | '
+                 '/opt/vyatta/bin/vyatta-boot-image.pl --select')
 
     def reboot(self, where):
         # should find a way to check if the image changed
@@ -55,7 +59,7 @@ def start_server(path, file, port):
 
                 self.send_response(200)
                 self.send_header("Content-type", "application/octet-stream")
-                self.send_header("Content-Disposition", f'attachment; filename="{file}"')
+                self.send_header("Content-Disposition", f'attachment; filename="{file}"')  # noqa: E501
                 self.send_header("Content-Length", str(fs.st_size))
                 self.end_headers()
 
