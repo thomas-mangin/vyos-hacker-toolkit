@@ -4,11 +4,14 @@ from datetime import datetime
 
 _records = []
 
+
 def _now():
     return datetime.now().strftime('%H:%M:%S')
 
+
 def timed(s):
     return f'{_now()} {s}'
+
 
 def failed(s='failure'):
     print(timed(s))
@@ -43,14 +46,18 @@ def _record(s, w='<', counter=[0]):
     _records.append((c, n, w, s))
     return f'{s}\n'
 
+
 def report(s):
     return _record(s, '=')
+
 
 def command(s):
     return _record(s, '>')
 
+
 def answer(s):
     return _record(s)
+
 
 def completed(s='completed'):
     print(timed(s))

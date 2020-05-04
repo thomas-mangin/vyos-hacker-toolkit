@@ -4,7 +4,9 @@ import argparse
 from vyosextra.register import Registerer
 from vyosextra.config import config
 
+
 register = Registerer()
+
 
 def setup(description, options, strict=True):
     parser = argparse.ArgumentParser(description=description)

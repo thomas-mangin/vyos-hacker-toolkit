@@ -3,6 +3,7 @@ import re
 
 from vyosextra import log
 
+
 class Repository:
     official = [
         'vyos-1x', 'vyos-cloud-init', 'vyos-salt-minion', 'vyos-world',

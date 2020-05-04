@@ -1,6 +1,7 @@
 from vyosextra.config import config
 from vyosextra import command
 
+
 class Control(object):
     move = [
         ('python/vyos/*', '/usr/lib/python3/dist-packages/vyos/'),

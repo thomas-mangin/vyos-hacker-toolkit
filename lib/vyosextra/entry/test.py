@@ -266,6 +266,7 @@ commands = [
     # 'show wireguard',
 ]
 
+
 errors = [
     'error',
     'fail',
@@ -274,6 +275,7 @@ errors = [
     'No such file or directory',
     'pm line',
 ]
+
 
 class color:
     HEADER = '\033[95m'
@@ -291,11 +293,14 @@ class color:
 def running(command):
     sys.stdout.write(f'[{color.RUN}test{color.END}] {command}')
 
+
 def skipped(command):
     sys.stdout.write(f'\r[{color.SKIP}skip{color.END}] {command}\n')
 
+
 def passed(command):
     sys.stdout.write(f'\r[{color.PASS}pass{color.END}] {command}\n')
+
 
 def failed(command, out, err, reason=''):
     sys.stdout.write(f'\r[{color.FAIL}fail{color.END}] {command}\n')
@@ -303,6 +308,7 @@ def failed(command, out, err, reason=''):
         print(f'reason: {reason}')
     print(out)
     print(err)
+
 
 def main():
     'test a VyOS router'
