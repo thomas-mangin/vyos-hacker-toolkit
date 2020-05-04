@@ -18,8 +18,7 @@ def failed(s='failure'):
 		# make iso reports error with 'E: ' lines
 		if w == 'answer' and s.startswith('E: '):
 			special.append()
-		if enabled:
-			print(f'{t} {c:>3} {w} {s}')
+		print(f'{t} {c:>3} {w} {s}')
 
 	if special:
 		print()
