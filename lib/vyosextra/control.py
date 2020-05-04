@@ -1,5 +1,6 @@
 import os
 import sys
+import fcntl
 
 from subprocess import Popen
 from subprocess import PIPE, STDOUT, DEVNULL
@@ -18,48 +19,72 @@ class Run(object):
 	def _unprefix(s, prefix='Welcome to VyOS'):
 		return '\n'.join(_ for _ in s.split('\n') if _ and _ != prefix)
 
-	def check(self, cmd, popen, communicate):
-		err = popen.returncode
+	def _report(self, popen):
+		def _non_blocking(output):
+			fd = output.fileno()
+			fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+			fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-		# stdout and stderr can be None in case of command error
-		for message in (communicate[0], communicate[1]):
-			if not message:
-				continue
-			string = self._unprefix(message.decode(errors='ignore').strip())
-			log.answer(string)
-			if string and self.verbose:
-				print(string)
+		def _read(output):
+			try:
+				return output.read().decode()
+			except:
+				return ""
 
-		if err:
-			log.answer(f'returned code {err}')
+		_non_blocking(popen.stdout)
+		_non_blocking(popen.stderr)
+
+		result = {1:'', 2:''}
+
+		# (1, popen.stdout, sys.stdout, lambda _: _),
+		# (2, popen.stderr, sys.stderr, self._unprefix)):
+
+		while popen.poll() is None:
+			for fno, pipe, std, formater in (
+				(1, popen.stdout, sys.stdout, lambda _:_),
+				(2, popen.stderr, sys.stderr, lambda _:_)):
+				recv = _read(pipe)
+				if not recv:
+					continue
+
+				short = recv
+				# short = formater(recv)
+				# if not short:
+				# 	continue
+
+				log.answer(short)
+				result[fno] += short
+				if self.verbose:
+					std.write(short)
+
+		return result.values()
+
+	def _check(self, code, exitonfail=True):
+		if code and exitonfail:
+			log.answer(f'returned code {code}')
 			log.failed('could not complete action requested')
 
-	def _run(self, cmd, ignore=''):
+	def run(self, cmd, ignore='', hide='', exitonfail=True):
 		command = f'{cmd}'
-		log.command(command)
+		secret = command.replace(hide, '********') if hide else command
+		log.command(secret)
 
 		if self.dry or self.verbose:
-			print(command)
+			print(secret)
 		if self.dry:
 			return ''
 
 		popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
-		com = popen.communicate()
-		self.check(cmd, popen, com)
-		return com
+		out, err = self._report(popen)
+		code = popen.returncode
+		self._check(code, exitonfail)
+		return out, err, code
 
-	def run(self, cmd, ignore=''):
-		com = self._run(cmd, ignore)
-		if com:
-			return self._unprefix(com[0].decode().strip())
-		return ''
+	def communicate(self, cmd, ignore='', exitonfail=True):
+		out, err, code = self._run(cmd, ignore, hide)
 
-	def communicate(self, cmd, ignore=''):
-		com = self._run(cmd, ignore)
-		return (
-			self._unprefix(com[0].decode().strip()),
-			com[0].decode().strip(),
-		)
+		self._check(code, exitonfail=exitonfail)
+		return self._report(out, err), code
 
 	def chain(self, cmd1, cmd2, ignore=''):
 		command = f'{cmd1} | {cmd2}'
@@ -76,9 +101,9 @@ class Run(object):
 	    # as popen1.communicate will have taken it.
 		com2 = popen2.communicate()
 		com1 = popen1.communicate()
-		self.check(cmd1, popen1, com1)
-		self.check(cmd2, popen2, com2)
-		return self._unprefix(com2[0].decode().strip())
+		self._check(popen1.returncode)
+		self._check(popen2.returncode)
+		self._report(*com2)
 
 
 class Control(Run):
@@ -88,8 +113,8 @@ class Control(Run):
 				('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
 			]
 
-	def ssh(self, where, cmd, ignore='', extra=''):
-		return self.run(config.ssh(where, cmd, extra), ignore)
+	def ssh(self, where, cmd, ignore='', extra='', hide='', exitonfail=True, quote=True):
+		return self.run(config.ssh(where, cmd, extra=extra, quote=quote), ignore=ignore, hide=hide, exitonfail=exitonfail)
 
 	def scp(self, where, src, dst):
 		return self.run(config.scp(where, src, dst))
