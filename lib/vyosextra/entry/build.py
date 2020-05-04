@@ -9,15 +9,38 @@ from vyosextra import control
 from vyosextra import config
 from vyosextra import arguments
 from vyosextra import repository
-from vyosextra.repository import InRepo
+from vyosextra.repository import Repository
 from vyosextra.config import config
 
 
 class Control(control.Control):
-	def install(self, server, router, location, vyos_repo, folder):
-		build_repo = config.get(server,'repo')
+	def update_build(self, where):
+		build_repo = config.get(where, 'repo')
+		self.ssh(where, f'cd {build_repo} && git pull',
+                    'Already up to date.'
+           )
 
-		with InRepo(os.path.join(folder,vyos_repo)) as debian:
+	def build(self, where, location, vyos_repo, folder):
+		build_repo = config.get(where, 'repo')
+		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
+
+		with Repository(os.path.join(folder, vyos_repo)) as debian:
+			package = debian.package(vyos_repo)
+			if not package:
+				log.failed(f'could not find {vyos_repo} package version')
+			elif not self.dry:
+				log.report(f'building package {package}')
+
+			self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
+			self.ssh(where, f'rm {build_repo}/{location}/{package}', exitonfail=False)
+			self.ssh(where, config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+
+		return True
+
+	def install(self, server, router, location, vyos_repo, folder):
+		build_repo = config.get(server, 'repo')
+
+		with Repository(os.path.join(folder, vyos_repo)) as debian:
 			package = debian.package(vyos_repo)
 			if not package:
 				log.failed(f'could not find {vyos_repo} package name')
@@ -30,30 +53,6 @@ class Control(control.Control):
 		)
 		self.ssh(router, f'sudo dpkg -i --force-all {package}')
 		self.ssh(router, f'rm {package}')
-
-	def update_build(self, where):
-		build_repo = config.get(where, 'repo')
-		self.ssh(where, f'cd {build_repo} && git pull',
-                    'Already up to date.'
-           )
-
-	def build(self, where, location, vyos_repo, folder):
-		build_repo = config.get(where, 'repo')
-		self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
-
-		with InRepo(os.path.join(folder, vyos_repo)) as debian:
-			package = debian.package(vyos_repo)
-			if not package:
-				log.failed(f'could not find {vyos_repo} package version')
-			elif not self.dry:
-				log.report(f'building package {package}')
-
-			self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
-			self.ssh(where, f'rm {build_repo}/{location}/{package} || true')
-			self.ssh(where, config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
-
-		return True
-
 
 
 def main():

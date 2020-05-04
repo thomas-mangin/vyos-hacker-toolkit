@@ -22,7 +22,7 @@ class Control(control.Control):
 		location = lines.pop(0).lstrip().lstrip('#').strip()
 
 		if not password:
-			self.ssh("build", f"rm {build_repo}/{location} || true")
+			self.ssh("build", f"rm {build_repo}/{location}", exitonfail=False)
 			return
 
 		data = ''.join(lines).format(user='admin', password=password)

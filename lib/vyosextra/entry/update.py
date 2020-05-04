@@ -7,13 +7,13 @@ from vyosextra import log
 from vyosextra import control
 from vyosextra import arguments
 
-from vyosextra.repository import InRepo
+from vyosextra.repository import Repository
 from vyosextra.config import config
 
 
 class Control(control.Control):
 	def copy(self, where, repo, folder):
-		with InRepo(folder) as debian:
+		with Repository(folder) as debian:
 			for src, dst in self.move:
 				self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
 				self.ssh(where, f'sudo chmod -R g+rxw {dst}')

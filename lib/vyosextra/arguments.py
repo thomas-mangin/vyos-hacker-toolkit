@@ -59,9 +59,8 @@ def _server(parser):
 def _package(parser):
 	parser.add_argument(
 		'-p', '--packages', type=str, nargs='*',
-		choices=['vyos-1x', 'vyatta-op', 'vyatta-cfg', 'smoketest'],
 		default=['vyos-1x'],
-		help='what type of package is it')
+		help='what vyos pacakge is considered')
 	parser.add_argument(
 		'-l', '--location', type=str,
 		default='..',
