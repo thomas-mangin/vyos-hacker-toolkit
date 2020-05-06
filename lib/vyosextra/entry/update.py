@@ -35,7 +35,8 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    control.copy(arg.router, arg.package, arg.location)
+    for package in arg.packages:
+        control.copy(arg.router, package, arg.location)
     log.completed('router updated')
 
 
