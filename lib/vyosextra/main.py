@@ -9,7 +9,7 @@ from vyosextra import log
 from vyosextra.entry import register
 
 
-def make_sys(extract=0, help=True):
+def make_sys(extract=0):
     prog = sys.argv[0]
     cmd = sys.argv[1]
     sys.argv = sys.argv[1:]
@@ -21,9 +21,6 @@ def make_sys(extract=0, help=True):
         extracted = []
 
     sys.argv = [f'{prog} {cmd}'] + sys.argv[1:]
-
-    if help and len(sys.argv) == 1:
-        sys.argv.append('-h')
 
     return extracted
 
@@ -66,16 +63,11 @@ def main():
         parser.print_help()
         return
 
-    helping = {
-        'build': False,
-        'download': False,
-    }
-
     if arg.command not in choices:
         parser.print_help()
         return
 
-    make_sys(help=helping.get(arg.command, True))
+    make_sys()
     register.call(arg.command)
 
 
