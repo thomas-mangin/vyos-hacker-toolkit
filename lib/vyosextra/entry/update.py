@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import os
 import sys
 
 from vyosextra import log
@@ -17,7 +18,7 @@ class Control(control.Control):
             for src, dst in self.move:
                 self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
                 self.ssh(where, f'sudo chmod -R g+rxw {dst}')
-                self.scp(where, src, dst)
+                self.scp(where, os.path.join(repo, src), dst)
 
 
 def main():

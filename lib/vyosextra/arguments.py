@@ -72,7 +72,7 @@ def _package(parser):
     parser.add_argument(
         '-l', '--location', type=str,
         default='..',
-        help='where the repository is')
+        help='where the branch root is (where vyos repos where cloned)')
 
 
 @register('make')

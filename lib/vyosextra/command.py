@@ -9,8 +9,8 @@ from subprocess import DEVNULL
 from vyosextra import log
 
 
-def _unprefix(s, prefix='Welcome to VyOS'):
-    return '\n'.join(_ for _ in s.split('\n') if _ and _ != prefix)
+def _unprefix(string, prefix='Welcome to VyOS'):
+    return '\n'.join(_ for _ in string.split('\n') if _ and _ != prefix)
 
 
 def _report(popen, verbose):
@@ -30,12 +30,9 @@ def _report(popen, verbose):
 
     result = {1: '', 2: ''}
 
-    # (1, popen.stdout, sys.stdout, lambda _: _),
-    # (2, popen.stderr, sys.stderr, _unprefix)):
-
     standards = (
         (1, popen.stdout, sys.stdout, lambda _: _),
-        (2, popen.stderr, sys.stderr, lambda _: _),
+        (2, popen.stderr, sys.stderr, _unprefix),
     )
     while popen.poll() is None:
         for fno, pipe, std, formater in standards:
@@ -43,10 +40,9 @@ def _report(popen, verbose):
             if not recv:
                 continue
 
-            short = recv
-            # short = formater(recv)
-            # if not short:
-            #     continue
+            short = formater(recv)
+            if not short:
+                continue
 
             log.answer(short)
             result[fno] += short
