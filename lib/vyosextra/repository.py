@@ -14,7 +14,7 @@ class Repository:
     ]
 
     def __init__(self, folder, verbose=True):
-        self.folder = folder
+        self.folder = os.path.abspath(folder)
         self.verbose = verbose
         try:
             self.pwd = os.path.abspath(os.getcwd())
@@ -38,8 +38,11 @@ class Repository:
         os.chdir(self.pwd)
 
     def package(self, repo):
-        with open(os.path.join('debian', 'changelog')) as f:
-            line = f.readline().strip()
+        try:
+            with open(os.path.join('debian', 'changelog')) as f:
+                line = f.readline().strip()
+        except FileNotFoundError:
+            log.failed(f'Can not find a debian/changelog folder in "{self.folder}"')
         found = re.match(r'[^(]+\((.*)\).*', line)
         if found is None:
             return ''
