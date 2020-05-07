@@ -23,12 +23,12 @@ class Control(control.Control):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
 
-        with Repository(os.path.join(folder, vyos_repo)) as debian:
+        with Repository(os.path.join(folder, vyos_repo), verbose=self.verbose) as debian:
             package = debian.package(vyos_repo)
             if not package:
-                log.failed(f'could not find {vyos_repo} package version')
+                log.failed(f'could not find {vyos_repo} package version', verbose=self.verbose)
             elif not self.dry:
-                log.report(f'building package {package}')
+                log.note(f'building package {package}')
 
             self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
             self.ssh(where, f'rm {build_repo}/{location}/{package}', exitonfail=False)
@@ -41,12 +41,12 @@ class Control(control.Control):
     def install(self, server, router, location, vyos_repo, folder):
         build_repo = config.get(server, 'repo')
 
-        with Repository(os.path.join(folder, vyos_repo)) as debian:
+        with Repository(os.path.join(folder, vyos_repo), verbose=self.verbose) as debian:
             package = debian.package(vyos_repo)
             if not package:
                 log.failed(f'could not find {vyos_repo} package name')
             if not self.dry:
-                log.report(f'installing {package}')
+                log.note(f'installing {package}')
 
         self.chain(
             config.ssh(server, f'cat {build_repo}/{location}/{package}'),

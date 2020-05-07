@@ -52,10 +52,10 @@ def _report(popen, verbose):
     return result.values()
 
 
-def _check(code, exitonfail=True):
+def _check(code, exitonfail=True, verbose=True):
     if code and exitonfail:
         log.answer(f'returned code {code}')
-        log.failed('could not complete action requested')
+        log.failed('could not complete action requested', verbose=verbose)
 
 
 def chain(cmd1, cmd2, dry, verbose, ignore=''):
@@ -72,11 +72,10 @@ def chain(cmd1, cmd2, dry, verbose, ignore=''):
     # run copopen2.communicate() before popen1.communicate()
     # otherwise there will be no data on the pipe!
     # as popen1.communicate will have taken it.
-    com2 = popen2.communicate()
+    _report(popen2, verbose)
     com1 = popen1.communicate()  # noqa: F841
-    _check(popen1.returncode)
-    _check(popen2.returncode)
-    _report(*com2)
+    _check(popen1.returncode, verbose=verbose)
+    _check(popen2.returncode, verbose=verbose)
 
 
 def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
@@ -92,7 +91,7 @@ def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
     popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
     out, err = _report(popen, verbose)
     code = popen.returncode
-    _check(code, exitonfail)
+    _check(code, exitonfail, verbose=verbose)
     return out, err, code
 
 
@@ -101,5 +100,5 @@ def communicate(self, cmd, dry, verbose, ignore='', hide='', exitonfail=True):
         cmd, dry, verbose,
         ignore=ignore, hide=hide, exitonfail=exitonfail)
 
-    _check(code, exitonfail=exitonfail)
+    _check(code, exitonfail=exitonfail, verbose=verbose)
     return _report(out, err), code

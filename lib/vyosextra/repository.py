@@ -13,12 +13,13 @@ class Repository:
         'vyatta-op', 'vyatta-cfg', 'vyatta-cfg-system'
     ]
 
-    def __init__(self, folder):
+    def __init__(self, folder, verbose=True):
         self.folder = folder
+        self.verbose = verbose
         try:
             self.pwd = os.getcwd()
         except FileNotFoundError:
-            log.failed('the folder we were into was deleted')
+            log.failed('the folder we were into was deleted', verbose=verbose)
 
     def __enter__(self):
         try:
@@ -26,7 +27,10 @@ class Repository:
             return self
         except Exception as e:
             if os.path.basename(self.folder) not in self.official:
-                log.failed(f'could not get into the repository {self.folder}\n{str(e)}')
+                log.failed(
+                    f'could not get into the repository {self.folder}\n{str(e)}',
+                    verbose=self.verbose
+                )
             self.folder = os.path.dirname(self.folder.rstrip('/'))
             return self.__enter__()
 

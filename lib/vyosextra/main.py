@@ -26,17 +26,20 @@ def make_sys(extract=0):
 
 
 def main():
-    if os.environ.get('VYOSEXTRA_DEBUG', None) is not None:
-        def intercept(dtype, value, trace):
-            try:
-                log.failed('report:')
-            except Exception:
-                pass
-            import traceback
-            traceback.print_exception(dtype, value, trace)
+    def intercept(dtype, value, trace):
+        try:
+            log.report('\nFailure report:\n---------------\n')
+        except Exception:
+            pass
+
+        import traceback
+        traceback.print_exception(dtype, value, trace)
+
+        if os.environ.get('VYOSEXTRA_DEBUG', None) is not None:
             import pdb
             pdb.pm()
-        sys.excepthook = intercept
+
+    sys.excepthook = intercept
 
     choices = register.registered()
     choices.sort()

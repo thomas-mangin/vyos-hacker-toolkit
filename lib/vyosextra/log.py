@@ -13,8 +13,14 @@ def timed(s):
     return f'{_now()} {s}'
 
 
-def failed(s='failure'):
-    print(timed(s))
+def failed(string, verbose=True):
+    print(timed(string))
+    if not verbose:
+        report()
+    sys.exit(1)
+
+
+def report():
     special = []
 
     for c, t, w, s in _records:
@@ -33,8 +39,6 @@ def failed(s='failure'):
             print(s)
         print()
 
-    sys.exit(1)
-
 
 def _record(s, w='<', counter=[0]):
     s = s.strip()
@@ -47,7 +51,7 @@ def _record(s, w='<', counter=[0]):
     return f'{s}\n'
 
 
-def report(s):
+def note(s):
     return _record(s, '=')
 
 

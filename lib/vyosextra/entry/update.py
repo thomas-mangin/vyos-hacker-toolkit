@@ -14,7 +14,7 @@ from vyosextra.config import config
 
 class Control(control.Control):
     def copy(self, where, repo, folder):
-        with Repository(folder):
+        with Repository(folder, verbose=self.verbose):
             for src, dst in self.move:
                 self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
                 self.ssh(where, f'sudo chmod -R g+rxw {dst}')
