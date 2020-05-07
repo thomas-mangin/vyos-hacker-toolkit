@@ -77,6 +77,10 @@ def main(target=''):
 
     control.update_build(arg.server)
 
+    if target == 'test':
+        control.make(arg.server, 'test')
+        return
+
     done = False
     for package in arg.packages:
         done = control.build(arg.server, location, package, arg.location)
