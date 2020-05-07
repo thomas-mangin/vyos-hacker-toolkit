@@ -17,7 +17,7 @@ class Repository:
         self.folder = folder
         self.verbose = verbose
         try:
-            self.pwd = os.getcwd()
+            self.pwd = os.path.abspath(os.getcwd())
         except FileNotFoundError:
             log.failed('the folder we were into was deleted', verbose=verbose)
 
