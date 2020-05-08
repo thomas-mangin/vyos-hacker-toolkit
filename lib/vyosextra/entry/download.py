@@ -76,7 +76,7 @@ def fetch(target='', show=False):
         elapsed = str(datetime.timedelta(seconds=duration)).split('.')[0]
         progress = int(count * block_size)
         speed = int(progress / (1024 * (int(duration) + 1)))
-        percent = min(int(count*block_size*100/total_size), 100)
+        percent = min(int(count * block_size * 100 / total_size), 100)
         progress_mb = progress / (1024 * 1024)
         report = ''
         f'   {image} {percent:>3}%,'
@@ -105,10 +105,7 @@ def fetch(target='', show=False):
 
 def main():
     'download latest VyOS rolling image'
-    arg = arguments.setup(
-        __doc__,
-        ['isofile', 'presentation']
-    )
+    arg = arguments.setup(__doc__, ['isofile', 'presentation'])
     code = fetch(arg.file)
     return code
 

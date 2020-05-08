@@ -18,6 +18,7 @@ class Registerer(object):
         def _register(function):
             self._register[name] = function
             return function
+
         return _register
 
     def __call__(self, name=None, function=None):

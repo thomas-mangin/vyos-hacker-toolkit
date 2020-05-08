@@ -19,16 +19,15 @@ class Control(object):
     def chain(self, cmd1, cmd2, **kargs):
         return command.chain(cmd1, cmd2, self.dry, self.verbose, **kargs)
 
-    def ssh(self, where, cmd,
-            ignore='', extra='', hide='', exitonfail=True, quote=True):
+    def ssh(self, where, cmd, ignore='', extra='', hide='', exitonfail=True, quote=True):
         return command.run(
             config.ssh(where, cmd, extra=extra, quote=quote),
-            self.dry, self.verbose,
-            ignore=ignore, hide=hide, exitonfail=exitonfail
+            self.dry,
+            self.verbose,
+            ignore=ignore,
+            hide=hide,
+            exitonfail=exitonfail,
         )
 
     def scp(self, where, src, dst):
-        return command.run(
-            config.scp(where, src, dst),
-            self.dry, self.verbose
-        )
+        return command.run(config.scp(where, src, dst), self.dry, self.verbose)

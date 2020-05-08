@@ -14,10 +14,7 @@ from vyosextra.config import config
 class Control(control.Control):
     def update_build(self, where):
         build_repo = config.get(where, 'repo')
-        self.ssh(where,
-                 f'cd {build_repo} && '
-                 f'git pull',
-                 'Already up to date.')
+        self.ssh(where, f'cd {build_repo} && ' f'git pull', 'Already up to date.')
 
     def build(self, where, location, vyos_repo, folder):
         build_repo = config.get(where, 'repo')
@@ -32,9 +29,7 @@ class Control(control.Control):
 
             self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
             self.ssh(where, f'rm {build_repo}/{location}/{package}', exitonfail=False)
-            self.ssh(where, config.docker(
-                where,
-                f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+            self.ssh(where, config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
         return True
 
@@ -48,20 +43,14 @@ class Control(control.Control):
             if not self.dry:
                 log.note(f'installing {package}')
 
-        self.chain(
-            config.ssh(server, f'cat {build_repo}/{location}/{package}'),
-            config.ssh(router, f'cat - > {package}')
-        )
+        self.chain(config.ssh(server, f'cat {build_repo}/{location}/{package}'), config.ssh(router, f'cat - > {package}'))
         self.ssh(router, f'sudo dpkg -i --force-all {package}')
         self.ssh(router, f'rm {package}')
 
 
 def main():
     'build and install a vyos debian package'
-    arg = arguments.setup(
-        __doc__,
-        ['server', 'router', 'package', 'presentation']
-    )
+    arg = arguments.setup(__doc__, ['server', 'router', 'package', 'presentation'])
     control = Control(arg.dry, arg.quiet)
 
     if not config.exists(arg.server):

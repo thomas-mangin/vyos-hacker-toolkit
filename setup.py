@@ -19,9 +19,7 @@ data = os.path.abspath(os.path.join(here, 'data'))
 generate(data)
 url = 'https://github.com/thomas-mangin/vyos-extra/archive/%s.tar.gz' % VERSION
 
-setuptools.setup(
-    download_url=url,
-)
+setuptools.setup(download_url=url,)
 
 os.remove(location())
 

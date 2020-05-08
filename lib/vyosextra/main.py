@@ -33,10 +33,12 @@ def main():
             pass
 
         import traceback
+
         traceback.print_exception(dtype, value, trace)
 
         if os.environ.get('VYOSEXTRA_DEBUG', None) is not None:
             import pdb
+
             pdb.pm()
 
     sys.excepthook = intercept
@@ -49,16 +51,10 @@ def main():
         description='vyos extra, the developer tool',
         add_help=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f'command options:\n{epilog}')
-    parser.add_argument(
-        '-h', '--help',
-        help='show this help message and exit',
-        action='store_true')
-    parser.add_argument(
-        'command',
-        help='command to run',
-        nargs='?',
-        choices=choices)
+        epilog=f'command options:\n{epilog}',
+    )
+    parser.add_argument('-h', '--help', help='show this help message and exit', action='store_true')
+    parser.add_argument('command', help='command to run', nargs='?', choices=choices)
 
     arg, _ = parser.parse_known_args()
 

@@ -26,10 +26,7 @@ class Control(control.Control):
             return
 
         data = ''.join(lines).format(user='admin', password=password)
-        self.chain(
-            config.printf(data),
-            config.ssh(where, f'cat - > {build_repo}/{location}')
-        )
+        self.chain(config.printf(data), config.ssh(where, f'cat - > {build_repo}/{location}'))
 
     def configure(self, where, location, extra, name):
         email = config.get('global', 'email')
@@ -56,10 +53,7 @@ def main(target=''):
     if not target:
         options = ['target'] + options
 
-    arg = arguments.setup(
-        __doc__,
-        options
-    )
+    arg = arguments.setup(__doc__, options)
 
     if not target:
         target = arg.target

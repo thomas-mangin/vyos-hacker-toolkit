@@ -46,7 +46,7 @@ def _record(s, w='<', counter=[0]):
         return s
     n = _now()
     c = counter.pop()
-    counter.append(c+1)
+    counter.append(c + 1)
     _records.append((c, n, w, s))
     return f'{s}\n'
 

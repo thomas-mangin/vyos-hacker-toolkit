@@ -36,12 +36,8 @@ class Control(control.Control):
         if not show:
             web(location, image, local)
 
-        self.ssh(where,
-                 f"printf 'yes\n\nyes\nyes\nyes\n' | "
-                 f"sudo /opt/vyatta/sbin/install-image {url}",
-                 extra=extra)
-        self.ssh(where, 'printf 1 | '
-                 '/opt/vyatta/bin/vyatta-boot-image.pl --select')
+        self.ssh(where, f"printf 'yes\n\nyes\nyes\nyes\n' | " f"sudo /opt/vyatta/sbin/install-image {url}", extra=extra)
+        self.ssh(where, 'printf 1 | ' '/opt/vyatta/bin/vyatta-boot-image.pl --select')
 
     def reboot(self, where):
         # should find a way to check if the image changed
@@ -72,11 +68,7 @@ def start_server(path, file, port):
 
 
 def web(location, name, port):
-    daemon = Thread(
-        name='serve VyOS',
-        target=start_server,
-        args=(os.path.dirname(location), name, port)
-    )
+    daemon = Thread(name='serve VyOS', target=start_server, args=(os.path.dirname(location), name, port))
 
     daemon.setDaemon(True)
     daemon.start()
@@ -84,10 +76,7 @@ def web(location, name, port):
 
 def main():
     'upgrade router to latest VyOS image'
-    arg = arguments.setup(
-        __doc__,
-        ['router', 'upgrade', 'presentation']
-    )
+    arg = arguments.setup(__doc__, ['router', 'upgrade', 'presentation'])
     control = Control(arg.dry, arg.quiet)
 
     if not config.exists(arg.router):

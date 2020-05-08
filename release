@@ -35,6 +35,7 @@ def remove_cache():
     for name in glob.glob('./lib/*/*/*.pyc'):
         os.remove(name)
 
+
 def release(target, debug):
     here = os.path.dirname(os.path.realpath(__file__))
     folder = os.path.abspath(os.path.join(here, 'data'))
@@ -46,11 +47,7 @@ def release(target, debug):
     python = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3' if debug else '/usr/bin/env python3'
 
     zipapp.create_archive(
-        source='lib',
-        target=target,
-        interpreter=python,
-        main='vyosextra.main:main',
-        compressed=False if debug else True,
+        source='lib', target=target, interpreter=python, main='vyosextra.main:main', compressed=False if debug else True,
     )
 
     os.remove(location())

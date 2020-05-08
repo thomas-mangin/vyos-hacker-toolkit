@@ -23,8 +23,7 @@ class Control(control.Control):
         self.ssh(where, f'sudo chmod g+rwx /etc/apt/sources.list.d')
 
         self.chain(
-            config.printf(config.read('source.list')),
-            config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
+            config.printf(config.read('source.list')), config.ssh(where, 'cat - > /etc/apt/sources.list.d/vyos-extra.list')
         )
 
         packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
@@ -46,8 +45,7 @@ class Control(control.Control):
         self.ssh(where, f'touch /config/vyos.log.debug')
 
     def _sudo(self, where, password, command, exitonfail=False):
-        _, _, r = self.ssh(where, f'echo {password} | sudo -S dpkg {command}',
-                           hide=password, exitonfail=exitonfail)
+        _, _, r = self.ssh(where, f'echo {password} | sudo -S dpkg {command}', hide=password, exitonfail=exitonfail)
         return r
 
     def setup_build(self, where):
@@ -113,21 +111,18 @@ class Control(control.Control):
         print('installing vyos-build')
         print('----')
         self.ssh(where, f'mkdir -p {repo_folder}')
-        self.ssh(where,
-                 f"cd {repo_folder} && "
-                 f"test '!' -d vyos-built && "
-                 f"git clone https://github.com/vyos/vyos-build.git {repo_name}",
-                 exitonfail=False)
+        self.ssh(
+            where,
+            f"cd {repo_folder} && " f"test '!' -d vyos-built && " f"git clone https://github.com/vyos/vyos-build.git {repo_name}",
+            exitonfail=False,
+        )
         self.ssh(where, f'cd {repo} && git pull')
         # self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
 
 
 def main():
     'set a machine for this tool'
-    arg = arguments.setup(
-        __doc__,
-        ['machine', 'presentation']
-    )
+    arg = arguments.setup(__doc__, ['machine', 'presentation'])
     control = Control(arg.dry, arg.quiet)
 
     if not config.exists(arg.machine):

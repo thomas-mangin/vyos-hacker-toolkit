@@ -67,8 +67,7 @@ def chain(cmd1, cmd2, dry, verbose, ignore=''):
         return ''
 
     popen1 = Popen(cmd1, stdout=PIPE, stderr=DEVNULL, shell=True)
-    popen2 = Popen(cmd2, stdin=popen1.stdout,
-                   stdout=PIPE, stderr=PIPE, shell=True)
+    popen2 = Popen(cmd2, stdin=popen1.stdout, stdout=PIPE, stderr=PIPE, shell=True)
     # run copopen2.communicate() before popen1.communicate()
     # otherwise there will be no data on the pipe!
     # as popen1.communicate will have taken it.
@@ -96,9 +95,7 @@ def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
 
 
 def communicate(self, cmd, dry, verbose, ignore='', hide='', exitonfail=True):
-    out, err, code = run(
-        cmd, dry, verbose,
-        ignore=ignore, hide=hide, exitonfail=exitonfail)
+    out, err, code = run(cmd, dry, verbose, ignore=ignore, hide=hide, exitonfail=exitonfail)
 
     _check(code, exitonfail=exitonfail, verbose=verbose)
     return _report(out, err), code

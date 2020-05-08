@@ -40,7 +40,7 @@ class _Config(object):
         fname = join(*path)
         for home in ('~/', '$HOME/'):
             if fname.startswith(home):
-                return abspath(join(os.getenv("HOME"), fname[len(home):]))
+                return abspath(join(os.getenv("HOME"), fname[len(home) :]))
         return abspath(fname).replace(' ', '\\ ')
 
     __instance = None
@@ -86,8 +86,7 @@ class _Config(object):
             self.absolute_path(f'~/.config/{name}'),
             f'/etc/{folder_name}',
             f'/etc/{name}',
-            f'/usr/local/etc/{folder_name}'
-            f'/usr/local/etc/{name}'
+            f'/usr/local/etc/{folder_name}' f'/usr/local/etc/{name}',
         ]
         if exists(join(self.root, 'lib/vyosextra')):
             etcs = [self.absolute_path(self.root, 'etc', folder_name)] + etcs
