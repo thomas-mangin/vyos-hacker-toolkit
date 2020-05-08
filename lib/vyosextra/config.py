@@ -206,7 +206,11 @@ class _Config(object):
         if host in ('localhost', '127.0.0.1', '::1') and port == 22:
             return f'rsync -avh --delete {src} {dest}'
         dest = dest.replace('$', '\$')  # noqa: W605
-        return f'rsync -avh --delete -e "ssh -p {port}" {src} {user}@{host}:{dest}'
+
+        file = self._values[where]['file']
+        if file:
+            file = f' -i {file}'
+        return f'rsync -avh --delete -e "ssh -p {port}{file}" {src} {user}@{host}:{dest}'
 
 
 # The global configuration
