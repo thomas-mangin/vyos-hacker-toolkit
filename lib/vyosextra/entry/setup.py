@@ -84,8 +84,8 @@ class Control(control.Control):
         print('----')
         print('setting up sudo ...')
         print('----')
-        if self._sudo(where, 'apt-get install sudo', exitonfail=False):
-            self.u_sudo(where, password, 'adduser ${USER} sudo')
+        if self._sudo(where, password, 'apt-get install sudo', exitonfail=False):
+            self._sudo(where, password, 'adduser ${USER} sudo')
         if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
             sed = "sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
             self._sudo(where, password, sed)
