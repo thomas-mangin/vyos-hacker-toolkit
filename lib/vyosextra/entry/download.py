@@ -78,11 +78,12 @@ def fetch(target='', show=False):
         speed = int(progress / (1024 * (int(duration) + 1)))
         percent = min(int(count * block_size * 100 / total_size), 100)
         progress_mb = progress / (1024 * 1024)
-        report = ''
-        f'   {image} {percent:>3}%,'
-        f' {progress_mb:3.2f} MB,'
-        f' {speed:>5} KB/s,'
-        f' {elapsed} seconds passed \r'
+        # fmt: off
+        report = (f'   {image} {percent:>3}%,'
+                  f' {progress_mb:3.2f} MB,'
+                  f' {speed:>5} KB/s,'
+                  f' {elapsed} seconds passed \r')
+        # fmt: on
         sys.stdout.write(report)
         sys.stdout.flush()
 
