@@ -88,15 +88,8 @@ def main():
 
     location = fetch(arg.file)
 
-    if arg.remote and not arg.local:
-        local = arg.remote
-        remote = arg.remote
-    else:
-        local = arg.local
-        remote = arg.remote
-
-    time.sleep(0.1)
-    control.upgrade(arg.router, arg.bind, location, local, remote, arg.dry)
+    time.sleep(0.5)
+    control.upgrade(arg.router, arg.bind, location, arg.local, arg.remote, arg.dry)
     if arg.reboot:
         control.reboot(arg.router)
 
