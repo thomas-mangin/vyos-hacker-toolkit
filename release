@@ -37,19 +37,24 @@ def remove_cache():
 
 
 def release(target, debug):
+    params = {
+        'source': 'lib',
+        'target': target,
+        'interpreter': '/usr/bin/env python3',
+        'main': 'vyosextra.main:main',
+    }
+
+    if debug:
+        params['interpreter'] = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3'
+    if sys.version_info.minor >= 7:
+        params['compressed'] = not debug
+
     here = os.path.dirname(os.path.realpath(__file__))
-    folder = os.path.abspath(os.path.join(here, 'data'))
+    data = os.path.abspath(os.path.join(here, 'data'))
 
-    generate(folder)
-
+    generate(data)
     remove_cache()
-
-    python = '/usr/bin/env VYOSEXTRA_DEBUG=1 python3' if debug else '/usr/bin/env python3'
-
-    zipapp.create_archive(
-        source='lib', target=target, interpreter=python, main='vyosextra.main:main', compressed=False if debug else True,
-    )
-
+    zipapp.create_archive(**params)
     os.remove(location())
 
 
@@ -58,5 +63,8 @@ if __name__ == '__main__':
     parser.add_argument('target', help='name of the binary to create', default='./vyos')
     parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
     arg = parser.parse_args()
+
+    if sys.version_info.minor < 5:
+        sys.exit('zipapp is only available with python 3.5+')
 
     release(arg.target, arg.debug)
