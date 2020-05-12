@@ -82,10 +82,13 @@ def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
     secret = command.replace(hide, '********') if hide else command
     log.command(secret)
 
-    if dry or verbose:
-        print(secret)
     if dry:
-        return '', '', 0
+        print(secret)
+        if exitonfail:
+            return '', '', 0
+        return '', '', 1
+    elif verbose:
+        print(secret)
 
     popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
     out, err = _report(popen, verbose)
