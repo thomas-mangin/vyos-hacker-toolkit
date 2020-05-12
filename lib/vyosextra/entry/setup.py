@@ -85,7 +85,7 @@ class Control(control.Control):
         if self._sudo(where, password, 'apt-get install sudo', exitonfail=False):
             self._sudo(where, password, 'adduser ${USER} sudo')
         if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
-            sed = "sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
+            sed = f"sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
             self._sudo(where, password, sed)
         else:
             print('sudo is already setup')
@@ -106,7 +106,7 @@ class Control(control.Control):
         print('installing VyOS docker build image')
         print('----')
         self.ssh(where, 'sudo systemctl restart docker.service')
-        self.ssh(where, 'docker pull vyos/vyos-build:current')
+        self.ssh(where, 'docker pull vyos/vyos-build:current', su=True)
 
         print('----')
         print('installing vyos-build')
@@ -119,6 +119,10 @@ class Control(control.Control):
         )
         self.ssh(where, f'cd {repo} && git pull')
         # self.ssh(where, 'cd ~/vyos/vyos-build && docker build -t vyos-builder docker')
+
+        print('----')
+        print("Please logout and log back in if you have installed locally")
+
 
 
 def main():

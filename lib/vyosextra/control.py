@@ -19,9 +19,9 @@ class Control(object):
     def chain(self, cmd1, cmd2, **kargs):
         return command.chain(cmd1, cmd2, self.dry, self.verbose, **kargs)
 
-    def ssh(self, where, cmd, ignore='', extra='', hide='', exitonfail=True, quote=True):
+    def ssh(self, where, cmd, ignore='', extra='', hide='', su=False, exitonfail=True, quote=True):
         return command.run(
-            config.ssh(where, cmd, extra=extra, quote=quote),
+            config.ssh(where, cmd, extra=extra, su=su, quote=quote),
             self.dry,
             self.verbose,
             ignore=ignore,

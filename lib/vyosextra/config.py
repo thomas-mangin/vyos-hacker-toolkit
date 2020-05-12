@@ -164,7 +164,7 @@ class _Config(object):
     def printf(self, string):
         return 'printf "' + string.replace('\n', '\\n').replace('"', '\"') + '"'
 
-    def ssh(self, where, command='', extra='', quote=True):
+    def ssh(self, where, command='', extra='', su=False, quote=True):
         host = self._values[where]['host']
         user = self._values[where]['user']
         port = self._values[where]['port']
@@ -176,6 +176,8 @@ class _Config(object):
 
         # optimisation in case we installed / are installing locally
         if role == 'build' and host in ('localhost', '127.0.0.1', '::1') and port == 22:
+            if su:
+                return f'sudo su - -c "{command}"'
             return command
 
         command = command.replace('$', '\$')  # noqa: W605
