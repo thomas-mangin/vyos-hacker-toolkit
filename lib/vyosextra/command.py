@@ -85,7 +85,7 @@ def run(cmd, dry, verbose, ignore='', hide='', exitonfail=True):
     if dry or verbose:
         print(secret)
     if dry:
-        return ''
+        return '', '', 0
 
     popen = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
     out, err = _report(popen, verbose)
