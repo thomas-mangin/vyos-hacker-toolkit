@@ -45,7 +45,7 @@ class Control(control.Control):
         self.ssh(where, f'touch /config/vyos.log.debug')
 
     def _sudo(self, where, password, command, exitonfail=False):
-        _, _, r = self.ssh(where, f'echo {password} | sudo -S dpkg {command}', hide=password, exitonfail=exitonfail)
+        _, _, r = self.ssh(where, f'echo {password} | sudo -S {command}', hide=password, exitonfail=exitonfail)
         return r
 
     def setup_build(self, where):
