@@ -12,13 +12,20 @@ from vyosextra.config import config
 
 
 class Control(control.Control):
+    location = 'compiled'
+
+    def cleanup(self, where):
+        build_repo = config.get(where, 'repo')
+
+        self.ssh("build", f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
+
     def update_build(self, where):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'cd {build_repo} && ' f'git pull', 'Already up to date.')
 
-    def build(self, where, location, vyos_repo, folder):
+    def build(self, where, vyos_repo, folder):
         build_repo = config.get(where, 'repo')
-        self.ssh(where, f'mkdir -p {build_repo}/{location}/{vyos_repo}')
+        self.ssh(where, f'mkdir -p {build_repo}/{self.location}/{vyos_repo}')
 
         with Repository(os.path.join(folder, vyos_repo), verbose=self.verbose) as debian:
             package = debian.package(vyos_repo)
@@ -27,9 +34,9 @@ class Control(control.Control):
             elif not self.dry:
                 log.note(f'building package {package}')
 
-            self.run(config.rsync(where, '.', f'{build_repo}/{location}/{vyos_repo}'))
-            self.ssh(where, f'rm {build_repo}/{location}/{package}', exitonfail=False)
-            self.ssh(where, config.docker(where, f'{location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+            self.run(config.rsync(where, '.', f'{build_repo}/{self.location}/{vyos_repo}'))
+            self.ssh(where, f'rm {build_repo}/{self.location}/{package}', exitonfail=False)
+            self.ssh(where, config.docker(where, f'{self.location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
         return True
 
@@ -67,12 +74,12 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    location = 'compiled'
-
     control.update_build(arg.server)
+    control.cleanup(arg.server)
+
     for package in arg.packages:
-        control.build(arg.server, location, package, arg.location)
-        control.install(arg.server, arg.router, location, package, arg.location)
+        control.build(arg.server, package, arg.location)
+        control.install(arg.server, arg.router, package, arg.location)
     log.completed('package(s) installed')
 
 

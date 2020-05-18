@@ -12,6 +12,8 @@ from vyosextra.entry import build as control
 
 
 class Control(control.Control):
+    location = 'packages'
+
     def make(self, where, target):
         self.ssh(where, config.docker(where, '', f'sudo make {target}'))
 
@@ -23,12 +25,13 @@ class Control(control.Control):
 
         if not password:
             self.ssh("build", f"rm {build_repo}/{location}", exitonfail=False)
+            self.ssh("build", f"touch {build_repo}/{location}")
             return
 
         data = ''.join(lines).format(user='admin', password=password)
         self.chain(config.printf(data), config.ssh(where, f'cat - > {build_repo}/{location}'))
 
-    def configure(self, where, location, extra, name):
+    def configure(self, where, extra, name):
         email = config.get('global', 'email')
 
         date = datetime.now().strftime('%Y%m%d%H%M')
@@ -67,9 +70,8 @@ def main(target=''):
     if role != 'build':
         sys.exit(f'target "{arg.server}" is not a build machine')
 
-    location = 'packages'
-
     control.update_build(arg.server)
+    control.cleanup(arg.server)
 
     if target == 'test':
         control.make(arg.server, 'test')
@@ -77,10 +79,10 @@ def main(target=''):
 
     done = False
     for package in arg.packages:
-        done = control.build(arg.server, location, package, arg.location)
+        done = control.build(arg.server, package, arg.location)
 
     if done or arg.force:
-        control.configure(arg.server, location, arg.extra, arg.name)
+        control.configure(arg.server, arg.extra, arg.name)
         control.backdoor(arg.server, arg.backdoor)
         control.make(arg.server, target)
 
