@@ -25,7 +25,7 @@ def make_sys(extract=0):
     return extracted
 
 
-def main():
+def _main():
     def intercept(dtype, value, trace):
         try:
             log.report('\nFailure report:\n---------------\n')
@@ -68,6 +68,13 @@ def main():
 
     make_sys()
     register.call(arg.command)
+
+
+def main():
+    try:
+        _main()
+    except KeyboardInterrupt:
+        sys.exit('\r^C received - exiting')
 
 
 if __name__ == '__main__':
