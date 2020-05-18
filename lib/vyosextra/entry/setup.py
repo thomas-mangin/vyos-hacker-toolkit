@@ -52,6 +52,10 @@ class Control(control.Control):
         packages = 'qemu-kvm libvirt-clients libvirt-daemon-system'
         packages += ' git rsync docker.io docker-compose'
 
+        # for crux
+        packages += ' apt-transport-https ca-certificates curl'
+        packages += ' gnupg2 software-properties-common'
+
         repo = config.get(where, 'repo')
         repo_name = os.path.basename(repo)
         repo_folder = os.path.dirname(repo)
@@ -93,6 +97,22 @@ class Control(control.Control):
         print('----')
         print('installing packages required for building VyOS')
         print('----')
+
+        print('----')
+        print('adding keys for debian')
+        print('----')
+        # crux
+        self._sudo(where, 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -')
+        # crux
+        self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7EA0A9C3F273FCD8')
+
+        # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9D6D8F6BC857C906')
+        # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E08A149DE57BFBE')
+        # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7638D0442B90D010')
+        # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 32C249BD0DF04B5C')
+
+        # crux
+        self.ssh(where, 'sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"')
         self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')  # noqa: E501
 
         print('----')
@@ -123,7 +143,6 @@ class Control(control.Control):
 
         print('----')
         print("Please logout and log back in if you have installed locally")
-
 
 
 def main():

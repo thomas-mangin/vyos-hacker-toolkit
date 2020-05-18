@@ -15,7 +15,7 @@ class Control(control.Control):
     location = 'packages'
 
     def make(self, where, release, target):
-        self.ssh(where, config.docker(where, release, '', f'sudo make {target}'))
+        self.ssh(where, config.docker(where, release, '', f'sudo make {target}'), extra='-t')
 
     def backdoor(self, where, password):
         build_repo = config.get(where, 'repo')
