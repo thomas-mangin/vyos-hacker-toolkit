@@ -68,7 +68,7 @@ def _make(parser):
     parser.add_argument('-e', '--extra', type=str, help='extra debian package(s) to install')
     parser.add_argument('-n', '--name', type=str, help='name/tag to add to the build version')
     parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
-    parser.add_argument('-r', '--release', type=str, help='make without custom package')
+    parser.add_argument('-r', '--release', type=str, help='make without custom package', choices=['current', 'crux'])
     parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
 
 

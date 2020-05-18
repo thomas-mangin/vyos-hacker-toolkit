@@ -196,10 +196,10 @@ class _Config(object):
         dst = dst.replace('$', '\$')  # noqa: W605
         return f'scp -r -P {port} {src} {user}@{host}:{dst}'
 
-    def docker(self, where, rwd, command):
+    def docker(self, where, release, rwd, command):
         # rwd: relative working directory
         repo = self._values[where]['repo']
-        return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:current {command}'  # noqa: E501
+        return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:{release} {command}'  # noqa: E501
 
     def rsync(self, where, src, dest):
         host = self._values[where]['host']

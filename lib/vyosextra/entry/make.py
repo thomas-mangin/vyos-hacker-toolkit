@@ -14,8 +14,8 @@ from vyosextra.entry import build as control
 class Control(control.Control):
     location = 'packages'
 
-    def make(self, where, target):
-        self.ssh(where, config.docker(where, '', f'sudo make {target}'))
+    def make(self, where, release, target):
+        self.ssh(where, config.docker(where, release, '', f'sudo make {target}'))
 
     def backdoor(self, where, password):
         build_repo = config.get(where, 'repo')
@@ -31,12 +31,14 @@ class Control(control.Control):
         data = ''.join(lines).format(user='admin', password=password)
         self.chain(config.printf(data), config.ssh(where, f'cat - > {build_repo}/{location}'))
 
-    def configure(self, where, extra, name, release):
+    def configure(self, where, release, extra, name):
         email = config.get('global', 'email')
 
         date = datetime.now().strftime('%Y%m%d%H%M')
-        name = name if name else 'rolling'
-        version = f'1.3-{name}-{date}'
+        if name:
+            version = f'{release}-{name}-{date}'
+        else:
+            version = f'{release}-{date}'
 
         configure = f"--build-by {email}"
         configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
@@ -45,8 +47,8 @@ class Control(control.Control):
         if extra:
             configure += f"  --custom-package '{extra}'"
 
-        self.ssh(where, config.docker(where, '', f'git checkout {release}'))
-        self.ssh(where, config.docker(where, '', f'./configure {configure}'))
+        self.ssh(where, config.docker(where, release, '', f'git checkout {release}'))
+        self.ssh(where, config.docker(where, release, '', f'./configure {configure}'))
 
 
 def main(target=''):
@@ -60,6 +62,7 @@ def main(target=''):
 
     if not target:
         target = arg.target
+    release = arg.release or 'current'
 
     control = Control(arg.dry, arg.quiet)
 
@@ -70,11 +73,11 @@ def main(target=''):
     if role != 'build':
         sys.exit(f'target "{arg.server}" is not a build machine')
 
-    control.git(arg.server, 'fetch')
     control.cleanup(arg.server)
+    control.git(arg.server, 'fetch')
 
     if target == 'test':
-        control.make(arg.server, 'test')
+        control.make(arg.server, release, 'test')
         return
 
     done = False
@@ -85,11 +88,11 @@ def main(target=''):
     if done:
         control.backdoor(arg.server, arg.backdoor)
     if done or arg.release:
-        control.configure(arg.server, arg.extra, arg.name, arg.release or 'current')
-        control.make(arg.server, target)
+        control.configure(arg.server, release, arg.extra, arg.name)
+        control.make(arg.server, release, target)
 
     if target == 'iso' and arg.test:
-        control.make(arg.server, 'test')
+        control.make(arg.server, release, 'test')
 
     log.completed('iso built and tested')
 

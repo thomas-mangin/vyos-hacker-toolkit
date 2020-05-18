@@ -19,7 +19,7 @@ class Control(control.Control):
 
         self.ssh("build", f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
 
-    def build(self, where, vyos_repo, folder):
+    def build(self, where, release, vyos_repo, folder):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'mkdir -p {build_repo}/{self.location}/{vyos_repo}')
 
@@ -32,7 +32,7 @@ class Control(control.Control):
 
             self.run(config.rsync(where, '.', f'{build_repo}/{self.location}/{vyos_repo}'))
             self.ssh(where, f'rm {build_repo}/{self.location}/{package}', exitonfail=False)
-            self.ssh(where, config.docker(where, f'{self.location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
+            self.ssh(where, config.docker(where, release, f'{self.location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
         return True
 
@@ -74,7 +74,7 @@ def main():
     control.cleanup(arg.server)
 
     for package in arg.packages:
-        control.build(arg.server, package, arg.location)
+        control.build(arg.server, 'current', package, arg.location)
         control.install(arg.server, arg.router, package, arg.location)
     log.completed('package(s) installed')
 
