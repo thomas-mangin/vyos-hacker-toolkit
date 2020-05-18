@@ -31,3 +31,8 @@ class Control(object):
 
     def scp(self, where, src, dst):
         return command.run(config.scp(where, src, dst), self.dry, self.verbose)
+
+    def git(self, where, action):
+        build_repo = config.get(where, 'repo')
+        self.ssh(where, f'cd {build_repo} && ' f'git {action}', 'Already up to date.')
+

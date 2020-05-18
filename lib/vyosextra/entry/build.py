@@ -19,10 +19,6 @@ class Control(control.Control):
 
         self.ssh("build", f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
 
-    def update_build(self, where):
-        build_repo = config.get(where, 'repo')
-        self.ssh(where, f'cd {build_repo} && ' f'git pull', 'Already up to date.')
-
     def build(self, where, vyos_repo, folder):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'mkdir -p {build_repo}/{self.location}/{vyos_repo}')
@@ -74,7 +70,7 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    control.update_build(arg.server)
+    control.git(arg.server, 'fetch')
     control.cleanup(arg.server)
 
     for package in arg.packages:

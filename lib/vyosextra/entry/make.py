@@ -31,7 +31,7 @@ class Control(control.Control):
         data = ''.join(lines).format(user='admin', password=password)
         self.chain(config.printf(data), config.ssh(where, f'cat - > {build_repo}/{location}'))
 
-    def configure(self, where, extra, name):
+    def configure(self, where, extra, name, release):
         email = config.get('global', 'email')
 
         date = datetime.now().strftime('%Y%m%d%H%M')
@@ -45,7 +45,7 @@ class Control(control.Control):
         if extra:
             configure += f"  --custom-package '{extra}'"
 
-        self.ssh(where, config.docker(where, '', 'pwd'))
+        self.ssh(where, config.docker(where, '', f'git checkout {release}'))
         self.ssh(where, config.docker(where, '', f'./configure {configure}'))
 
 
@@ -70,7 +70,7 @@ def main(target=''):
     if role != 'build':
         sys.exit(f'target "{arg.server}" is not a build machine')
 
-    control.update_build(arg.server)
+    control.git(arg.server, 'fetch')
     control.cleanup(arg.server)
 
     if target == 'test':
@@ -78,12 +78,14 @@ def main(target=''):
         return
 
     done = False
-    for package in arg.packages:
-        done = control.build(arg.server, package, arg.location)
+    if not arg.release:
+        for package in arg.packages:
+            done = control.build(arg.server, package, arg.location)
 
-    if done or arg.force:
-        control.configure(arg.server, arg.extra, arg.name)
+    if done:
         control.backdoor(arg.server, arg.backdoor)
+    if done or arg.release:
+        control.configure(arg.server, arg.extra, arg.name, arg.release or 'current')
         control.make(arg.server, target)
 
     if target == 'iso' and arg.test:
