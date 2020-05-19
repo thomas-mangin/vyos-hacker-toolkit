@@ -23,6 +23,7 @@ It can be done as following:
 git clone git@github.com:thomas-mangin/vyos-extra
 cd vyos-extra
 ./release /usr/local/bin/vyos
+mkdir -p ~/.config/vyos/
 cp ./etc/vyos-extra.conf.sample ~/.config/vyos/extra.conf
 ```
 
@@ -33,7 +34,7 @@ And finally setup your build server (or local machine)
 vyos setup build
 ```
 
-The application can also be installed using `setup.py`, or ran directly from the repository, but until there is a PyPI release, building the zipapp is the recommended way.
+The application can also be installed using python `setup.py`, or ran directly from the repository, but until there is a PyPI release, building the zipapp is the recommended way.
 
 You should setup one build server (normally called build) where the tools will setup a VyOS development environment, and one router where you can test new image / code change, it is possible to have more.
 
@@ -66,6 +67,7 @@ All the tools are available through the `vyos` entry point, the commands are:
 the command `make`, `iso` and `update` will require a working build server.
 
 This can be done by using the the `setup` command for Debian/Ubuntu (only OS supported ATM).
+On first run please add the '--sudo' flag to make sure that sudo is correctly setup.
 
 using `-s/--show` will present you with what the tool is going to do without running any command.
 ```
