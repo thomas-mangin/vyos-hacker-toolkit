@@ -134,6 +134,7 @@ class Control(control.Control):
         print('installing vyos-build')
         print('----')
         self.ssh(where, f'mkdir -p {repo_folder}')
+        self.ssh(where, f'rm -rf {repo_folder}/{repo_name}', exitonfail=False)
         self.ssh(
             where,
             f"cd {repo_folder} && " f"test '!' -d vyos-built && " f"git clone https://github.com/vyos/vyos-build.git {repo_name}",
