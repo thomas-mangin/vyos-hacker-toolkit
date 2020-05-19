@@ -21,7 +21,7 @@ host = 127.0.0.1
 port = 22
 user = vyos
 file = 
-repo = $HOME/vyos/vyos-build
+repo = $HOME/vyos-build
 default = True
 
 [router]
