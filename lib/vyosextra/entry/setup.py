@@ -48,7 +48,7 @@ class Control(control.Control):
         _, _, r = self.ssh(where, f'echo {password} | sudo -S {command}', hide=password, exitonfail=exitonfail)
         return r
 
-    def setup_build(self, where):
+    def setup_build(self, where, with_sudo):
         packages = 'qemu-kvm libvirt-clients libvirt-daemon-system'
         packages += ' git rsync docker.io docker-compose'
 
@@ -65,34 +65,35 @@ class Control(control.Control):
             print('this machine is already setup')
             return
 
-        print('----')
-        print("Please enter the host root password (it is not saved)")
-        print("It is required to setup password-less command via sudo")
-        username = config.get(where, 'user')
-        if self.dry:
-            password = 'your-password'
-        else:
-            password = getpass('password: ')
-            password = f"'{password}'"
+        if with_sudo:
+            print('----')
+            print("Please enter the host root password (it is not saved)")
+            print("It is required to setup password-less command via sudo")
+            username = config.get(where, 'user')
+            if self.dry:
+                password = 'your-password'
+            else:
+                password = getpass('password: ')
+                password = f"'{password}'"
 
-        print('----')
-        print('updating the OS to make sure the packages are on the latest version')
-        print('it may take some time ...')
-        print('----')
-        self._sudo(where, password, 'dpkg --configure -a')
-        self._sudo(where, password, 'apt-get --yes upgrade')
-        self._sudo(where, password, 'apt-get update', exitonfail=False)
+            print('----')
+            print('updating the OS to make sure the packages are on the latest version')
+            print('it may take some time ...')
+            print('----')
+            self._sudo(where, password, 'dpkg --configure -a')
+            self._sudo(where, password, 'apt-get --yes upgrade')
+            self._sudo(where, password, 'apt-get update', exitonfail=False)
 
-        print('----')
-        print('setting up sudo ...')
-        print('----')
-        if self._sudo(where, password, 'apt-get install sudo', exitonfail=False):
-            self._sudo(where, password, 'adduser ${USER} sudo')
-        if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
-            sed = f"sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
-            self._sudo(where, password, sed)
-        else:
-            print('sudo is already setup')
+            print('----')
+            print('setting up sudo ...')
+            print('----')
+            if self._sudo(where, password, 'apt-get install sudo', exitonfail=False):
+                self._sudo(where, password, 'adduser ${USER} sudo')
+            if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
+                sed = f"sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
+                self._sudo(where, password, sed)
+            else:
+                print('sudo is already setup')
 
         print('----')
         print('installing packages required for building VyOS')
@@ -160,7 +161,7 @@ def main():
     if role == 'router':
         control.setup_router(arg.machine)
     elif role == 'build':
-        control.setup_build(arg.machine)
+        control.setup_build(arg.machine, arg.sudo)
     else:
         log.completed('the machine "{arg.machine}" is not correctly setup')
 
