@@ -103,10 +103,10 @@ class Control(control.Control):
         print('adding keys for debian')
         print('----')
         # crux
-        self._sudo(where, 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -')
-        # crux
-        self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7EA0A9C3F273FCD8')
+        self.ssh(where, 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -')
 
+        # crux
+        # self.ssh(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7EA0A9C3F273FCD8')
         # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 9D6D8F6BC857C906')
         # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E08A149DE57BFBE')
         # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7638D0442B90D010')
