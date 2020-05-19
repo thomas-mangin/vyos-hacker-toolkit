@@ -77,23 +77,23 @@ class Control(control.Control):
                 password = f"'{password}'"
 
             print('----')
-            print('updating the OS to make sure the packages are on the latest version')
-            print('it may take some time ...')
-            print('----')
-            self._sudo(where, password, 'dpkg --configure -a')
-            self._sudo(where, password, 'apt-get --yes upgrade')
-            self._sudo(where, password, 'apt-get update', exitonfail=False)
-
-            print('----')
             print('setting up sudo ...')
             print('----')
-            if self._sudo(where, password, 'apt-get install sudo', exitonfail=False):
+            if self._sudo(where, password, 'apt-get install --yes sudo', exitonfail=False):
                 self._sudo(where, password, 'adduser ${USER} sudo')
             if self._sudo(where, password, 'grep NOPASSWD /etc/sudoers', exitonfail=False):
                 sed = f"sed -i '$ a\{username} ALL=(ALL) NOPASSWD: ALL' /etc/sudoers"  # noqa: W605,E501
                 self._sudo(where, password, sed)
             else:
                 print('sudo is already setup')
+
+        print('----')
+        print('updating the OS to make sure the packages are on the latest version')
+        print('it may take some time ...')
+        print('----')
+        self.ssh(where, password, 'sudo dpkg --configure -a')
+        self.ssh(where, password, 'sudo apt-get --yes upgrade')
+        self.ssh(where, password, 'sudo apt-get update', exitonfail=False)
 
         print('----')
         print('installing packages required for building VyOS')
