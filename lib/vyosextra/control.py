@@ -35,4 +35,3 @@ class Control(object):
     def git(self, where, action):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'cd {build_repo} && ' f'git {action}', 'Already up to date.')
-

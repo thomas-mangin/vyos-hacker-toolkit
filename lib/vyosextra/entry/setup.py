@@ -113,7 +113,9 @@ class Control(control.Control):
         # self._sudo(where, 'sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 32C249BD0DF04B5C')
 
         # crux
-        self.ssh(where, 'sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"')
+        self.ssh(
+            where, 'sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"'
+        )
         self.ssh(where, f'sudo apt-get --yes --no-install-recommends install {packages}')  # noqa: E501
 
         print('----')
