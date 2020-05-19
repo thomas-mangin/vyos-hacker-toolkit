@@ -59,7 +59,7 @@ def _server(parser):
 def _package(parser):
     parser.add_argument('-p', '--packages', type=str, nargs='*', default=['vyos-1x'], help='what vyos package is considered')
     parser.add_argument(
-        '-l', '--location', type=str, default='..', help='where the branch root is (where vyos repos where cloned)'
+        '-l', '--location', type=str, default='.', help='where the branch root is (where vyos repos where cloned)'
     )
 
 
