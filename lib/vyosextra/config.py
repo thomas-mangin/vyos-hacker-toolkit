@@ -182,6 +182,7 @@ class _Config(object):
 
         command = command.replace('$', '\$')  # noqa: W605
         if ' ' in command and quote:
+            command = command.replace('"', '\\\\"')
             command = f'"{command}"'
 
         return f'ssh {extra} -p {port} {user}@{host} {command}'
