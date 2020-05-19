@@ -12,7 +12,7 @@ from vyosextra.entry import build as control
 
 
 class Control(control.Control):
-    location = 'packages'
+    location = 'makeiso'  # packages, is used by crux !
 
     def make(self, where, release, target):
         self.ssh(where, config.docker(where, release, '', f'sudo make {target}'), extra='-t')
@@ -24,8 +24,8 @@ class Control(control.Control):
         location = lines.pop(0).lstrip().lstrip('#').strip()
 
         if not password:
-            self.ssh("build", f"rm {build_repo}/{location}", exitonfail=False)
-            self.ssh("build", f"touch {build_repo}/{location}")
+            self.ssh(where, f"rm {build_repo}/{location}", exitonfail=False)
+            self.ssh(where, f"touch {build_repo}/{location}")
             return
 
         data = ''.join(lines).format(user='admin', password=password)
@@ -41,7 +41,7 @@ class Control(control.Control):
             version = f'{release}-{date}'
 
         configure = f"--build-by {email}"
-        configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
+        # configure += f" --debian-mirror http://ftp.de.debian.org/debian/"
         configure += f" --version {version}"
         configure += f" --build-type release"
         if extra:

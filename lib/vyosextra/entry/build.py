@@ -17,7 +17,7 @@ class Control(control.Control):
     def cleanup(self, where):
         build_repo = config.get(where, 'repo')
 
-        self.ssh("build", f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
+        self.ssh(where, f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
 
     def build(self, where, release, vyos_repo, folder):
         build_repo = config.get(where, 'repo')
