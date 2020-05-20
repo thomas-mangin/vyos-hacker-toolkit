@@ -12,7 +12,7 @@ from vyosextra.entry import build as control
 
 
 class Control(control.Control):
-    location = 'makeiso'  # packages, is used by crux !
+    location = 'packages'  # packages, is used by crux !
 
     def make(self, where, release, target):
         self.ssh(where, config.docker(where, release, '', f'sudo make {target}'), extra='-t')
