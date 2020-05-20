@@ -83,7 +83,7 @@ def main(target=''):
     done = False
     if not arg.release:
         for package in arg.packages:
-            done = control.build(arg.server, package, arg.location, package)
+            done = control.build(arg.server, package, 'current', arg.location)
 
     if done:
         control.backdoor(arg.server, arg.backdoor)

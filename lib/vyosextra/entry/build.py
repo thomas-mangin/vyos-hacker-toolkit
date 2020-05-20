@@ -19,7 +19,7 @@ class Control(control.Control):
 
         self.ssh(where, f"rm -rf {build_repo}/{self.location}/*", exitonfail=False)
 
-    def build(self, where, release, vyos_repo, folder):
+    def build(self, where, vyos_repo, release, folder):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'mkdir -p {build_repo}/{self.location}/{vyos_repo}')
 
@@ -31,22 +31,21 @@ class Control(control.Control):
                 log.note(f'building package {package}')
 
             self.run(config.rsync(where, '.', f'{build_repo}/{self.location}/{vyos_repo}'))
-            self.ssh(where, f'rm {build_repo}/{self.location}/{package}', exitonfail=False)
             self.ssh(where, config.docker(where, release, f'{self.location}/{vyos_repo}', 'dpkg-buildpackage -uc -us -tc -b'))
 
         return True
 
-    def install(self, server, router, location, vyos_repo, folder):
+    def install(self, server, router, vyos_repo, location):
         build_repo = config.get(server, 'repo')
 
-        with Repository(os.path.join(folder, vyos_repo), verbose=self.verbose) as debian:
+        with Repository(os.path.join(location, vyos_repo), verbose=self.verbose) as debian:
             package = debian.package(vyos_repo)
             if not package:
                 log.failed(f'could not find {vyos_repo} package name')
             if not self.dry:
                 log.note(f'installing {package}')
 
-        self.chain(config.ssh(server, f'cat {build_repo}/{location}/{package}'), config.ssh(router, f'cat - > {package}'))
+        self.chain(config.ssh(server, f'cat {build_repo}/{self.location}/{package}'), config.ssh(router, f'cat - > {package}'))
         self.ssh(router, f'sudo dpkg -i --force-all {package}')
         self.ssh(router, f'rm {package}')
 
@@ -74,10 +73,9 @@ def main():
     control.cleanup(arg.server)
 
     for package in arg.packages:
-        control.build(arg.server, 'current', package, arg.location)
+        control.build(arg.server, package, 'current', arg.location)
         control.install(arg.server, arg.router, package, arg.location)
     log.completed('package(s) installed')
-
 
 if __name__ == '__main__':
     main()
