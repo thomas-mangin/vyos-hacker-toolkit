@@ -35,3 +35,7 @@ class Control(object):
     def git(self, where, action):
         build_repo = config.get(where, 'repo')
         self.ssh(where, f'cd {build_repo} && git {action}', 'Already up')
+
+    def docker_pull(self, where, release):
+        self.ssh(where, f'docker pull vyos/vyos-build:{release}', su=True)
+        self.ssh(where, f'docker image prune -f', su=True)

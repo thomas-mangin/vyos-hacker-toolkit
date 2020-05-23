@@ -129,8 +129,8 @@ class Control(control.Control):
         print('installing VyOS docker build image')
         print('----')
         self.ssh(where, 'sudo systemctl restart docker.service')
-        self.ssh(where, 'docker pull vyos/vyos-build:crux', su=True)
-        self.ssh(where, 'docker pull vyos/vyos-build:current', su=True)
+        self.docker_pull(where, 'crux')
+        self.docker_pull(where, 'current')
 
         print('----')
         print('installing vyos-build')

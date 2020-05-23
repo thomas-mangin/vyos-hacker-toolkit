@@ -75,6 +75,7 @@ def main(target=''):
 
     control.cleanup(arg.server)
     control.git(arg.server, 'fetch')
+    control.docker_pull(arg.server, release)
 
     if target == 'test':
         control.make(arg.server, release, 'test')
