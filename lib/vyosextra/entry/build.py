@@ -69,7 +69,8 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    control.git(arg.server, 'fetch')
+    control.git(arg.server, f'checkout current')
+    control.git(arg.server, f'pull')
     control.cleanup(arg.server)
 
     for package in arg.packages:

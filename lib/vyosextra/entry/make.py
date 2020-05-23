@@ -74,7 +74,8 @@ def main(target=''):
         sys.exit(f'target "{arg.server}" is not a build machine')
 
     control.cleanup(arg.server)
-    control.git(arg.server, 'fetch')
+    control.git(arg.server, f'checkout {release}')
+    control.git(arg.server, f'pull')
     control.docker_pull(arg.server, release)
 
     if target == 'test':
