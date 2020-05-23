@@ -98,7 +98,7 @@ def _edit(parser):
 
 @register('upgrade')
 def _upgrade(parser):
-    parser.add_argument('-f', '--file', type=str, default='', help='the vyos iso to download')
+    parser.add_argument('-i', '--iso', type=str, default='', help='an vyos iso to use (do not download)')
     parser.add_argument('-b', '--bind', type=int, help='ip to bind the webserver to')
     parser.add_argument('-l', '--local', type=int, default=8088, help='port to bind the webserver')
     parser.add_argument('-r', '--remote', type=int, help='ssh forward port to bind the router')

@@ -76,7 +76,7 @@ def web(location, name, port):
 
 def main():
     'upgrade router to latest VyOS image'
-    arg = arguments.setup(__doc__, ['router', 'upgrade', 'presentation'])
+    arg = arguments.setup(__doc__, ['router', 'upgrade', 'isofile', 'presentation'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.router):
@@ -86,7 +86,7 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    location = fetch(arg.file)
+    location = os.path.abspath(arg.iso) if arg.iso else fetch(arg.file)
 
     time.sleep(0.5)
     control.upgrade(arg.router, arg.bind, location, arg.local, arg.remote, arg.dry)
