@@ -76,7 +76,7 @@ def web(location, name, port):
 
 def main():
     'upgrade router to latest VyOS image'
-    arg = arguments.setup(__doc__, ['router', 'upgrade', 'isofile', 'presentation'])
+    arg = arguments.setup(__doc__, ['upgrade'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.router):

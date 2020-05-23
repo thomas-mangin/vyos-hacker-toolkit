@@ -106,7 +106,7 @@ def fetch(target='', show=False):
 
 def main():
     'download latest VyOS rolling image'
-    arg = arguments.setup(__doc__, ['isofile', 'presentation'])
+    arg = arguments.setup(__doc__, ['download'])
     fetch(arg.file)
 
 

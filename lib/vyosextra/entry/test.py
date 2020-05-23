@@ -312,7 +312,7 @@ def failed(command, out, err, reason=''):
 
 def main():
     'test a VyOS router'
-    arg = arguments.setup(__doc__, ['machine', 'presentation'])
+    arg = arguments.setup(__doc__, ['test'])
     control = Control(arg.dry, not arg.quiet)
 
     for command in commands:

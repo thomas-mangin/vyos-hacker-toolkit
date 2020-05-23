@@ -52,7 +52,7 @@ class Control(control.Control):
 
 def main():
     'build and install a vyos debian package'
-    arg = arguments.setup(__doc__, ['server', 'router', 'package', 'presentation'])
+    arg = arguments.setup(__doc__, ['build'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.server):

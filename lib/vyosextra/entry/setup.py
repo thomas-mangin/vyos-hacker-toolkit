@@ -56,6 +56,9 @@ class Control(control.Control):
         packages += ' apt-transport-https ca-certificates curl'
         packages += ' gnupg2 software-properties-common'
 
+        # for docker image
+        packages += 'squashfs-tools'
+
         repo = config.get(where, 'repo')
         repo_name = os.path.basename(repo)
         repo_folder = os.path.dirname(repo)
@@ -151,7 +154,7 @@ class Control(control.Control):
 
 def main():
     'set a machine for this tool'
-    arg = arguments.setup(__doc__, ['machine', 'sudo', 'presentation'])
+    arg = arguments.setup(__doc__, ['setup'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.machine):

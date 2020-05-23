@@ -64,7 +64,7 @@ class Control(control.Control):
 
 def main():
     'setup a branch of a vyos repository'
-    arg = arguments.setup(__doc__, ['repository', 'presentation', 'edit'])
+    arg = arguments.setup(__doc__, ['branch'])
     control = Control(arg.dry, not arg.quiet)
     control.setup_source(arg.repository)
     control.setup_branch(arg.branch, arg.repository)

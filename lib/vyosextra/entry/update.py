@@ -23,7 +23,7 @@ class Control(control.Control):
 
 def main():
     'update a VyOS router filesystem with newer vyos-1x code'
-    arg = arguments.setup(__doc__, ['router', 'package', 'presentation'])
+    arg = arguments.setup(__doc__, ['update'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.router):

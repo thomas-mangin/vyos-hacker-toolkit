@@ -12,7 +12,7 @@ from vyosextra.config import config
 
 def main():
     'ssh to a configured machine'
-    arg = arguments.setup(__doc__, ['machine', 'presentation'])
+    arg = arguments.setup(__doc__, ['ssh'])
 
     if not config.exists(arg.machine):
         sys.exit(f'machine "{arg.machine}" is not configured\n')

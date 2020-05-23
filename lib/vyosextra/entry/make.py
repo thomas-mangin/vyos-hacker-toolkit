@@ -64,7 +64,7 @@ class Control(control.Control):
 def main(target=''):
     'call vyos-build make within docker'
 
-    options = ['server', 'package', 'make', 'presentation']
+    options = ['make']
     if not target:
         options = ['target'] + options
 
