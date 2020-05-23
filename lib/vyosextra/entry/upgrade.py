@@ -77,7 +77,7 @@ def web(location, name, port):
 def main():
     'upgrade router to latest VyOS image'
     arg = arguments.setup(__doc__, ['router', 'upgrade', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.router):
         sys.exit(f'machine "{arg.router}" is not configured\n')

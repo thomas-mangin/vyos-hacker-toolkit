@@ -53,7 +53,7 @@ class Control(control.Control):
 def main():
     'build and install a vyos debian package'
     arg = arguments.setup(__doc__, ['server', 'router', 'package', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.server):
         sys.exit(f'machine "{arg.server}" is not configured\n')

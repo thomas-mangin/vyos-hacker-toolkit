@@ -64,7 +64,7 @@ def main(target=''):
         target = arg.target
     release = arg.release or 'current'
 
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.server):
         sys.exit(f'machine "{arg.server}" is not configured')

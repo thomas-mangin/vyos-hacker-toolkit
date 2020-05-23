@@ -20,7 +20,7 @@ class Control(control.Control):
 def main():
     'edit vyos code'
     arg = arguments.setup(__doc__, ['repository', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
     control.edit(control.branched_repo(arg.branch, arg.repository))
 
 

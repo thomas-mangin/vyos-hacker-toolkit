@@ -2,9 +2,10 @@ import os
 import re
 
 from vyosextra import log
+from vyosextra import control
 
 
-class Repository:
+class Repository(control.Control):
     official = [
         'vyos-1x',
         'vyos-cloud-init',
@@ -22,7 +23,8 @@ class Repository:
         'vyatta-cfg-system',
     ]
 
-    def __init__(self, folder, verbose=True):
+    def __init__(self, folder, verbose=False):
+        control.Control.__init__(self, dry=False, verbose=False)
         self.folder = os.path.abspath(folder)
         self.verbose = verbose
         try:
@@ -44,13 +46,10 @@ class Repository:
         os.chdir(self.pwd)
 
     def package(self, repo):
-        try:
-            with open(os.path.join('debian', 'changelog')) as f:
-                line = f.readline().strip()
-        except FileNotFoundError:
+        if not os.path.exists(os.path.join('debian', 'changelog')):
             log.failed(f'Can not find a debian/changelog folder in "{self.folder}"')
-        found = re.match(r'[^(]+\((.*)\).*', line)
-        if found is None:
-            return ''
-        version = found.group(1)
-        return f'{repo}_{version}_all.deb'
+
+        out, _, code = self.run("git describe --tags --long --match 'vyos/*'", exitonfail=False)
+        if not out:
+            out = "vyos/0.0-no.git.tag"
+        return out.replace('vyos/', f'{repo}_').replace('-dirty', '+dirty') + '_all.deb'

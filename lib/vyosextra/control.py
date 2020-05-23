@@ -9,9 +9,9 @@ class Control(object):
         ('src/op_mode/*', '/usr/libexec/vyos/op_mode/'),
     ]
 
-    def __init__(self, dry, quiet):
+    def __init__(self, dry, verbose):
         self.dry = dry
-        self.verbose = not quiet
+        self.verbose = verbose
 
     def run(self, cmd, **kargs):
         return command.run(cmd, self.dry, self.verbose, **kargs)
@@ -34,4 +34,4 @@ class Control(object):
 
     def git(self, where, action):
         build_repo = config.get(where, 'repo')
-        self.ssh(where, f'cd {build_repo} && ' f'git {action}', 'Already up to date.')
+        self.ssh(where, f'cd {build_repo} && git {action}', 'Already up')

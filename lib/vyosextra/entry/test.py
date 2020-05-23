@@ -313,7 +313,7 @@ def failed(command, out, err, reason=''):
 def main():
     'test a VyOS router'
     arg = arguments.setup(__doc__, ['machine', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     for command in commands:
         show = f'/opt/vyatta/bin/vyatta-op-cmd-wrapper {command}'

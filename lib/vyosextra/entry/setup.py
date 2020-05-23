@@ -152,7 +152,7 @@ class Control(control.Control):
 def main():
     'set a machine for this tool'
     arg = arguments.setup(__doc__, ['machine', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.machine):
         sys.exit(f'machine "{arg.machine}" is not configured\n')

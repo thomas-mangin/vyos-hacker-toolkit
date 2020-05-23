@@ -24,7 +24,7 @@ class Control(control.Control):
 def main():
     'update a VyOS router filesystem with newer vyos-1x code'
     arg = arguments.setup(__doc__, ['router', 'package', 'presentation'])
-    control = Control(arg.dry, arg.quiet)
+    control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.router):
         sys.exit(f'machine "{arg.router}" is not configured\n')
