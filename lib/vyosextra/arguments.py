@@ -71,6 +71,7 @@ def _make(parser):
     parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
     parser.add_argument('-r', '--release', type=str, help='make without custom package', choices=['current', 'crux'])
     parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
+    parser.add_argument('-f', '--fetch', help='copy the iso locally when built', action='store_true')
 
 
 @register('repository')

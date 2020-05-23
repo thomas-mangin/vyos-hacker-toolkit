@@ -50,6 +50,16 @@ class Control(control.Control):
         self.ssh(where, config.docker(where, release, '', f'git checkout {release}'))
         self.ssh(where, config.docker(where, release, '', f'./configure {configure}'))
 
+    def fetch(self, where):
+        build_repo = config.get(where, 'repo')
+
+        when = datetime.now().strftime('%Y%M%d%H%M')
+        iso = f'vyos-1.3-rolling-{when}-amd64.iso'
+
+        self.chain(
+            config.ssh(where, f'cat {build_repo}/build/live-image-amd64.hybrid.iso'),
+            f'cat - > {iso}'
+        )
 
 def main(target=''):
     'call vyos-build make within docker'
@@ -95,6 +105,9 @@ def main(target=''):
 
     if target == 'iso' and arg.test:
         control.make(arg.server, release, 'test')
+
+    if arg.fetch:
+        control.fetch(arg.server)
 
     log.completed('iso built and tested')
 
