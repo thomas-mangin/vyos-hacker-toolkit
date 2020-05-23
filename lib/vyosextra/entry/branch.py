@@ -45,7 +45,7 @@ class Control(control.Control):
         self.into(working)
         self.run(f'git checkout {branch}')
         self.run(f'git reset --hard HEAD')
-        self.run(f'git pull upstream {branch}')
+        self.run(f'git pull upstream --tags {branch}')
         self.run(f'git push origin {branch}')
 
     def setup_branch(self, branch, repo):
