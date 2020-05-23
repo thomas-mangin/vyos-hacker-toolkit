@@ -53,6 +53,10 @@ def _server(parser):
     default = config.default.get('build', None)
     nargs = '?' if default else None
     parser.add_argument('server', nargs=nargs, default=default, help='server on which the action will be performed')
+
+
+@register('sudo')
+def _setup(parser):
     parser.add_argument('--sudo', action='store_true', help='also setup sudo on this machine')
 
 

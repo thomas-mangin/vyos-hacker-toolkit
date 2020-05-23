@@ -151,7 +151,7 @@ class Control(control.Control):
 
 def main():
     'set a machine for this tool'
-    arg = arguments.setup(__doc__, ['machine', 'presentation'])
+    arg = arguments.setup(__doc__, ['machine', 'sudo', 'presentation'])
     control = Control(arg.dry, not arg.quiet)
 
     if not config.exists(arg.machine):
