@@ -49,7 +49,8 @@ class Repository(control.Control):
         if not os.path.exists(os.path.join('debian', 'changelog')):
             log.failed(f'Can not find a debian/changelog folder in "{self.folder}"')
 
-        out, _, code = self.run("git describe --tags --long --match 'vyos/*'", exitonfail=False)
+        out, _, code = self.run("git describe --tags --long --match 'vyos/*' --dirty", exitonfail=False)
+        out = out.strip()
         if not out:
             out = "vyos/0.0-no.git.tag"
         return out.replace('vyos/', f'{repo}_').replace('-dirty', '+dirty') + '_all.deb'
