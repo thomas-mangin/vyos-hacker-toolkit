@@ -65,11 +65,12 @@ def _target(parser):
 # -- options
 
 def _backdoor(parser):
-    parser.add_argument('-b', '--backdoor', type=str, help='install an admin account on the iso with this passord')
+    # to dangerous to have a -b option
+    parser.add_argument('--backdoor', type=str, help='install an admin account on the iso with this passord')
 
 
 def _bind(parser):
-    parser.add_argument('-b', '--bind', type=int, help='ip to bind the webserver to')
+    parser.add_argument('-b', '--bind', type=int, metavar="IP", help='ip to bind the webserver to')
 
 
 def _debug(parser):
@@ -88,17 +89,12 @@ def _edit(parser):
     parser.add_argument('-e', '--edit', action='store_true', help='start editor once branched')
 
 
-# XXX: two -f
-def _fetch(parser):
-    parser.add_argument('-r', '--fetch', help='copy the iso locally when built', action='store_true')
-
-
 def _file(parser):
     parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
 
 
 def _iso(parser):
-    parser.add_argument('-i', '--iso', type=str, default='', help='an vyos iso to use (do not download)')
+    parser.add_argument('-i', '--iso', type=str, default='', help='an vyos iso file to use')
 
 
 def _quiet(parser):
@@ -106,17 +102,11 @@ def _quiet(parser):
 
 
 def _local(parser):
-    parser.add_argument('-l', '--local', type=int, default=8088, help='port to bind the webserver')
+    parser.add_argument('-l', '--local', type=int, default=8088, metavar="PORT", help='port to bind the webserver')
 
 
 def _packages(parser):
     parser.add_argument('-p', '--packages', type=str, nargs='*', default=['vyos-1x'], help='what vyos packages are considered')
-
-
-def _location(parser):
-    parser.add_argument(
-        '-l', '--location', type=str, default='.', help='where the branch root is (where vyos repos where cloned)'
-    )
 
 
 def _name(parser):
@@ -128,7 +118,7 @@ def _release(parser):
 
 
 def _remote(parser):
-    parser.add_argument('-r', '--remote', type=int, help='ssh forward port to bind the router')
+    parser.add_argument('-r', '--remote', type=int,  metavar="PORT", help='ssh forward port to bind the router')
 
 
 def _test(parser):
@@ -140,9 +130,18 @@ def _reboot(parser):
     parser.add_argument('--reboot', action='store_true', help='reboot the router')
 
 
+def _save(parser):
+    parser.add_argument('-s', '--save', help='location where to save', action='store_true')
+
+
 def _sudo(parser):
     parser.add_argument('--sudo', action='store_true', help='also setup sudo on this machine')
 
+
+def _working(parser):
+    parser.add_argument(
+        '-w', '--working-dir', type=str, default='.', help='where the branch root is (where vyos repos where cloned)'
+    )
 
 # all programs are defined here
 
@@ -160,7 +159,7 @@ def build(parser):
     _router(parser)
     # --
     _packages(parser)
-    _location(parser)
+    _working(parser)
     _dry(parser)
     _quiet(parser)
 
@@ -207,7 +206,7 @@ def _make(parser):
     _backdoor(parser)
     _release(parser)
     _test(parser)
-    _fetch(parser)
+    _save(parser)
 
 
 @register('test')
@@ -220,10 +219,11 @@ def test(parser):
 
 @register('update')
 def release(parser):
+    breakpoint()
     _router(parser)
     # --
     _packages(parser)
-    _location(parser)
+    _working(parser)
     _dry(parser)
     _quiet(parser)
 
@@ -233,7 +233,7 @@ def update(parser):
     _router(parser)
     # --
     _packages(parser)
-    _location(parser)
+    _working(parser)
     _dry(parser)
     _quiet(parser)
 
@@ -242,14 +242,14 @@ def update(parser):
 def upgrade(parser):
     _router(parser)
     # --
-    _iso(parser)
     _bind(parser)
     _local(parser)
-    _packages(parser)
-    _location(parser)
     _remote(parser)
-    _reboot(parser)
+    _iso(parser)
+    _packages(parser)
+    _working(parser)
     _file(parser)
+    _reboot(parser)
     _dry(parser)
     _quiet(parser)
 
