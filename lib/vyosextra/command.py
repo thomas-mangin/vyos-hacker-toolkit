@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import fcntl
 
 from subprocess import Popen
@@ -35,11 +36,13 @@ def _report(popen, verbose):
         (2, popen.stderr, sys.stderr, _unprefix),
     )
     while popen.poll() is None:
+        idle = True
         for fno, pipe, std, formater in standards:
             recv = _read(pipe)
             if not recv:
                 continue
 
+            idle = False
             short = formater(recv)
             if not short:
                 continue
@@ -48,6 +51,9 @@ def _report(popen, verbose):
             result[fno] += short
             if verbose:
                 std.write(short)
+
+        if not idle:
+            time.sleep(0.1)
 
     return result.values()
 
