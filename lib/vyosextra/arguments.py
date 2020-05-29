@@ -66,63 +66,59 @@ def _target(parser):
 
 def _backdoor(parser):
     # to dangerous to have a -b option
-    parser.add_argument('--backdoor', type=str, help='install an admin account on the iso with this passord')
+    parser.add_argument('--backdoor', action='store_true', help='install an admin account on the iso with this passord')
 
 
 def _bind(parser):
-    parser.add_argument('-b', '--bind', type=int, metavar="IP", help='ip to bind the webserver to')
+    parser.add_argument('--bind', '-b', metavar="IP", type=int, help='ip to bind the webserver to')
 
 
 def _debug(parser):
-    parser.add_argument('-d', '--debug', help='run python with pdb', action='store_true')
-
-
-def _extra(parser):
-    parser.add_argument('-e', '--extra', type=str, help='extra debian package(s) to install')
+    parser.add_argument('--debug', '-d', help='run python with pdb', action='store_true')
 
 
 def _dry(parser):
-    parser.add_argument('-d', '--dry', action='store_true', help='only show what will be done')
+    parser.add_argument('--dry', '-d', action='store_true', help='only show what will be done')
+
+
+def _extra(parser):
+    parser.add_argument('--extra', '-e', type=str, help='extra debian package(s) to install')
 
 
 def _edit(parser):
-    parser.add_argument('-e', '--edit', action='store_true', help='start editor once branched')
-
-
-def _file(parser):
-    parser.add_argument('-f', '--file', type=str, default='', help='iso file to save as')
+    parser.add_argument('--edit', '-e', action='store_true', help='start editor once branched')
 
 
 def _iso(parser):
-    parser.add_argument('-i', '--iso', type=str, default='', help='an vyos iso file to use')
+    parser.add_argument('--iso', '-i', type=str, default='', help='an vyos iso file to use')
 
 
 def _quiet(parser):
-    parser.add_argument('-q', '--quiet', action='store_true', help='do not show what is happening')
+    parser.add_argument('--quiet', '-q', action='store_true', help='do not show what is happening')
 
 
 def _local(parser):
-    parser.add_argument('-l', '--local', type=int, default=8088, metavar="PORT", help='port to bind the webserver')
+    parser.add_argument('--local', '-l', metavar="PORT", type=int, default=8088, help='port to bind the webserver')
 
 
 def _packages(parser):
-    parser.add_argument('-p', '--packages', type=str, nargs='*', default=['vyos-1x'], help='what vyos packages are considered')
+    parser.add_argument('--packages', '-p', type=str, nargs='*', default=['vyos-1x'], help='what vyos packages are considered')
 
 
 def _name(parser):
-    parser.add_argument('-n', '--name', type=str, help='name/tag to add to the build version')
+    parser.add_argument('--name', '-n', type=str, help='name/tag to add to the build version')
 
 
 def _release(parser):
-    parser.add_argument('-r', '--release', type=str, help='make without custom package', choices=['current', 'crux'])
+    parser.add_argument('--release', '-r', type=str, help='make without custom package', choices=['current', 'crux'])
 
 
 def _remote(parser):
-    parser.add_argument('-r', '--remote', type=int,  metavar="PORT", help='ssh forward port to bind the router')
+    parser.add_argument('--remote', '-r',  metavar="PORT", type=int, help='ssh forward port to bind the router')
 
 
 def _test(parser):
-    parser.add_argument('-t', '--test', help='test the iso when built', action='store_true')
+    parser.add_argument('--test', '-t', help='test the iso when built', action='store_true')
 
 
 def _reboot(parser):
@@ -131,7 +127,7 @@ def _reboot(parser):
 
 
 def _save(parser):
-    parser.add_argument('-s', '--save', help='location where to save', action='store_true')
+    parser.add_argument('--save', '-s', help='location where to save', action='store_true')
 
 
 def _sudo(parser):
@@ -140,7 +136,7 @@ def _sudo(parser):
 
 def _working(parser):
     parser.add_argument(
-        '-w', '--working-dir', type=str, default='.', help='where the branch root is (where vyos repos where cloned)'
+        '-w', '--working', type=str, default='.', help='where the branch root is (where vyos repos where cloned)'
     )
 
 # all programs are defined here
@@ -184,7 +180,7 @@ def docker(parser):
 
 @register('download')
 def download(parser):
-    _file(parser)
+    _save(parser)
     _dry(parser)
     _quiet(parser)
 
@@ -200,13 +196,19 @@ def edit(parser):
 
 @register('make')
 def _make(parser):
+    _server(parser)
     # --
     _extra(parser)
     _name(parser)
     _backdoor(parser)
+    _packages(parser)
     _release(parser)
     _test(parser)
     _save(parser)
+    _working(parser)
+    # --
+    _dry(parser)
+    _quiet(parser)
 
 
 @register('test')
@@ -248,7 +250,7 @@ def upgrade(parser):
     _iso(parser)
     _packages(parser)
     _working(parser)
-    _file(parser)
+    _save(parser)
     _reboot(parser)
     _dry(parser)
     _quiet(parser)

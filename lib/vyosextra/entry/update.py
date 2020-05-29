@@ -34,7 +34,7 @@ def main():
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
     for package in arg.packages:
-        control.copy(arg.router, package, arg.location)
+        control.copy(arg.router, package, arg.working)
     log.completed('router updated')
 
 

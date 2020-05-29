@@ -74,8 +74,8 @@ def main():
     control.cleanup(arg.server)
 
     for package in arg.packages:
-        control.build(arg.server, package, 'current', arg.location)
-        control.install(arg.server, arg.router, package, arg.location)
+        control.build(arg.server, package, 'current', arg.working)
+        control.install(arg.server, arg.router, package, arg.working)
     log.completed('package(s) installed')
 
 if __name__ == '__main__':
