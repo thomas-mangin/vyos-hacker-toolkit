@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os
+import time
 import sys
 
 from vyosextra import log
@@ -13,14 +14,19 @@ from vyosextra.config import config
 
 
 class Control(control.Control):
-    def copy(self, where, repo, folder):
+    timed = []
+    def permission(self, where, folder):
         with Repository(folder, verbose=self.verbose):
             for src, dst in self.move:
                 self.ssh(where, f'sudo chgrp -R vyattacfg {dst}')
                 self.ssh(where, f'sudo chmod -R g+rxw {dst}')
-                self.scp(where, os.path.join(repo, src), dst)
 
+    def rsync(self, where, folder):
+        with Repository(folder, verbose=self.verbose):
+            for src, dst in self.move:
+                self.run(config.rsync(where, src, dst))
 
+	
 def main():
     'update a VyOS router filesystem with newer vyos-1x code'
     arg = arguments.setup(__doc__, ['update'])
@@ -33,9 +39,10 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    for package in arg.packages:
-        control.copy(arg.router, package, arg.working)
-    log.completed('router updated')
+    control.permission(arg.router, arg.working)
+    while True:
+        time.sleep(0.2)
+        control.rsync(arg.router, arg.working)
 
 
 if __name__ == '__main__':

@@ -28,8 +28,9 @@ class Control(control.Control):
 
         packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
         self.ssh(where, f'sudo apt-get --yes update')
-        # self.ssh(where, f'sudo apt-get --yes upgrade')))
+        self.ssh(where, f'sudo apt --fix-broken install')
         self.ssh(where, f'sudo apt-get --yes install {packages}')
+        # self.ssh(where, f'sudo apt-get --yes upgrade')))
 
         self.ssh(where, f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')
         self.ssh(where, f'ln -sf /usr/libexec/vyos/conf_mode conf')
