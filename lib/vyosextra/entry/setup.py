@@ -27,10 +27,16 @@ class Control(control.Control):
         )
 
         packages = 'vim git ngrep jq gdb strace apt-rdepends rsync'
+
+        # for flamegraph
+        packages += ' python3-pip python3-wheel python3-virtualenv'
+
         self.ssh(where, f'sudo apt-get --yes update')
         self.ssh(where, f'sudo apt --fix-broken install')
         self.ssh(where, f'sudo apt-get --yes install {packages}')
         # self.ssh(where, f'sudo apt-get --yes upgrade')))
+
+        self.ssh(where, 'pip3 install git+https://github.com/evanhempel/python-flamegraph.git')
 
         self.ssh(where, f'ln -sf /usr/lib/python3/dist-packages/vyos vyos')
         self.ssh(where, f'ln -sf /usr/libexec/vyos/conf_mode conf')
@@ -58,7 +64,7 @@ class Control(control.Control):
         packages += ' gnupg2 software-properties-common'
 
         # for docker image
-        packages += 'squashfs-tools'
+        packages += ' squashfs-tools'
 
         repo = config.get(where, 'repo')
         repo_name = os.path.basename(repo)

@@ -39,7 +39,7 @@ class Control(control.Control):
                 modified = new_modified
                 self.rsync(where, folder)
 
-            time.sleep(0.5)
+            time.sleep(2)
 
 
 def main():
