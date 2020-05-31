@@ -86,7 +86,7 @@ def main():
     if role != 'router':
         sys.exit(f'target "{arg.router}" is not a VyOS router\n')
 
-    location = os.path.abspath(arg.iso) if arg.iso else fetch(arg.file)
+    location = os.path.abspath(arg.iso) if arg.iso else fetch(arg.iso)
 
     time.sleep(0.5)
     control.upgrade(arg.router, arg.bind, location, arg.local, arg.remote, arg.dry)
