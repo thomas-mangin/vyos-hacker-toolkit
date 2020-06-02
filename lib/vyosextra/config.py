@@ -202,18 +202,24 @@ class _Config(object):
         repo = self._values[where]['repo']
         return f'docker run --rm --privileged -v {repo}:{repo} -w {repo}/{rwd} vyos/vyos-build:{release} {command}'  # noqa: E501
 
-    def rsync(self, where, src, dest):
+    def rsync(self, where, src, dest, exclude=''):
         host = self._values[where]['host']
         user = self._values[where]['user']
         port = self._values[where]['port']
+
+        options = '-avh --delete'
+        if exclude:
+            options += f" --exclude '{exclude}'"
+
         if host in ('localhost', '127.0.0.1', '::1') and port == 22:
-            return f'rsync -avh --delete {src} {dest}'
+            return f'rsync {options} {src} {dest}'
+
         dest = dest.replace('$', '\$')  # noqa: W605
 
         file = self._values[where]['file']
         if file:
             file = f' -i {file}'
-        return f'rsync -avh --delete -e "ssh -p {port}{file}" {src} {user}@{host}:{dest}'
+        return f'rsync {options} -e "ssh -p {port}{file}" {src} {user}@{host}:{dest}'
 
 
 # The global configuration

@@ -25,7 +25,7 @@ class Control(control.Control):
     def rsync(self, where, folder):
         with Repository(folder, verbose=self.verbose):
             for src, dst in self.move:
-                self.run(config.rsync(where, src, dst))
+                self.run(config.rsync(where, src, dst, exclude='**__pycache__'))
 
     # there is no portable way, and python only to use inotify / etc.
     def update(self, where, folder):
