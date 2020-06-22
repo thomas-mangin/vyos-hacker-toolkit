@@ -75,14 +75,14 @@ class Control(control.Control):
             print('this machine is already setup')
             return
 
+        username = config.get(where, 'user')
+        password = 'your-password'
+
         if with_sudo:
-            print('----')
-            print("Please enter the host root password (it is not saved)")
-            print("It is required to setup password-less command via sudo")
-            username = config.get(where, 'user')
-            if self.dry:
-                password = 'your-password'
-            else:
+            if not self.dry:
+                print('----')
+                print("Please enter the host root password (it is not saved)")
+                print("It is required to setup password-less command via sudo")
                 password = getpass('password: ')
                 password = f"'{password}'"
 
