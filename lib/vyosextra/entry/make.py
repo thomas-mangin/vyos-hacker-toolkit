@@ -106,7 +106,7 @@ def main(target=''):
     if target == 'iso' and arg.test:
         control.make(arg.server, release, 'test')
 
-    if arg.fetch:
+    if arg.save:
         control.fetch(arg.server)
 
     log.completed('iso built and tested')
