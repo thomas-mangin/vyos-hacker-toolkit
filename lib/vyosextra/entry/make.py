@@ -24,7 +24,8 @@ class Control(control.Control):
         location = lines.pop(0).lstrip().lstrip('#').strip()
 
         if not password:
-            self.ssh(where, f"rm {build_repo}/{location}", exitonfail=False)
+            self.ssh(where, f"rm {build_repo}/{location}/vyos-1x", exitonfail=False)
+            self.ssh(where, f"rm {build_repo}/{location}/vyatta*", exitonfail=False)
             self.ssh(where, f"touch {build_repo}/{location}")
             return
 
@@ -84,8 +85,10 @@ def main(target=''):
         sys.exit(f'target "{arg.server}" is not a build machine')
 
     control.cleanup(arg.server)
+    # to re-add the vyos-1x folder we deleted
+    control.git(arg.server, 'checkout packages')
     control.git(arg.server, f'checkout {release}')
-    control.git(arg.server, f'pull')
+    control.git(arg.server, 'pull')
     control.docker_pull(arg.server, release)
 
     if target == 'test':
