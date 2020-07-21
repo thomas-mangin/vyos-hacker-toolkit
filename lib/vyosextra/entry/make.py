@@ -24,9 +24,8 @@ class Control(control.Control):
         location = lines.pop(0).lstrip().lstrip('#').strip()
 
         if not password:
-            self.ssh(where, f"rm {build_repo}/{location}/vyos-1x", exitonfail=False)
+            self.ssh(where, f"rm {build_repo}/{location}/vyos*", exitonfail=False)
             self.ssh(where, f"rm {build_repo}/{location}/vyatta*", exitonfail=False)
-            self.ssh(where, f"touch {build_repo}/{location}")
             return
 
         data = ''.join(lines).format(user='admin', password=password)
@@ -61,6 +60,7 @@ class Control(control.Control):
             config.ssh(where, f'cat {build_repo}/build/live-image-amd64.hybrid.iso'),
             f'cat - > {iso}'
         )
+
 
 def main(target=''):
     'call vyos-build make within docker'

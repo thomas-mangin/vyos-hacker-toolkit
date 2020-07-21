@@ -15,10 +15,13 @@ def _unprefix(string, prefix='Welcome to VyOS'):
 
 
 def _report(popen, verbose):
+    def _blocking(output):
+        fd = output.fileno()
+        os.set_blocking(fd, True)
+
     def _non_blocking(output):
         fd = output.fileno()
-        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        os.set_blocking(fd, False)
 
     def _read(output):
         try:
@@ -36,13 +39,13 @@ def _report(popen, verbose):
         (2, popen.stderr, sys.stderr, _unprefix),
     )
     while popen.poll() is None:
-        idle = True
+        busy = False
         for fno, pipe, std, formater in standards:
             recv = _read(pipe)
             if not recv:
                 continue
 
-            idle = False
+            busy = True
             short = formater(recv)
             if not short:
                 continue
@@ -52,8 +55,11 @@ def _report(popen, verbose):
             if verbose:
                 std.write(short)
 
-        if not idle:
+        if not busy:
             time.sleep(0.1)
+
+    _blocking(popen.stdout)
+    _blocking(popen.stderr)
 
     return result.values()
 
